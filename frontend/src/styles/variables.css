@@ -1,0 +1,93 @@
+/* ============================================================
+   VARIABLES GLOBALES
+   ------------------------------------------------------------
+   Aquí van TODOS los colores, tamaños, espacios y fuentes
+   del sistema. Si quieres cambiar el verde SENA en toda la
+   aplicación, lo cambias acá una vez y se actualiza en todo.
+   ============================================================ */
+
+:root {
+  /* === COLORES INSTITUCIONALES SENA === */
+  --color-verde-sena: #39A900;
+  --color-verde-oscuro: #007832;
+  --color-verde-muy-oscuro: #004D20;
+  --color-verde-claro: #E8F5E9;
+
+  /* === COLORES DE ACENTO === */
+  --color-naranja: #FF8200;
+  --color-rojo: #D32F2F;
+  --color-amarillo: #FFB300;
+  --color-azul: #1976D2;
+
+  /* === GRISES === */
+  --color-blanco: #FFFFFF;
+  --color-gris-100: #F5F5F5;
+  --color-gris-200: #E0E0E0;
+  --color-gris-300: #BDBDBD;
+  --color-gris-500: #757575;
+  --color-gris-700: #424242;
+  --color-gris-900: #212121;
+  --color-negro: #000000;
+
+  /* === COLORES DE ESTADO === */
+  --color-exito: var(--color-verde-sena);
+  --color-error: var(--color-rojo);
+  --color-advertencia: var(--color-amarillo);
+  --color-info: var(--color-azul);
+
+  /* === ESPACIADOS (multiplos de 4px para mantener consistencia) === */
+  --espacio-xs: 4px;
+  --espacio-sm: 8px;
+  --espacio-md: 16px;
+  --espacio-lg: 24px;
+  --espacio-xl: 32px;
+  --espacio-xxl: 48px;
+  --espacio-xxxl: 64px;
+
+  /* === TIPOGRAFIA === */
+  --fuente-principal: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto,
+                      "Helvetica Neue", Arial, sans-serif;
+  --fuente-monospace: "Consolas", "Monaco", "Courier New", monospace;
+
+  --tamano-xs: 12px;
+  --tamano-sm: 14px;
+  --tamano-md: 16px;
+  --tamano-lg: 20px;
+  --tamano-xl: 24px;
+  --tamano-xxl: 32px;
+  --tamano-xxxl: 48px;
+
+  --peso-normal: 400;
+  --peso-medio: 500;
+  --peso-semibold: 600;
+  --peso-bold: 700;
+
+  /* === BORDES Y RADIOS === */
+  --radio-sm: 4px;
+  --radio-md: 8px;
+  --radio-lg: 12px;
+  --radio-xl: 20px;
+  --radio-circular: 50%;
+
+  --borde-fino: 1px solid var(--color-gris-200);
+  --borde-medio: 2px solid var(--color-gris-200);
+
+  /* === SOMBRAS === */
+  --sombra-sm: 0 1px 3px rgba(0, 0, 0, 0.08);
+  --sombra-md: 0 4px 12px rgba(0, 0, 0, 0.1);
+  --sombra-lg: 0 8px 24px rgba(0, 0, 0, 0.15);
+  --sombra-xl: 0 16px 40px rgba(0, 0, 0, 0.2);
+
+  /* === TRANSICIONES (velocidades estandar) === */
+  --velocidad-rapida: 150ms;
+  --velocidad-media: 300ms;
+  --velocidad-lenta: 500ms;
+  --suavizado: cubic-bezier(0.4, 0, 0.2, 1);
+
+  /* === Z-INDEX (capas de profundidad) === */
+  --z-base: 1;
+  --z-dropdown: 100;
+  --z-overlay: 500;
+  --z-modal: 1000;
+  --z-notificacion: 2000;
+}

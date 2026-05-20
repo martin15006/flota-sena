@@ -1,0 +1,67 @@
+/* ============================================================
+   ESTILOS GLOBALES
+   ------------------------------------------------------------
+   Estilos base que aplican a toda la aplicacion: tipografia,
+   colores generales, body, layout principal.
+   ============================================================ */
+
+html,
+body {
+  height: 100%;
+  font-family: var(--fuente-principal);
+  font-size: var(--tamano-md);
+  color: var(--color-gris-900);
+  background-color: var(--color-gris-100);
+  line-height: 1.5;
+}
+
+#root {
+  min-height: 100%;
+  display: flex;
+  flex-direction: column;
+}
+
+/* === TITULOS POR DEFECTO === */
+h1 {
+  font-size: var(--tamano-xxxl);
+  font-weight: var(--peso-bold);
+  line-height: 1.2;
+  color: var(--color-verde-oscuro);
+}
+
+h2 {
+  font-size: var(--tamano-xxl);
+  font-weight: var(--peso-bold);
+  line-height: 1.3;
+  color: var(--color-verde-oscuro);
+}
+
+h3 {
+  font-size: var(--tamano-xl);
+  font-weight: var(--peso-semibold);
+  line-height: 1.4;
+  color: var(--color-verde-oscuro);
+}
+
+h4 {
+  font-size: var(--tamano-lg);
+  font-weight: var(--peso-semibold);
+  line-height: 1.4;
+}
+
+/* === ENLACES === */
+a {
+  color: var(--color-verde-sena);
+  transition: color var(--velocidad-rapida) var(--suavizado);
+}
+
+a:hover {
+  color: var(--color-verde-oscuro);
+}
+
+/* === FOCO ACCESIBLE === */
+:focus-visible {
+  outline: 3px solid var(--color-verde-sena);
+  outline-offset: 2px;
+  border-radius: var(--radio-sm);
+}
