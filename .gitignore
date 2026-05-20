@@ -1,0 +1,34 @@
+# Dependencias instaladas (se reinstalan con npm install)
+node_modules/
+
+# Variables de entorno (contraseñas, secretos)
+.env
+.env.local
+.env.*.local
+
+# Logs
+*.log
+npm-debug.log*
+yarn-debug.log*
+
+# Sistema operativo
+.DS_Store
+Thumbs.db
+desktop.ini
+
+# Editor
+.vscode/
+.idea/
+*.swp
+
+# Build
+dist/
+build/
+
+# Cache
+.cache/
+.parcel-cache/
+
+# Base de datos local (backups)
+*.sql.gz
+backups/
