@@ -10,10 +10,10 @@ Sistema web para el chequeo preoperacional digital de la flota institucional, co
 
 | Capa | Tecnología |
 |---|---|
-| Frontend | React 19 + Vite + CSS modular |
+| Frontend | React 19 + Vite + React Router 7 + CSS modular |
 | Backend | Node.js 24 + Express 5 |
 | Base de datos | Supabase (PostgreSQL en la nube) |
-| Autenticación | Supabase Auth |
+| Autenticación | Supabase Auth + JWT |
 | Storage | Supabase Storage (fotos de vehículos) |
 | Tiempo real | Supabase Realtime (alertas al admin) |
 | Correo | Nodemailer (envíos automáticos) |
@@ -38,11 +38,16 @@ flota-sena/
 │
 ├── frontend/                 → Aplicación React
 │   ├── src/
-│   │   ├── components/       → Componentes reutilizables
 │   │   ├── pages/            → Páginas de la app
+│   │   │   ├── Login/        → Página de inicio de sesión
+│   │   │   └── Dashboard/    → Panel principal post-login
+│   │   ├── components/       → Componentes reutilizables
+│   │   ├── contexts/         → AuthContext (estado global del usuario)
+│   │   ├── hooks/            → Custom hooks (useAuth)
+│   │   ├── lib/              → Helpers (api.js para llamadas al backend)
 │   │   ├── styles/           → CSS global (variables, reset, global, animations)
 │   │   ├── assets/           → Imágenes y recursos
-│   │   ├── App.jsx           → Componente raíz
+│   │   ├── App.jsx           → Router principal + AuthProvider
 │   │   └── main.jsx          → Entry point
 │   └── package.json
 │
@@ -58,6 +63,7 @@ flota-sena/
 - Node.js 20 o superior
 - Git
 - Cuenta de Supabase (gratis) con un proyecto creado
+- Tablas `usuarios` y `auditoria_usuarios` creadas en Supabase (ver `docs/`)
 
 ### 1. Clonar el repositorio
 
@@ -90,14 +96,15 @@ npm run dev
 
 El frontend queda en `http://localhost:5173`.
 
-### 4. Verificar conexión
+### 4. Iniciar sesión
 
-Abre `http://localhost:5173` y revisa el cuadro "Estado del sistema". Los 4 indicadores deben aparecer en verde:
+Abre `http://localhost:5173` — te redirige automáticamente a `/login`.
 
-- Frontend: Activo
-- Backend: Conectado
-- Supabase: Conectado
-- Usuarios: 0 (al inicio)
+Ingresa con un usuario admin creado previamente en Supabase. Puedes usar:
+- **Correo electrónico** registrado, o
+- **Cédula** asociada al usuario (el sistema acepta ambos)
+
+Después del login exitoso te lleva al panel `/dashboard`.
 
 ---
 
@@ -115,6 +122,19 @@ Abre `http://localhost:5173` y revisa el cuadro "Estado del sistema". Los 4 indi
 | 7 | Vencimientos automáticos: SOAT, RTM, extintor, licencia | ⏳ |
 | 8 | Pruebas TRL 6 → TRL 7: validación end-to-end y campo real | ⏳ |
 
+### Detalle Fase 1 (en curso)
+
+- [x] Tabla `usuarios` extendida sobre `auth.users` de Supabase
+- [x] Tabla `auditoria_usuarios` para registro de acciones admin
+- [x] Endpoints de auth en el backend (`/api/auth/login`, `/api/auth/me`)
+- [x] Middleware de verificación de token JWT
+- [x] Login con correo o cédula
+- [x] Página de Login en el frontend con AuthContext
+- [x] Dashboard placeholder con datos del usuario y logout
+- [ ] Página de cambio obligatorio de contraseña (primer login)
+- [ ] Gestión de usuarios desde el panel admin (crear, editar, desactivar)
+- [ ] Rutas protegidas (`ProtectedRoute`)
+
 ---
 
 ## 🔒 Seguridad
@@ -124,6 +144,7 @@ Abre `http://localhost:5173` y revisa el cuadro "Estado del sistema". Los 4 indi
 - Contraseñas de usuarios manejadas por Supabase Auth (bcrypt interno)
 - Sesiones con JWT con expiración de 12 horas
 - Bloqueo automático tras 5 intentos fallidos de login
+- Row Level Security (RLS) habilitado en tablas sensibles
 
 ---
 

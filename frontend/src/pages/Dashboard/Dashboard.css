@@ -1,0 +1,102 @@
+/* ============================================================
+   COMPONENTE: Dashboard (placeholder)
+   ============================================================ */
+
+.dashboard {
+  min-height: 100vh;
+  display: flex;
+  flex-direction: column;
+  background: var(--color-gris-100);
+}
+
+.dashboard-header {
+  background: var(--color-blanco);
+  padding: var(--espacio-md) var(--espacio-xl);
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  border-bottom: var(--borde-fino);
+  box-shadow: var(--sombra-sm);
+}
+
+.dashboard-titulo {
+  font-weight: var(--peso-bold);
+  color: var(--color-verde-oscuro);
+  font-size: var(--tamano-md);
+}
+
+.dashboard-usuario {
+  display: flex;
+  align-items: center;
+  gap: var(--espacio-md);
+}
+
+.dashboard-usuario-info {
+  text-align: right;
+}
+
+.dashboard-usuario-nombre {
+  font-size: var(--tamano-sm);
+  font-weight: var(--peso-semibold);
+  color: var(--color-gris-900);
+}
+
+.dashboard-usuario-rol {
+  font-size: var(--tamano-xs);
+  color: var(--color-gris-500);
+  text-transform: uppercase;
+  letter-spacing: 0.5px;
+}
+
+.dashboard-logout {
+  padding: var(--espacio-sm) var(--espacio-md);
+  background: var(--color-blanco);
+  color: var(--color-rojo);
+  border: 2px solid var(--color-rojo);
+  border-radius: var(--radio-md);
+  font-size: var(--tamano-sm);
+  font-weight: var(--peso-semibold);
+  cursor: pointer;
+  transition: all var(--velocidad-rapida) var(--suavizado);
+}
+
+.dashboard-logout:hover {
+  background: var(--color-rojo);
+  color: var(--color-blanco);
+}
+
+.dashboard-main {
+  flex: 1;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: var(--espacio-xxl);
+}
+
+.dashboard-bienvenida {
+  background: var(--color-blanco);
+  padding: var(--espacio-xxl);
+  border-radius: var(--radio-lg);
+  box-shadow: var(--sombra-md);
+  max-width: 600px;
+  text-align: center;
+}
+
+.dashboard-bienvenida h1 {
+  color: var(--color-verde-oscuro);
+  margin-bottom: var(--espacio-md);
+}
+
+.dashboard-bienvenida p {
+  color: var(--color-gris-700);
+  margin-bottom: var(--espacio-md);
+}
+
+.dashboard-nota {
+  margin-top: var(--espacio-lg);
+  padding: var(--espacio-md);
+  background: var(--color-verde-claro);
+  border-radius: var(--radio-md);
+  font-size: var(--tamano-sm);
+  color: var(--color-verde-oscuro);
+}

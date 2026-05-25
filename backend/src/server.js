@@ -2,6 +2,7 @@ import express from 'express';
 import cors from 'cors';
 import dotenv from 'dotenv';
 import helloRoutes from './routes/hello.routes.js';
+import authRouter from './routes/auth.routes.js';
 
 dotenv.config();
 
@@ -14,6 +15,7 @@ app.use(cors({ origin: process.env.CORS_ORIGIN }));
 app.use(express.json());
 
 app.use('/api', helloRoutes);
+app.use('/api/auth', authRouter);
 
 app.use((req, res) => {
     res.status(404).json({ error: 'Ruta no encontrada' });
