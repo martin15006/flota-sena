@@ -3,6 +3,7 @@ import cors from 'cors';
 import dotenv from 'dotenv';
 import helloRoutes from './routes/hello.routes.js';
 import authRouter from './routes/auth.routes.js';
+import usuariosRoutes from './routes/usuarios.routes.js'
 
 dotenv.config();
 
@@ -16,6 +17,7 @@ app.use(express.json());
 
 app.use('/api', helloRoutes);
 app.use('/api/auth', authRouter);
+app.use('/api/usuarios', usuariosRoutes);
 
 app.use((req, res) => {
     res.status(404).json({ error: 'Ruta no encontrada' });
@@ -30,4 +32,4 @@ app.listen(PORT, () => {
     console.log(`Servidor corriendo en http://localhost:${PORT}`);
     console.log(`Prueba: http://localhost:${PORT}/api/hello`);
     console.log(`Test Supabase: http://localhost:${PORT}/api/test-supabase`);
-});
+});;
