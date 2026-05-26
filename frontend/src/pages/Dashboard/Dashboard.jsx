@@ -1,4 +1,4 @@
-import { useNavigate, Navigate } from "react-router-dom";
+import { useNavigate } from "react-router-dom";
 import { useAuth } from "../../hooks/useAuth.js";
 import './Dashboard.css';
 
@@ -6,9 +6,6 @@ function Dashboard() {
     const { usuario, cerrarSesion } = useAuth();
     const navigate = useNavigate();
 
-    if (!usuario) {
-        return <Navigate to='/login' replace />;
-    }
 
     const manejarLogout = () => {
         cerrarSesion();
@@ -40,6 +37,15 @@ function Dashboard() {
                         <strong>{usuario.rol}</strong>
                     </p>
                 </div>
+                {usuario.rol === 'admin' && (
+                    <button
+                        className="boton boton-primario"
+                        onClick={() => navigate('/admin/usuarios')}
+                        style={{ marginTop: '16px' }}
+                    >
+                        Gestion de usuarios
+                    </button>
+                )}
             </main>
         </div>
     );
