@@ -3,7 +3,8 @@ import cors from 'cors';
 import dotenv from 'dotenv';
 import helloRoutes from './routes/hello.routes.js';
 import authRouter from './routes/auth.routes.js';
-import usuariosRoutes from './routes/usuarios.routes.js'
+import usuariosRoutes from './routes/usuarios.routes.js';
+import uploadRoutes from './routes/upload.routes.js';
 
 dotenv.config();
 
@@ -18,6 +19,7 @@ app.use(express.json());
 app.use('/api', helloRoutes);
 app.use('/api/auth', authRouter);
 app.use('/api/usuarios', usuariosRoutes);
+app.use('/api/upload', uploadRoutes);
 
 app.use((req, res) => {
     res.status(404).json({ error: 'Ruta no encontrada' });
