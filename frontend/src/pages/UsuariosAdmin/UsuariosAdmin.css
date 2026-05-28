@@ -20,6 +20,18 @@
     box-shadow: var(--sombra-sm);
 }
 
+.usuarios-admin-logo-wrapper {
+    display: flex;
+    align-items: center;
+    gap: var(--espacio-md);
+}
+
+.usuarios-admin-logo-img {
+    height: 40px;
+    width: auto;
+    object-fit: contain;
+}
+
 .usuarios-admin-logo {
     font-weight: var(--peso-bold);
     color: var(--color-verde-oscuro);

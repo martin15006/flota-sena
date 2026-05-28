@@ -3,6 +3,8 @@ import { useNavigate } from "react-router-dom";
 import { useAuth } from "../../hooks/useAuth.js";
 import { api } from "../../lib/api.js";
 import "./UsuariosAdmin.css";
+import ModalPasswordTemporal from "./components/ModalPasswordTemporal.jsx";
+import Footer from '../../components/Footer/Footer.jsx';
 
 function UsuariosAdmin() {
   const { usuario, cerrarSesion } = useAuth();
@@ -13,6 +15,7 @@ function UsuariosAdmin() {
   const [busqueda, setBusqueda] = useState("");
   const [filtroRol, setFiltroRol] = useState("todos");
   const [filtroEstado, setFiltroEstado] = useState("todos");
+  const [modalPassword, setModalPassword] = useState(null);
 
   const cargarUsuarios = async () => {
     setCargando(true);
@@ -85,10 +88,11 @@ function UsuariosAdmin() {
       const data = await api(`/usuarios/${id}/resetear-password`, {
         method: "POST",
       });
-      alert(
-        `Nueva contraseña temporal:\n\n${data.password_temporal}\n\n` +
-          `Entrégala al usuario. Deberá cambiarla al iniciar sesión.`
-      );
+      setModalPassword({
+        password: data.password_temporal,
+        email: data.email,
+        nombreUsuario: nombre,
+      });
       cargarUsuarios();
     } catch (err) {
       alert(err.message);
@@ -103,7 +107,10 @@ function UsuariosAdmin() {
   return (
     <div className="usuarios-admin">
       <header className="usuarios-admin-header">
-        <div className="usuarios-admin-logo">SENA · Gestión de Flota</div>
+        <div className="usuarios-admin-logo-wrapper">
+          <img src="/logoverde.png" alt="SENA" className="usuarios-admin-logo-img" />
+          <div className="usuarios-admin-logo">Gestión de Flota</div>
+        </div>
         <div className="usuarios-admin-usuario">
           <div className="usuarios-admin-usuario-info">
             <div className="usuarios-admin-usuario-nombre">
@@ -114,6 +121,7 @@ function UsuariosAdmin() {
           <button className="usuarios-admin-logout" onClick={cerrar}>
             Cerrar sesión
           </button>
+
         </div>
       </header>
 
@@ -231,9 +239,8 @@ function UsuariosAdmin() {
                     </td>
                     <td>
                       <span
-                        className={`usuarios-admin-estado ${
-                          u.activo ? "activo" : "inactivo"
-                        }`}
+                        className={`usuarios-admin-estado ${u.activo ? "activo" : "inactivo"
+                          }`}
                       >
                         {u.activo ? "Activo" : "Inactivo"}
                       </span>
@@ -291,6 +298,14 @@ function UsuariosAdmin() {
           </div>
         )}
       </main>
+      <ModalPasswordTemporal
+        abierto={modalPassword !== null}
+        onCerrar={() => setModalPassword(null)}
+        password={modalPassword?.password}
+        email={modalPassword?.email}
+        nombreUsuario={modalPassword?.nombreUsuario}
+      />
+      <Footer />
     </div>
   );
 }

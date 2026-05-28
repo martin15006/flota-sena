@@ -19,11 +19,8 @@ function Login() {
         try {
             const usuario = await iniciarSesion(identificador, password);
 
-            if (usuario.debe_cambiar_password) {
-                navigate('/cambiar-password');
-            } else {
-                navigate('/dashboard');
-            }
+            navigate('/dashboard');
+
         } catch (err) {
             setError(err.message);
         } finally {
@@ -39,7 +36,8 @@ function Login() {
 
             <div className="login-tarjeta animar-fade-in-up">
                 <div className="login-cabecera">
-                    <div className="login-logo">SENA · Regional Tolima</div>
+                    <img src='/logoverde.png' alt="SENA" className="login-logo-img" />
+                    <div className="login-logo-texto">SENA · Regional Tolima</div>
                     <h1 className="login-titulo">Iniciar sesión</h1>
                     <p className="login-subtitulo">Sistema de Gestión de Flota Vehicular</p>
                 </div>

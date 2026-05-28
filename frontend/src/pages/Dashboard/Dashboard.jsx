@@ -1,6 +1,7 @@
 import { useNavigate } from "react-router-dom";
 import { useAuth } from "../../hooks/useAuth.js";
 import './Dashboard.css';
+import Footer from "../../components/Footer/Footer.jsx";
 
 function Dashboard() {
     const { usuario, cerrarSesion } = useAuth();
@@ -15,7 +16,10 @@ function Dashboard() {
     return (
         <div className="dashboard">
             <header className="dashboard-header">
-                <div className="dashboard-titulo">SENA · Gestión de Flotas</div>
+                <div className='dashboard-logo-wrapper'>
+                    <img src="/logoverde.png" alt='SENA' className="dashboard-logo-img" />
+                    <div className="dashboard-titulo">Gestión de Flota</div>
+                </div>
                 <div className="dashboard-usuario">
                     <div className="dashboard-usuario-info">
                         <div className="dashboard-usuario-nombre">
@@ -36,17 +40,18 @@ function Dashboard() {
                         Sesión iniciada correctamente como {' '}
                         <strong>{usuario.rol}</strong>
                     </p>
+                    {usuario.rol === 'admin' && (
+                        <button
+                            className="boton boton-primario"
+                            onClick={() => navigate('/admin/usuarios')}
+                            style={{ marginTop: '24px' }}
+                        >
+                            Gestion de usuarios
+                        </button>
+                    )}
                 </div>
-                {usuario.rol === 'admin' && (
-                    <button
-                        className="boton boton-primario"
-                        onClick={() => navigate('/admin/usuarios')}
-                        style={{ marginTop: '16px' }}
-                    >
-                        Gestion de usuarios
-                    </button>
-                )}
             </main>
+            <Footer />
         </div>
     );
 }

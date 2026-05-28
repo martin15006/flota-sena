@@ -71,7 +71,15 @@
   margin-bottom: var(--espacio-xl);
 }
 
-.login-logo {
+.login-logo-img {
+  width: 90px;
+  height: auto;
+  margin: 0 auto var(--espacio-md);
+  display: block;
+  animation: scaleIn 0.5s var(--suavizado);
+}
+
+.login-logo-texto {
   display: inline-block;
   background: var(--color-verde-claro);
   color: var(--color-verde-oscuro);

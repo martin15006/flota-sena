@@ -19,6 +19,18 @@
   box-shadow: var(--sombra-sm);
 }
 
+.dashboard-logo-wrapper {
+  display: flex;
+  align-items: center;
+  gap: var(--espacio-md);
+}
+
+.dashboard-logo-img {
+  height: 40px;
+  width: auto;
+  object-fit: contain;
+}
+
 .dashboard-titulo {
   font-weight: var(--peso-bold);
   color: var(--color-verde-oscuro);
