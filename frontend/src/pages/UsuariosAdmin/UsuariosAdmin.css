@@ -158,10 +158,11 @@
     flex: 1;
     min-width: 200px;
     padding: var(--espacio-sm) var(--espacio-md);
-    border: 2px solid var(--color-gris-200);
+    border: 2px solid var(--color-input-borde);
+    background: var(--color-input-bg);
     border-radius: var(--radio-md);
     font-size: var(--tamano-md);
-    transition: border-color var(--velocidad-rapida);
+    transition: all var(--velocidad-rapida);
 }
 
 .usuarios-admin-busqueda:focus {
@@ -171,12 +172,12 @@
 
 .usuarios-admin-select {
     padding: var(--espacio-sm) var(--espacio-md);
-    border: 2px solid var(--color-gris-200);
+    border: 2px solid var(--color-input-borde);
+    background: var(--color-input-bg);
     border-radius: var(--radio-md);
     font-size: var(--tamano-md);
-    background: var(--color-blanco);
     cursor: pointer;
-    transition: border-color var(--velocidad-rapida);
+    transition: all var(--velocidad-rapida);
 }
 
 .usuarios-admin-select:focus {

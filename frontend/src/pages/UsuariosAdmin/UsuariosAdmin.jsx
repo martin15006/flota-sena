@@ -5,6 +5,7 @@ import { api } from "../../lib/api.js";
 import "./UsuariosAdmin.css";
 import ModalPasswordTemporal from "./components/ModalPasswordTemporal.jsx";
 import Footer from '../../components/Footer/Footer.jsx';
+import ModalCrearUsuario from "./components/ModalCrearUsuario.jsx";
 
 function UsuariosAdmin() {
   const { usuario, cerrarSesion } = useAuth();
@@ -16,6 +17,7 @@ function UsuariosAdmin() {
   const [filtroRol, setFiltroRol] = useState("todos");
   const [filtroEstado, setFiltroEstado] = useState("todos");
   const [modalPassword, setModalPassword] = useState(null);
+  const [modalCrearAbierto, setModalCrearAbierto] = useState(false);
 
   const cargarUsuarios = async () => {
     setCargando(true);
@@ -142,7 +144,7 @@ function UsuariosAdmin() {
           </div>
           <button
             className="usuarios-admin-boton-crear"
-            onClick={() => alert("Modal de crear viene en el Lote 6b")}
+            onClick={() => setModalCrearAbierto(true)}
           >
             + Crear conductor
           </button>
@@ -304,6 +306,11 @@ function UsuariosAdmin() {
         password={modalPassword?.password}
         email={modalPassword?.email}
         nombreUsuario={modalPassword?.nombreUsuario}
+      />
+      <ModalCrearUsuario
+        abierto={modalCrearAbierto}
+        onCerrar={() => setModalCrearAbierto(false)}
+        onCreado={(data) => setModalPassword(data)}
       />
       <Footer />
     </div>

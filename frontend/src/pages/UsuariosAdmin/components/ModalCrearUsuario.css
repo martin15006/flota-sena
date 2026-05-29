@@ -1,0 +1,215 @@
+/* ============================================================
+   COMPONENTE: ModalCrearUsuario (formulario)
+   ============================================================ */
+
+.form-usuario {
+  display: flex;
+  flex-direction: column;
+  gap: var(--espacio-xl);
+}
+
+.form-usuario-seccion {
+  display: flex;
+  flex-direction: column;
+  gap: var(--espacio-md);
+  padding-bottom: var(--espacio-lg);
+  border-bottom: 1px dashed var(--color-gris-200);
+}
+
+.form-usuario-seccion:last-of-type {
+  border-bottom: none;
+  padding-bottom: 0;
+}
+
+.form-usuario-seccion-titulo {
+  font-size: var(--tamano-sm);
+  text-transform: uppercase;
+  letter-spacing: 0.5px;
+  color: var(--color-verde-oscuro);
+  font-weight: var(--peso-semibold);
+  margin: 0;
+}
+
+.form-usuario-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(220px, 1fr));
+  gap: var(--espacio-md);
+}
+
+.form-usuario-campo {
+  display: flex;
+  flex-direction: column;
+  gap: var(--espacio-xs);
+}
+
+.form-usuario-label {
+  font-size: var(--tamano-sm);
+  font-weight: var(--peso-semibold);
+  color: var(--color-gris-700);
+}
+
+.form-usuario-input {
+  padding: var(--espacio-sm) var(--espacio-md);
+  border: 2px solid var(--color-input-borde);
+  background: var(--color-input-bg);
+  border-radius: var(--radio-md);
+  font-size: var(--tamano-md);
+  transition: all var(--velocidad-rapida);
+  font-family: inherit;
+}
+
+.form-usuario-input:hover:not(:disabled) {
+  border-color: var(--color-verde-oscuro);
+}
+
+.form-usuario-input:focus {
+  outline: none;
+  border-color: var(--color-verde-sena);
+}
+
+.form-usuario-input:disabled {
+  opacity: 0.5;
+  cursor: not-allowed;
+}
+
+/* === FOTO === */
+.form-usuario-foto-area {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.form-usuario-foto-placeholder {
+  width: 160px;
+  height: 160px;
+  background: var(--color-gris-100);
+  border: 2px dashed var(--color-gris-300);
+  border-radius: var(--radio-md);
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  gap: var(--espacio-sm);
+  color: var(--color-gris-500);
+  font-size: var(--tamano-sm);
+  cursor: pointer;
+  transition: all var(--velocidad-rapida);
+}
+
+.form-usuario-foto-placeholder:hover {
+  border-color: var(--color-verde-sena);
+  background: var(--color-verde-claro);
+  color: var(--color-verde-oscuro);
+}
+
+.form-usuario-foto-icono {
+  font-size: 40px;
+}
+
+.form-usuario-foto-preview-contenedor {
+  position: relative;
+  display: inline-block;
+}
+
+.form-usuario-foto-preview {
+  width: 160px;
+  height: 160px;
+  object-fit: cover;
+  border-radius: var(--radio-md);
+  border: 2px solid var(--color-verde-sena);
+}
+
+.form-usuario-foto-quitar {
+  position: absolute;
+  top: -8px;
+  right: -8px;
+  background: var(--color-rojo);
+  color: var(--color-blanco);
+  border: none;
+  border-radius: var(--radio-xl);
+  padding: 4px 12px;
+  font-size: var(--tamano-xs);
+  font-weight: var(--peso-semibold);
+  cursor: pointer;
+  box-shadow: var(--sombra-md);
+}
+
+.form-usuario-foto-quitar:hover {
+  background: #B71C1C;
+}
+
+/* === MENSAJES === */
+.form-usuario-error {
+  background: #FFEBEE;
+  color: var(--color-rojo);
+  padding: var(--espacio-md);
+  border-radius: var(--radio-md);
+  border-left: 4px solid var(--color-rojo);
+  font-size: var(--tamano-sm);
+}
+
+.form-usuario-info {
+  background: var(--color-verde-claro);
+  color: var(--color-verde-oscuro);
+  padding: var(--espacio-md);
+  border-radius: var(--radio-md);
+  border-left: 4px solid var(--color-verde-sena);
+  font-size: var(--tamano-sm);
+}
+
+/* === BOTONES === */
+.form-usuario-acciones {
+  display: flex;
+  gap: var(--espacio-md);
+  justify-content: flex-end;
+  padding-top: var(--espacio-md);
+  border-top: var(--borde-fino);
+}
+
+.form-usuario-boton {
+  padding: var(--espacio-md) var(--espacio-xl);
+  border: none;
+  border-radius: var(--radio-md);
+  font-size: var(--tamano-md);
+  font-weight: var(--peso-semibold);
+  cursor: pointer;
+  transition: all var(--velocidad-media) var(--suavizado);
+}
+
+.form-usuario-boton:disabled {
+  opacity: 0.5;
+  cursor: not-allowed;
+}
+
+.form-usuario-boton-cancelar {
+  background: var(--color-gris-100);
+  color: var(--color-gris-700);
+}
+
+.form-usuario-boton-cancelar:hover:not(:disabled) {
+  background: var(--color-gris-200);
+}
+
+.form-usuario-boton-crear {
+  background: var(--color-verde-sena);
+  color: var(--color-blanco);
+  box-shadow: var(--sombra-sm);
+}
+
+.form-usuario-boton-crear:hover:not(:disabled) {
+  background: var(--color-verde-oscuro);
+  transform: translateY(-1px);
+  box-shadow: var(--sombra-md);
+}
+
+@media (max-width: 640px) {
+  .form-usuario-grid {
+    grid-template-columns: 1fr;
+  }
+  .form-usuario-acciones {
+    flex-direction: column-reverse;
+  }
+  .form-usuario-boton {
+    width: 100%;
+  }
+}

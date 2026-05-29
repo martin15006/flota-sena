@@ -22,12 +22,16 @@
   /* === GRISES === */
   --color-blanco: #FFFFFF;
   --color-gris-100: #F5F5F5;
-  --color-gris-200: #E0E0E0;
-  --color-gris-300: #BDBDBD;
+  --color-gris-200: #C9C9C9;   /* ajustado: era #E0E0E0 (muy claro) */
+  --color-gris-300: #A0A0A0;   /* ajustado: era #BDBDBD */
   --color-gris-500: #757575;
   --color-gris-700: #424242;
   --color-gris-900: #212121;
   --color-negro: #000000;
+
+  /* === FORMULARIOS === */
+  --color-input-bg: #F0F2F5;       /* fondo sutil para diferenciar input */
+  --color-input-borde: #B0B0B0;    /* borde mas visible para inputs */
 
   /* === COLORES DE ESTADO === */
   --color-exito: var(--color-verde-sena);
