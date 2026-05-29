@@ -19,7 +19,11 @@ function Login() {
         try {
             const usuario = await iniciarSesion(identificador, password);
 
-            navigate('/dashboard');
+            if (usuario.debe_cambiar_password) {
+                navigate('/cambiar-password');
+            } else {
+                navigate('/dashboard');
+            }
 
         } catch (err) {
             setError(err.message);

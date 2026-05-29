@@ -4,6 +4,7 @@ import ProtectedRoutes from "./components/ProtectedRoute/ProtectedRoute.jsx";
 import Login from "./pages/Login/Login.jsx";
 import Dashboard from "./pages/Dashboard/Dashboard.jsx";
 import UsuariosAdmin from "./pages/UsuariosAdmin/UsuariosAdmin.jsx";
+import CambiarPassword from "./pages/CambiarPassword/CambiarPassword.jsx";
 
 function App() {
     return (
@@ -12,6 +13,12 @@ function App() {
                 <Routes>
                     <Route path='/' element={<Navigate to='/login' replace />} />
                     <Route path='/login' element={<Login />} />
+
+                    <Route path='/cambiar-password' element={
+                        <ProtectedRoutes>
+                            <CambiarPassword />
+                        </ProtectedRoutes>
+                    } />
 
                     <Route path='/dashboard' element={
                         <ProtectedRoutes>

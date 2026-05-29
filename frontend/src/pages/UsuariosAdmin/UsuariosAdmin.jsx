@@ -6,6 +6,7 @@ import "./UsuariosAdmin.css";
 import ModalPasswordTemporal from "./components/ModalPasswordTemporal.jsx";
 import Footer from '../../components/Footer/Footer.jsx';
 import ModalCrearUsuario from "./components/ModalCrearUsuario.jsx";
+import ModalEditarUsuario from "./components/ModalEditarUsuario.jsx";
 
 function UsuariosAdmin() {
   const { usuario, cerrarSesion } = useAuth();
@@ -18,6 +19,7 @@ function UsuariosAdmin() {
   const [filtroEstado, setFiltroEstado] = useState("todos");
   const [modalPassword, setModalPassword] = useState(null);
   const [modalCrearAbierto, setModalCrearAbierto] = useState(false);
+  const [usuarioAEditar, setUsuarioAeditar] = useState(null);
 
   const cargarUsuarios = async () => {
     setCargando(true);
@@ -251,9 +253,7 @@ function UsuariosAdmin() {
                       <div className="usuarios-admin-acciones">
                         <button
                           className="usuarios-admin-accion"
-                          onClick={() =>
-                            alert("Modal editar viene en el Lote 6b")
-                          }
+                          onClick={() => setUsuarioAeditar(u)}
                           title="Editar"
                         >
                           Editar
@@ -311,6 +311,12 @@ function UsuariosAdmin() {
         abierto={modalCrearAbierto}
         onCerrar={() => setModalCrearAbierto(false)}
         onCreado={(data) => setModalPassword(data)}
+      />
+      <ModalEditarUsuario
+        abierto={usuarioAEditar !== null}
+        onCerrar={() => setUsuarioAeditar(null)}
+        usuario={usuarioAEditar}
+        onEditado={cargarUsuarios}
       />
       <Footer />
     </div>

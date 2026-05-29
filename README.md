@@ -11,12 +11,12 @@ Sistema web para el chequeo preoperacional digital de la flota institucional, co
 | Capa | Tecnología |
 |---|---|
 | Frontend | React 19 + Vite + React Router 7 + CSS modular |
-| Backend | Node.js 24 + Express 5 |
+| Backend | Node.js 24 + Express 5 + Multer |
 | Base de datos | Supabase (PostgreSQL en la nube) |
-| Autenticación | Supabase Auth + JWT |
-| Storage | Supabase Storage (fotos de vehículos) |
-| Tiempo real | Supabase Realtime (alertas al admin) |
-| Correo | Nodemailer (envíos automáticos) |
+| Autenticación | Supabase Auth + JWT + bcrypt |
+| Storage de imágenes | Cloudinary (con optimización automática) |
+| Tiempo real | Supabase Realtime (alertas al admin — Fase 5) |
+| Correo | Nodemailer (envíos automáticos — Fase 5) |
 
 ---
 
@@ -113,8 +113,8 @@ Después del login exitoso te lleva al panel `/dashboard`.
 | Fase | Descripción | Estado |
 |------|-------------|--------|
 | 0 | Fundación: estructura, frontend base, backend base, Supabase | ✅ |
-| 1 | Autenticación: login, roles, gestión de usuarios | 🔄 En curso |
-| 2 | Gestión de vehículos: CRUD admin, fotos, datos | ⏳ |
+| 1 | Autenticación: login, roles, gestión de usuarios | ✅ |
+| 2 | Gestión de vehículos: CRUD admin, fotos, datos | 🔄 En curso |
 | 3 | Flujo del conductor: aptitud + chequeo de 39 ítems | ⏳ |
 | 4 | Dashboard del admin: semáforo, historial, alertas | ⏳ |
 | 5 | Notificaciones: campanita en sitio + correo | ⏳ |
@@ -122,29 +122,45 @@ Después del login exitoso te lleva al panel `/dashboard`.
 | 7 | Vencimientos automáticos: SOAT, RTM, extintor, licencia | ⏳ |
 | 8 | Pruebas TRL 6 → TRL 7: validación end-to-end y campo real | ⏳ |
 
-### Detalle Fase 1 (en curso)
+### Detalle Fase 1 (completada)
 
-- [x] Tabla `usuarios` extendida sobre `auth.users` de Supabase
-- [x] Tabla `auditoria_usuarios` para registro de acciones admin
-- [x] Endpoints de auth en el backend (`/api/auth/login`, `/api/auth/me`)
+**Backend**
+- [x] Tablas `usuarios` y `auditoria_usuarios` en Supabase con triggers y constraints
+- [x] Endpoints de auth: `/api/auth/login`, `/api/auth/me`, `/api/auth/cambiar-password`
+- [x] Endpoints CRUD de usuarios: listar, obtener, crear, editar, desactivar, reactivar, eliminar, resetear password
+- [x] Endpoint de upload de imágenes a Cloudinary
 - [x] Middleware de verificación de token JWT
-- [x] Login con correo o cédula
-- [x] Página de Login en el frontend con AuthContext
+- [x] Middleware de rol admin para rutas privilegiadas
+- [x] Validación que impide eliminar al último admin activo
+- [x] Auditoría automática de todas las acciones administrativas
+
+**Frontend**
+- [x] Página de login con soporte de correo o cédula
+- [x] AuthContext con persistencia de sesión en localStorage
+- [x] Componente ProtectedRoute con manejo de estado de carga
 - [x] Dashboard placeholder con datos del usuario y logout
-- [ ] Página de cambio obligatorio de contraseña (primer login)
-- [ ] Gestión de usuarios desde el panel admin (crear, editar, desactivar)
-- [ ] Rutas protegidas (`ProtectedRoute`)
+- [x] Página completa de gestión de usuarios con tabla, filtros y acciones
+- [x] Modal reutilizable base con cierre por ESC, click fuera y bloqueo de scroll
+- [x] Modal de crear usuario con upload de foto y preview
+- [x] Modal de editar usuario con datos pre-llenados
+- [x] Modal de contraseña temporal con copiar al portapapeles
+- [x] Página de cambio obligatorio de contraseña con redirección automática
+- [x] Footer institucional reutilizable con logos SENA + ICI + SENNOVA
+- [x] Integración de logos institucionales en login y headers
 
 ---
 
 ## 🔒 Seguridad
 
 - Las variables sensibles viven en `backend/.env` (excluido por `.gitignore`)
-- La `service_role key` de Supabase nunca se expone al frontend
+- La `service_role key` de Supabase y las API keys de Cloudinary nunca se exponen al frontend
 - Contraseñas de usuarios manejadas por Supabase Auth (bcrypt interno)
 - Sesiones con JWT con expiración de 12 horas
-- Bloqueo automático tras 5 intentos fallidos de login
-- Row Level Security (RLS) habilitado en tablas sensibles
+- Contraseñas temporales generadas automáticamente al crear usuarios
+- Cambio obligatorio de contraseña en el primer inicio de sesión
+- Verificación de contraseña actual antes de permitir cambios
+- Validación de tipo y tamaño de archivos en uploads (máx. 5 MB, solo imágenes)
+- Auditoría completa de acciones administrativas en tabla `auditoria_usuarios`
 
 ---
 
