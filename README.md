@@ -148,6 +148,25 @@ Después del login exitoso te lleva al panel `/dashboard`.
 - [x] Footer institucional reutilizable con logos SENA + ICI + SENNOVA
 - [x] Integración de logos institucionales en login y headers
 
+### Detalle Fase 2 (en curso)
+
+**Base de datos**
+- [ ] Tabla `vehiculos` con placa, marca, modelo, año, VIN, tipo, kilometraje, fechas SOAT/RTM, estado operativo
+- [ ] Tabla `fotos_vehiculo` para galería múltiple (FK a vehiculos)
+- [ ] Carga inicial de las 9 placas de la flota SENA Tolima
+
+**Backend**
+- [ ] Endpoints CRUD de vehículos (`/api/vehiculos`) con auditoría y validación de placa única
+- [ ] Endpoint de upload de múltiples fotos por vehículo
+- [ ] Endpoint de upload del archivo RUNT en PDF
+
+**Frontend**
+- [ ] Página de listado de vehículos con tabla, filtros y búsqueda por placa
+- [ ] Modal de crear/editar vehículo con upload de fotos y RUNT
+- [ ] Vista detallada de vehículo con galería de fotos navegable
+- [ ] Visor del RUNT en PDF
+- [ ] Configuración de ítems del checklist no aplicables por vehículo (prep. Fase 3)
+
 ---
 
 ## 🔒 Seguridad
