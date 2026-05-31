@@ -114,8 +114,8 @@ Después del login exitoso te lleva al panel `/dashboard`.
 |------|-------------|--------|
 | 0 | Fundación: estructura, frontend base, backend base, Supabase | ✅ |
 | 1 | Autenticación: login, roles, gestión de usuarios | ✅ |
-| 2 | Gestión de vehículos: CRUD admin, fotos, datos | 🔄 En curso |
-| 3 | Flujo del conductor: aptitud + chequeo de 39 ítems | ⏳ |
+| 2 | Gestión de vehículos: CRUD admin, fotos, datos | ✅ |
+| 3 | Flujo del conductor: aptitud + chequeo de 39 ítems | 🔄 En curso |
 | 4 | Dashboard del admin: semáforo, historial, alertas | ⏳ |
 | 5 | Notificaciones: campanita en sitio + correo | ⏳ |
 | 6 | Reportes: exportación Excel/PDF, envío automático | ⏳ |
@@ -148,7 +148,7 @@ Después del login exitoso te lleva al panel `/dashboard`.
 - [x] Footer institucional reutilizable con logos SENA + ICI + SENNOVA
 - [x] Integración de logos institucionales en login y headers
 
-### Detalle Fase 2 (en curso)
+### Detalle Fase 2 (completada)
 
 **Base de datos**
 - [x] Tabla `vehiculos` con placa, marca, modelo, año, VIN, tipo, kilometraje, fechas SOAT/RTM, estado operativo, nivel de criticidad, `centro_id`
@@ -175,7 +175,27 @@ Después del login exitoso te lleva al panel `/dashboard`.
 - [x] Manejo global de sesión expirada (401 → redirección automática al login)
 - [x] Vista detallada de vehículo con galería de fotos navegable (Lightbox con teclas)
 - [x] Visor del RUNT en PDF embebido (iframe nativo del navegador)
-- [ ] Configuración de ítems del checklist no aplicables por vehículo (prep. Fase 3)
+
+### Detalle Fase 3 (en curso)
+
+**Base de datos**
+- [ ] Tabla `items_chequeo` con los 39 ítems normativos, su categoría y a qué tipos de vehículo aplican
+- [ ] Tabla `chequeos_preoperacionales` (cabecera de cada chequeo: vehículo, conductor, fecha, resultado)
+- [ ] Tabla `chequeo_respuestas` (respuesta por ítem en cada chequeo)
+- [ ] Configuración de ítems no aplicables por vehículo específico (excepciones puntuales además del filtro por tipo)
+
+**Backend**
+- [ ] Endpoints CRUD del catálogo de ítems (admin)
+- [ ] Endpoint para iniciar chequeo, guardar respuestas en lote y cerrar chequeo
+- [ ] Lógica de cálculo automático de resultado (verde/amarillo/rojo)
+- [ ] Endpoint de historial de chequeos por vehículo y por conductor
+
+**Frontend del conductor**
+- [ ] Dashboard del conductor (distinto al del admin)
+- [ ] Pantalla de selección de vehículo a operar
+- [ ] Formulario de aptitud personal del conductor
+- [ ] Pantalla del chequeo con los 39 ítems (UI optimizada para móvil)
+- [ ] Pantalla de resultado con semáforo y opción de descargar reporte
 
 ---
 
