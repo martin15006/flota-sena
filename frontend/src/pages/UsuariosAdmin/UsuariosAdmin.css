@@ -148,6 +148,7 @@
     padding: var(--espacio-md);
     border-radius: var(--radio-md);
     box-shadow: var(--sombra-sm);
+    border: var(--borde-card);
     display: flex;
     gap: var(--espacio-md);
     margin-bottom: var(--espacio-lg);
@@ -190,6 +191,7 @@
     background: var(--color-blanco);
     border-radius: var(--radio-md);
     box-shadow: var(--sombra-sm);
+    border: var(--borde-card);
     overflow-x: auto;
 }
 
@@ -385,6 +387,7 @@
     text-align: center;
     color: var(--color-gris-500);
     box-shadow: var(--sombra-sm);
+    border: var(--borde-card);
 }
 
 .usuarios-admin-estado-error {

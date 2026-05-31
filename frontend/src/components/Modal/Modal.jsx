@@ -27,11 +27,8 @@ function Modal({ abierto, onCerrar, titulo, children, ancho = 'mediano' }) {
     if (!abierto) return null;
 
     return (
-        <div className="modal-overlay" onClick={onCerrar}>
-            <div
-                className={`modal-contenedor modal-ancho-${ancho}`}
-                onClick={(e) => e.stopPropagation()}
-            >
+        <div className="modal-overlay">
+            <div className={`modal-contenedor modal-ancho-${ancho}`}>
                 <div className="modal-cabecera">
                     <h2 className="modal-titulo">{titulo}</h2>
                     <button
@@ -39,7 +36,18 @@ function Modal({ abierto, onCerrar, titulo, children, ancho = 'mediano' }) {
                         onClick={onCerrar}
                         aria-label="Cerrar"
                     >
-                        x
+                        <svg
+                            width="14"
+                            height="14"
+                            viewBox="0 0 14 14"
+                            fill="none"
+                            stroke="currentColor"
+                            strokeWidth="2.5"
+                            strokeLinecap="round"
+                            aria-hidden="true"
+                        >
+                            <path d="M1 1 L13 13 M13 1 L1 13" />
+                        </svg>
                     </button>
                 </div>
                 <div className="modal-cuerpo">{children}</div>

@@ -21,7 +21,8 @@
 
   /* === GRISES === */
   --color-blanco: #FFFFFF;
-  --color-gris-100: #F5F5F5;
+  --color-gris-50: #F5F7FA;
+  --color-gris-100: #BFC5CD;
   --color-gris-200: #C9C9C9;   /* ajustado: era #E0E0E0 (muy claro) */
   --color-gris-300: #A0A0A0;   /* ajustado: era #BDBDBD */
   --color-gris-500: #757575;
@@ -77,10 +78,14 @@
   --borde-medio: 2px solid var(--color-gris-200);
 
   /* === SOMBRAS === */
-  --sombra-sm: 0 1px 3px rgba(0, 0, 0, 0.08);
-  --sombra-md: 0 4px 12px rgba(0, 0, 0, 0.1);
-  --sombra-lg: 0 8px 24px rgba(0, 0, 0, 0.15);
-  --sombra-xl: 0 16px 40px rgba(0, 0, 0, 0.2);
+  --sombra-sm: 0 2px 6px rgba(0, 0, 0, 0.12);
+  --sombra-md: 0 4px 14px rgba(0, 0, 0, 0.18);
+  --sombra-lg: 0 10px 28px rgba(0, 0, 0, 0.22);
+  --sombra-xl: 0 18px 44px rgba(0, 0, 0, 0.28);
+
+  /* === BORDE DE CARDS (mas marcado para mejor contraste) === */
+  --borde-card: 2px solid #6F7785;
+  --color-separador: #95A0AC;
 
   /* === TRANSICIONES (velocidades estandar) === */
   --velocidad-rapida: 150ms;

@@ -140,7 +140,7 @@ Después del login exitoso te lleva al panel `/dashboard`.
 - [x] Componente ProtectedRoute con manejo de estado de carga
 - [x] Dashboard placeholder con datos del usuario y logout
 - [x] Página completa de gestión de usuarios con tabla, filtros y acciones
-- [x] Modal reutilizable base con cierre por ESC, click fuera y bloqueo de scroll
+- [x] Modal reutilizable base con cierre por ESC o botón X y bloqueo de scroll
 - [x] Modal de crear usuario con upload de foto y preview
 - [x] Modal de editar usuario con datos pre-llenados
 - [x] Modal de contraseña temporal con copiar al portapapeles
@@ -151,20 +151,30 @@ Después del login exitoso te lleva al panel `/dashboard`.
 ### Detalle Fase 2 (en curso)
 
 **Base de datos**
-- [ ] Tabla `vehiculos` con placa, marca, modelo, año, VIN, tipo, kilometraje, fechas SOAT/RTM, estado operativo
-- [ ] Tabla `fotos_vehiculo` para galería múltiple (FK a vehiculos)
-- [ ] Carga inicial de las 9 placas de la flota SENA Tolima
+- [x] Tabla `vehiculos` con placa, marca, modelo, año, VIN, tipo, kilometraje, fechas SOAT/RTM, estado operativo, nivel de criticidad, `centro_id`
+- [x] Tabla `fotos_vehiculo` para galería múltiple (FK a vehiculos)
+- [x] Tabla `auditoria_vehiculos` con todas las acciones administrativas
+- [x] Estructura geográfica multinivel (Regional → Departamental → Ciudad → Centro)
+- [x] Carga inicial de las 9 placas de la flota SENA Tolima
 
 **Backend**
-- [ ] Endpoints CRUD de vehículos (`/api/vehiculos`) con auditoría y validación de placa única
-- [ ] Endpoint de upload de múltiples fotos por vehículo
-- [ ] Endpoint de upload del archivo RUNT en PDF
+- [x] Endpoints CRUD de vehículos (`/api/vehiculos`) con auditoría y validación de placa única
+- [x] Endpoint de upload de múltiples fotos por vehículo + marcar foto principal
+- [x] Endpoint de upload del archivo RUNT en PDF
+- [x] Filtrado automático de vehículos por `centro_id` del admin (multi-tenant)
+- [x] Eliminación encadenada de archivos en Cloudinary al borrar vehículo o fotos
+- [x] Keep-alive de conexión Supabase cada 4 minutos (parche temporal — ver Bitácora)
 
 **Frontend**
-- [ ] Página de listado de vehículos con tabla, filtros y búsqueda por placa
-- [ ] Modal de crear/editar vehículo con upload de fotos y RUNT
-- [ ] Vista detallada de vehículo con galería de fotos navegable
-- [ ] Visor del RUNT en PDF
+- [x] Página de listado de vehículos con cards, filtros, búsqueda y auto-refresh cada 30s
+- [x] Modal unificado de crear/editar vehículo con upload de fotos y RUNT
+- [x] Slider de criticidad con gradiente de colores y vínculo automático con el estado
+- [x] Botón refrescar con animación de giro durante la carga
+- [x] Cards de estadísticas clickeables para filtrar por estado
+- [x] Componente Toast reutilizable con posición configurable y animación de salida
+- [x] Manejo global de sesión expirada (401 → redirección automática al login)
+- [x] Vista detallada de vehículo con galería de fotos navegable (Lightbox con teclas)
+- [x] Visor del RUNT en PDF embebido (iframe nativo del navegador)
 - [ ] Configuración de ítems del checklist no aplicables por vehículo (prep. Fase 3)
 
 ---
@@ -174,7 +184,7 @@ Después del login exitoso te lleva al panel `/dashboard`.
 - Las variables sensibles viven en `backend/.env` (excluido por `.gitignore`)
 - La `service_role key` de Supabase y las API keys de Cloudinary nunca se exponen al frontend
 - Contraseñas de usuarios manejadas por Supabase Auth (bcrypt interno)
-- Sesiones con JWT con expiración de 12 horas
+- Sesiones manejadas por Supabase Auth (access token con TTL de ~1h, refresh token disponible para extender)
 - Contraseñas temporales generadas automáticamente al crear usuarios
 - Cambio obligatorio de contraseña en el primer inicio de sesión
 - Verificación de contraseña actual antes de permitir cambios

@@ -41,13 +41,20 @@ function Dashboard() {
                         <strong>{usuario.rol}</strong>
                     </p>
                     {usuario.rol === 'admin' && (
-                        <button
-                            className="boton boton-primario"
-                            onClick={() => navigate('/admin/usuarios')}
-                            style={{ marginTop: '24px' }}
-                        >
-                            Gestion de usuarios
-                        </button>
+                        <div className="dashboard-acciones">
+                            <button
+                                className="boton boton-primario"
+                                onClick={() => navigate('/admin/vehiculos')}
+                            >
+                                Gestión de vehículos
+                            </button>
+                            <button
+                                className="boton boton-secundario"
+                                onClick={() => navigate('/admin/usuarios')}
+                            >
+                                Gestión de usuarios
+                            </button>
+                        </div>
                     )}
                 </div>
             </main>

@@ -1,6 +1,10 @@
-/* ============================================================
-   COMPONENTE: Dashboard (placeholder)
-   ============================================================ */
+.dashboard-acciones {
+    display: flex;
+    gap: var(--espacio-md);
+    justify-content: center;
+    flex-wrap: wrap;
+    margin-top: var(--espacio-xl);
+}
 
 .dashboard {
   min-height: 100vh;
@@ -90,6 +94,7 @@
   padding: var(--espacio-xxl);
   border-radius: var(--radio-lg);
   box-shadow: var(--sombra-md);
+  border: var(--borde-card);
   max-width: 600px;
   text-align: center;
 }

@@ -1,6 +1,7 @@
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { useNavigate } from 'react-router-dom';
 import { useAuth } from '../../hooks/useAuth.js';
+import Toast from '../../components/Toast/Toast.jsx';
 import './Login.css';
 
 function Login() {
@@ -8,8 +9,20 @@ function Login() {
     const [password, setPassword] = useState('');
     const [error, setError] = useState(null);
     const [cargando, setCargando] = useState(false);
-    const { iniciarSesion } = useAuth();
+    const [toast, setToast] = useState(null);
+    const { iniciarSesion, sesionExpirada, consumirSesionExpirada } = useAuth();
     const navigate = useNavigate();
+
+    useEffect(() => {
+        if (sesionExpirada) {
+            setToast({
+                mensaje: "Tu sesión expiró. Vuelve a iniciar sesión.",
+                tipo: "advertencia",
+                key: Date.now(),
+            });
+            consumirSesionExpirada();
+        }
+    }, [sesionExpirada, consumirSesionExpirada]);
 
     const manejarSubmit = async (e) => {
         e.preventDefault();
@@ -98,6 +111,16 @@ function Login() {
                     </button>
                 </form>
             </div>
+
+            {toast && (
+                <Toast
+                    key={toast.key}
+                    mensaje={toast.mensaje}
+                    tipo={toast.tipo}
+                    duracion={5000}
+                    onCerrar={() => setToast(null)}
+                />
+            )}
         </div>
     );
 }
