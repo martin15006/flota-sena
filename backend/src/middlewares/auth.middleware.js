@@ -41,11 +41,50 @@ export const verificarToken = async (req, res, next) => {
     }
 };
 
+// Roles considerados "admin" en cualquiera de los 5 niveles de la jerarquía
+const ROLES_ADMIN = [
+    'admin',
+    'admin_centro',
+    'admin_ciudad',
+    'admin_departamental',
+    'admin_regional',
+    'superadmin',
+];
+
+// Guard genérico: pasa si el rol del usuario está en la lista permitida
+export const requiereRol = (...rolesPermitidos) => (req, res, next) => {
+    if (!req.usuario || !rolesPermitidos.includes(req.usuario.rol)) {
+        return res
+            .status(403)
+            .json({ error: 'No tienes permisos para realizar esta accion' });
+    }
+    next();
+};
+
 export const soloAdmin = (req, res, next) => {
-    if (req.usuario?.rol !== 'admin') {
+    if (!req.usuario || !ROLES_ADMIN.includes(req.usuario.rol)) {
         return res
             .status(403)
             .json({ error: 'Solo administradores pueden hacer esta accion' });
+    }
+    next();
+};
+
+export const soloConductor = (req, res, next) => {
+    if (req.usuario?.rol !== 'conductor') {
+        return res
+            .status(403)
+            .json({ error: 'Solo conductores pueden hacer esta accion' });
+    }
+    next();
+};
+
+export const adminOConductor = (req, res, next) => {
+    const rol = req.usuario?.rol;
+    if (!rol || (rol !== 'conductor' && !ROLES_ADMIN.includes(rol))) {
+        return res
+            .status(403)
+            .json({ error: 'No tienes permisos para realizar esta accion' });
     }
     next();
 };

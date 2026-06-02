@@ -6,6 +6,7 @@ import authRouter from './routes/auth.routes.js';
 import usuariosRoutes from './routes/usuarios.routes.js';
 import uploadRoutes from './routes/upload.routes.js';
 import vehiculosRoutes from './routes/vehiculos.routes.js';
+import chequeosRoutes from './routes/chequeos.routes.js';
 import { iniciarKeepAlive, detenerKeepAlive } from './utils/keepAlive.js';
 
 dotenv.config();
@@ -31,6 +32,7 @@ app.use('/api/auth', authRouter);
 app.use('/api/usuarios', usuariosRoutes);
 app.use('/api/upload', uploadRoutes);
 app.use('/api/vehiculos', vehiculosRoutes);
+app.use('/api/chequeos', chequeosRoutes);
 
 app.use((req, res) => {
     res.status(404).json({ error: 'Ruta no encontrada' });
@@ -41,11 +43,12 @@ app.use((err, req, res, next) => {
     res.status(500).json({ error: 'Error interno del servidor' });
 });
 
-const servidor = app.listen(PORT, () => {
+const servidor = app.listen(PORT, async () => {
     console.log(`Servidor corriendo en http://localhost:${PORT}`);
     console.log(`Prueba: http://localhost:${PORT}/api/hello`);
     console.log(`Test Supabase: http://localhost:${PORT}/api/test-supabase`);
-    iniciarKeepAlive();
+    // Esperamos el primer latido antes de seguir, asi las primeras requests llegan con la conexion caliente
+    await iniciarKeepAlive();
 });
 
 const cerrarLimpio = (senal) => {

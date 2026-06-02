@@ -34,6 +34,11 @@ Supabase cierra silenciosamente las conexiones cliente ociosas tras ~5 minutos. 
 3. Considerar migrar a llamadas REST directas vía PostgREST (`fetch` simple sin estado).
 4. Monitorear con APM (Sentry, Datadog) qué tan seguido falla el heartbeat en producción.
 
+**📌 Caso confirmado el 2026-06-02 (Fase 3, primer endpoint del catálogo):**
+- Síntoma: `GET /api/chequeos/catalogo` devolvía `200 OK` con `{categorias: [], items: [], preguntas: []}` aunque la BD tenía los 39 ítems cargados.
+- Causa: backend recién arrancado, conexión Supabase fría, primera petición pegó antes del primer latido del keep-alive.
+- Refuerzo agregado al parche: `iniciarKeepAlive()` ahora es **bloqueante** al arrancar. El servidor no termina su `app.listen` hasta que el primer latido confirma la conexión activa. Mensaje en terminal: `[KEEP-ALIVE] Calentando conexion Supabase...` → `[KEEP-ALIVE] Conexion lista. Activo cada 240s`.
+
 **Archivos relacionados:**
 - `backend/src/utils/keepAlive.js`
 - `backend/src/server.js` (iniciar/detener)
@@ -166,6 +171,42 @@ Cloudinary **bloquea por defecto** la entrega de archivos PDF y ZIP desde 2019 c
 
 **⚠️ Para producción:**
 Documentar en el manual de despliegue que tras crear la cuenta de Cloudinary del cliente, hay que **habilitar PDF/ZIP delivery** desde el dashboard antes de que el sistema pueda mostrar los RUNT. Si el cliente migra a otra cuenta Cloudinary o crea una nueva, este paso debe repetirse.
+
+---
+
+## ✅ BUG-008 — RLS habilitado por defecto en tablas creadas vía SQL Editor
+
+**Estado:** Resuelto.
+
+**Síntoma:**
+- El endpoint `GET /api/chequeos/catalogo` devolvía `200 OK` con `{categorias: [], items: [], preguntas: []}` aunque la BD tenía los 39 ítems cargados.
+- Logs del backend mostraban `count: 5, error: null` para las queries — Supabase decía que devolvió 5 filas pero el body de la respuesta llegaba con array vacío.
+- Pasaba consistentemente en la primera petición tras arranque del backend.
+
+**Causa raíz:**
+Supabase **habilita Row Level Security (RLS) por defecto** en todas las tablas que se crean desde su SQL Editor. Aunque el backend usa `service_role_key` (que **debería** bypasear RLS), la combinación de RLS sin policies + conexión recién levantada producía comportamiento inconsistente donde las queries reportaban éxito pero devolvían arrays vacíos.
+
+**Por qué no se detectó antes:**
+- En Fase 1 ya habíamos deshabilitado RLS en `usuarios` y `auditoria_usuarios` (ver BUG histórico de Semana 2: "Error de Row Level Security al crear usuarios").
+- En Fase 2 las tablas geográficas (regiones, departamentos, ciudades, centros_formacion) y de vehículos también quedaron con RLS habilitado, pero no causaron problemas inmediatos porque las primeras consultas siempre llegaban con conexión "caliente" después de muchas otras peticiones del frontend.
+- En Fase 3 se manifestó porque el endpoint del catálogo fue la **primera** petición tras arrancar el backend, antes de que ninguna otra hubiera "calentado" el cliente Supabase.
+
+**Solución aplicada:**
+1. **Deshabilitar RLS en todas las tablas del proyecto** desde el SQL Editor:
+```sql
+ALTER TABLE categorias_chequeo DISABLE ROW LEVEL SECURITY;
+ALTER TABLE items_chequeo DISABLE ROW LEVEL SECURITY;
+ALTER TABLE preguntas_aptitud DISABLE ROW LEVEL SECURITY;
+-- ... y todas las demás
+```
+2. **Incluir las sentencias `DISABLE ROW LEVEL SECURITY`** al final de `database/database.sql` para que cualquier reconstrucción de la BD desde cero quede consistente.
+
+**📌 Para producción:**
+La decisión de no usar RLS está alineada con la arquitectura del proyecto: el frontend NUNCA habla directamente con Supabase, todo pasa por el backend que autentica con tokens y autoriza con middlewares. RLS sería redundante. Esta decisión queda documentada también en `CONTEXTO_PROYECTO.md` sección 12.
+
+**Archivos relacionados:**
+- `database/database.sql` (incluye las 19 sentencias `DISABLE ROW LEVEL SECURITY`)
+- `docs/CONTEXTO_PROYECTO.md` sección 12 (decisión de diseño)
 
 ---
 

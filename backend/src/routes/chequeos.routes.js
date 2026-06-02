@@ -1,0 +1,60 @@
+import { Router } from "express";
+import {
+    getCatalogo,
+    getVehiculosDisponibles,
+    postIniciarChequeo,
+    putRespuestasChequeo,
+    postCerrarChequeo,
+    getChequeos,
+    getChequeoPorId,
+    getIntentosBloqueados,
+} from "../controllers/chequeos.controller.js";
+import {
+    verificarToken,
+    adminOConductor,
+    soloConductor,
+    soloAdmin,
+} from "../middlewares/auth.middleware.js";
+
+const router = Router();
+
+// Todas las rutas requieren autenticacion
+router.use(verificarToken);
+
+// GET /api/chequeos/catalogo
+// Devuelve categorias + items + preguntas de aptitud
+// Accesible por admin y conductor (ambos lo usan)
+router.get("/catalogo", adminOConductor, getCatalogo);
+
+// GET /api/chequeos/vehiculos-disponibles?busqueda=...
+// Lista vehiculos activos del centro del conductor
+// Solo conductor: el admin ya tiene su propia vista de vehiculos
+router.get("/vehiculos-disponibles", soloConductor, getVehiculosDisponibles);
+
+// POST /api/chequeos/iniciar
+// Crea un chequeo nuevo con sus respuestas de aptitud
+router.post("/iniciar", soloConductor, postIniciarChequeo);
+
+// PUT /api/chequeos/:id/respuestas
+// Guarda respuestas del checklist (1 a 39 a la vez, upsert por item)
+router.put("/:id/respuestas", soloConductor, putRespuestasChequeo);
+
+// POST /api/chequeos/:id/cerrar
+// Calcula resultado, cierra el chequeo, actualiza vehiculo si aplica
+router.post("/:id/cerrar", soloConductor, postCerrarChequeo);
+
+// == Vista del admin ==
+
+// GET /api/chequeos?fecha_desde=...&placa=...&resultado_estado=...&pagina=1&limite=20
+// Lista chequeos visibles segun el scope del admin (centro/ciudad/depto/regional/nacional)
+router.get("/", soloAdmin, getChequeos);
+
+// GET /api/chequeos/intentos-bloqueados?razon=...&pagina=1&limite=20
+// IMPORTANTE: esta ruta tiene que ir ANTES de /:id porque sino /:id matchearia "intentos-bloqueados"
+router.get("/intentos-bloqueados", soloAdmin, getIntentosBloqueados);
+
+// GET /api/chequeos/:id
+// Detalle completo de un chequeo (cabecera + respuestas + aptitud + vehiculo + conductor + fotos)
+router.get("/:id", soloAdmin, getChequeoPorId);
+
+export default router;
