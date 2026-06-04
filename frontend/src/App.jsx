@@ -7,6 +7,15 @@ import UsuariosAdmin from "./pages/UsuariosAdmin/UsuariosAdmin.jsx";
 import VehiculosAdmin from "./pages/VehiculosAdmin/VehiculosAdmin.jsx";
 import VehiculoDetalle from "./pages/VehiculoDetalle/VehiculoDetalle.jsx";
 import CambiarPassword from "./pages/CambiarPassword/CambiarPassword.jsx";
+import ConductorDashboard from "./pages/Conductor/ConductorDashboard.jsx";
+import ChequeoAptitud from "./pages/Conductor/ChequeoAptitud.jsx";
+import SeleccionVehiculo from "./pages/Conductor/SeleccionVehiculo.jsx";
+import ChequeoItems from "./pages/Conductor/ChequeoItems.jsx";
+import ChequeoResultado from "./pages/Conductor/ChequeoResultado.jsx";
+import CatalogoAdmin from "./pages/CatalogoAdmin/CatalogoAdmin.jsx";
+import ChequeosAdmin from "./pages/ChequeosAdmin/ChequeosAdmin.jsx";
+import ChequeoDetalle from "./pages/ChequeoDetalle/ChequeoDetalle.jsx";
+import IntentosBloqueados from "./pages/IntentosBloqueados/IntentosBloqueados.jsx";
 
 function App() {
     return (
@@ -43,6 +52,61 @@ function App() {
                     <Route path="/admin/vehiculos/:id" element={
                         <ProtectedRoutes>
                             <VehiculoDetalle />
+                        </ProtectedRoutes>
+                    } />
+
+                    <Route path="/admin/catalogo" element={
+                        <ProtectedRoutes>
+                            <CatalogoAdmin />
+                        </ProtectedRoutes>
+                    } />
+
+                    <Route path="/admin/chequeos" element={
+                        <ProtectedRoutes>
+                            <ChequeosAdmin />
+                        </ProtectedRoutes>
+                    } />
+
+                    {/* La ruta estática debe ir antes de la :id para evitar conflictos */}
+                    <Route path="/admin/chequeos/intentos-bloqueados" element={
+                        <ProtectedRoutes>
+                            <IntentosBloqueados />
+                        </ProtectedRoutes>
+                    } />
+
+                    <Route path="/admin/chequeos/:id" element={
+                        <ProtectedRoutes>
+                            <ChequeoDetalle />
+                        </ProtectedRoutes>
+                    } />
+
+                    <Route path="/conductor" element={
+                        <ProtectedRoutes>
+                            <ConductorDashboard />
+                        </ProtectedRoutes>
+                    } />
+
+                    <Route path="/conductor/chequeo/aptitud" element={
+                        <ProtectedRoutes>
+                            <ChequeoAptitud />
+                        </ProtectedRoutes>
+                    } />
+
+                    <Route path="/conductor/chequeo/vehiculo" element={
+                        <ProtectedRoutes>
+                            <SeleccionVehiculo />
+                        </ProtectedRoutes>
+                    } />
+
+                    <Route path="/conductor/chequeo/items" element={
+                        <ProtectedRoutes>
+                            <ChequeoItems />
+                        </ProtectedRoutes>
+                    } />
+
+                    <Route path="/conductor/chequeo/resultado" element={
+                        <ProtectedRoutes>
+                            <ChequeoResultado />
                         </ProtectedRoutes>
                     } />
 

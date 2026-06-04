@@ -2,7 +2,7 @@
 
 > **Archivo maestro de contexto.** Acumula toda la información importante del dominio, decisiones tomadas, reglas de negocio y **lo que ya está hecho**. Diseñado para servir como fuente de verdad entre sesiones y para que cualquier persona (humano o IA) que retome el proyecto tenga todo lo necesario sin tener que volver a preguntar.
 >
-> **Última actualización:** 30 de mayo de 2026 (cierre de Fase 2, inicio de Fase 3)
+> **Última actualización:** 3 de junio de 2026 (cierre de Fase 3)
 >
 > **Cómo usarlo:**
 > - **Mantener actualizado** al cerrar cada fase o al tomar decisiones nuevas.
@@ -101,21 +101,50 @@ Los datos institucionales del HTML (5 preguntas de aptitud, 39 ítems del checkl
 - ✅ Keep-alive Supabase ahora es bloqueante al arrancar (previene primera petición fría)
 - ✅ Mensaje de error de aptitud mejorado con detalle de qué pregunta exacta falló
 
-### 🔄 Lo que está EN CURSO (Fase 3)
+**Fase 3 — Chequeo preoperacional** (cerrada el 3 de junio de 2026)
 
-- Backend: endpoints de fotos de evidencia del chequeo (POST/DELETE/PATCH) — Bloque 3
-- Cron job mensual de borrado de fotos vencidas (preservar_siempre = false, fecha_borrado_programado < NOW())
-- Frontend del conductor: login diferenciado + 5 preguntas + selección vehículo + checklist + resultado
-- Frontend del conductor: chequeo post-operacional (mismo formulario, distinto tipo)
-- Frontend del admin: vista de chequeos con filtros + detalle + intentos bloqueados
+*Frontend del conductor (5 pantallas, mobile-first):*
+- ✅ Dashboard con 2 círculos (Preoperacional / Post-operacional)
+- ✅ Aptitud personal: 5 preguntas SÍ/NO con modal de confirmación, progress bar, pantalla de bloqueo en rojo si no apto
+- ✅ Selección de vehículo: búsqueda tolerante de placa (con o sin espacios, mayúsculas, guiones), modal de confirmación con kilometraje
+- ✅ Checklist: 5 categorías visibles una por pantalla, 39 ítems agrupados, validación de observación obligatoria en NO CUMPLE, persistencia en sessionStorage
+- ✅ Resultado: pantalla a color según semáforo, conteos cumple/no cumple/N/A, badge de falla crítica, mensaje "NO OPERAR" si aplica
+- ✅ Mini-logo SENA en todas las pantallas del flujo
+
+*Bloque 3 — Fotos de evidencia (completo):*
+- ✅ Backend: `POST /api/respuestas/:id/fotos` (subir), `DELETE`, `PATCH preservar` (admin), `GET` listar
+- ✅ Frontend conductor: botones "Tomar foto" (cámara nativa móvil con `capture="environment"`) y "Subir foto" (galería)
+- ✅ Compresión cliente: canvas API redimensiona a max 1600px lado largo + JPEG 0.85, reduce típicamente 5 MB → 500 KB-1 MB
+- ✅ Validaciones: máx 3 fotos por ítem, solo si chequeo abierto, solo si ítem en NO CUMPLE
+- ✅ Admin: botón "Preservar siempre" en cada foto con badge morado visual
+
+*Frontend admin (4 pantallas nuevas):*
+- ✅ `/admin/chequeos` — Lista de chequeos con filtros (fecha, placa, estado, oficiales, cerrados), paginación, cards con borde de color del estado
+- ✅ `/admin/chequeos/:id` — Detalle con resultado, vehículo, conductor + licencia, aptitud, checklist agrupado por categoría con fotos
+- ✅ `/admin/chequeos/intentos-bloqueados` — Lista de intentos rechazados con filtros + bloque explicativo
+- ✅ `/admin/catalogo` — CRUD visual de categorías/ítems/preguntas de aptitud con selector de íconos, uppercase en nombre de categoría, eliminación inteligente (hard si no usado, soft si tiene historial), modal de edición con Toast
+
+*Acceso desde móvil:*
+- ✅ Vite con `host: true` para exponer LAN
+- ✅ URLs frontend dinámicas con `window.location.hostname`
+- ✅ CORS amplio en dev (acepta cualquier 192.168.x.x, 10.x.x.x, 172.16-31.x.x)
+
+*Bugs detectados y resueltos durante la fase:*
+- ✅ BUG-009 — Resumen del chequeo mostraba 0/0/0 (desajuste de nombres entre backend y frontend)
+- ✅ BUG-010 — Intentos bloqueados por vehículo inexistente no se registraban (FK fail silenciosa)
 
 ### ⏳ Lo que VIENE después de Fase 3
 
-- **Fase 4** — Dashboard del admin: semáforo, historial, alertas
+- **Fase 4** — Dashboard del admin: semáforo de flota, historial, alertas, tareas pendientes #46-#49
 - **Fase 5** — Notificaciones: campanita en sitio (Supabase Realtime) + correo (Nodemailer)
 - **Fase 6** — Reportes: exportación Excel/PDF, envío automático cada 8 días
 - **Fase 7** — Vencimientos automáticos: SOAT, RTM, extintor, licencia
 - **Fase 8** — Validación TRL 6 → TRL 7 con conductor real en patio
+
+**Pendientes técnicos al cierre de Fase 3 (no bloqueantes):**
+- Cron job mensual de borrado de fotos vencidas (se ejecutará cuando armemos el despliegue)
+- Hacer `centro_id` obligatorio para conductor (tarea #49)
+- Pequeñas mejoras del admin de usuarios (#46-48)
 
 ---
 
@@ -547,6 +576,23 @@ Vinculados automáticamente:
 - Si peor → `UPDATE vehiculos SET estado = X` automático.
 - Si mejor → respuesta del cierre incluye `sugerencia_admin` con el nuevo estado propuesto, y el frontend del admin lo muestra como acción pendiente.
 
+### UX del frontend del conductor (Fase 3, mobile-first)
+
+Diseñado para uso en celular en el patio. **Wizard guiado paso a paso**, no un panel admin.
+
+**Flujo:**
+1. **Dashboard del conductor** (`/conductor`): saludo + estado + botones grandes "Iniciar preoperacional" y "Hacer post-operacional" + últimos 3 chequeos.
+2. **Aptitud** (`/conductor/chequeo/aptitud`): **una pregunta por pantalla** con botones gigantes SÍ/NO. **Modal de confirmación al seleccionar** (para evitar respuestas accidentales por toque erróneo). Barra de progreso 1/5, 2/5, etc. Si responde no apto → pantalla de bloqueo + alerta al admin.
+3. **Selección de vehículo** (`/conductor/chequeo/vehiculo`): búsqueda por placa + cards con foto + kilometraje al confirmar.
+4. **Checklist** (`/conductor/chequeo/checklist/:categoria`): **una categoría por pantalla** (5 pantallas: Niveles, Pedales, Luces, Seguridad, Varios). Cada ítem con botones grandes ✅/❌/➖.
+5. **Resultado** (`/conductor/chequeo/resultado`): semáforo gigante con el estado calculado.
+
+**Decisiones de UX confirmadas:**
+- Botones gigantes (target táctil mínimo 44x44 px, ideal 60+ para uso con guantes/sucio).
+- Auto-guardado de respuestas con el endpoint PUT (upsert).
+- Verificación con modal antes de aceptar respuestas críticas (evita toques erróneos).
+- Mensaje claro y rojo si hay falla crítica: "NO DEBES OPERAR este vehículo".
+
 ### Búsqueda de vehículo por placa en flujo del conductor
 
 Cuando el conductor selecciona el vehículo a operar:
@@ -573,6 +619,30 @@ Hay **dos tipos de fotos** con políticas distintas:
 - **Inmediata** (campanita + correo): nuevo chequeo, intento de conductor no apto, intento de chequeo en vehículo desactivado, falla crítica detectada.
 - **Diferida** (correo o campanita, sin urgencia): fotos próximas a borrarse (30 días antes), vencimientos próximos.
 - **Programada** (correo): resumen consolidado cada 8 días (configurable).
+
+### Trazabilidad: no se permite borrar chequeos (Fase 3 — cierre)
+- **El sistema NO ofrece eliminar chequeos cerrados** ni desde la interfaz ni desde un endpoint. Tampoco se borra el historial automáticamente, ni después de un año ni después de cinco.
+- **Por qué**: el chequeo preoperacional es prueba de **debida diligencia** del SENA. Si dentro de 2 años un vehículo tiene un accidente, hay que poder mostrar quién lo condujo ese día, qué reportó antes de salir, qué decía el semáforo. Sin historial no hay defensa para una auditoría o reclamación.
+- **Volumen no es problema**: una fila de chequeo pesa unos bytes; 100.000 chequeos = ~50 MB. Lo voluminoso son las fotos, y esas SÍ se borran a los 12 meses (salvo `preservar_siempre`).
+- **Alternativa futura si se requiere "anular"**: agregar campos `anulado`, `anulado_por_admin_id`, `motivo_anulacion` para que un chequeo erróneo se marque como inválido sin perderse del historial. NO implementado en Fase 3.
+
+### Compresión de fotos del lado del cliente (Fase 3)
+- Las cámaras de celulares modernos producen fotos de 4-8 MB en formato HEIC/JPEG a 12+ MP. Para evidencia de chequeo eso es excesivo.
+- El frontend usa **canvas API** para redimensionar a max 1600 px (lado largo, mantiene aspect ratio) y exporta como **JPEG calidad 0.85** antes de mandar al backend.
+- Reduce típicamente de 5 MB a 500 KB - 1 MB sin pérdida visible para identificar problemas.
+- **Conversión automática a JPEG** resuelve también el caso del HEIC de iPhones que el backend no aceptaría.
+- La validación de tamaño (≤ 5 MB) se hace **después** de comprimir, no antes.
+
+### Búsqueda tolerante de placas (Fase 3)
+- En **todos los buscadores de placa** (conductor y admin), el filtro normaliza ambos lados: pasa a mayúsculas y quita todo lo que no sea alfanumérico.
+- Resultado: `ABC 123`, `abc123`, `ABC-123`, `abc 123` matchean igual.
+- Implementado en backend (`normalizarPlaca()` en `chequeos.service.js`) para que la búsqueda funcione independiente de cómo el frontend mande el filtro.
+- En el frontend del admin el input solo aplica `toUpperCase()` para preservar lo que el usuario escribe (puede mantener espacios al ver el filtro).
+
+### Acceso desde dispositivos móviles en desarrollo (Fase 3)
+- **Vite** configurado con `server.host: true` para escuchar en todas las interfaces de red.
+- **URLs del frontend** (`api.js`, helper de fotos) construidas dinámicamente con `\`http://${window.location.hostname}:3001/api\``. Funciona tanto en localhost como cuando se accede desde celular en LAN.
+- **CORS** del backend permite en dev cualquier rango RFC 1918 (192.168.x.x, 10.x.x.x, 172.16-31.x.x). En producción se respeta estrictamente `CORS_ORIGIN`.
 
 ---
 
@@ -684,6 +754,8 @@ El HTML de mayo 2026 tiene desviaciones intencionales (ver sección ⚠️ al in
 | **Pendiente resuelto con SENA** (ej: confirmaron algo del PDF) | `CONTEXTO_PROYECTO.md` sección 13 | Marcar con ✅ y agregar la decisión final |
 | **Cambio en la base de datos** (CREATE TABLE, ALTER TABLE, agregar columna, crear índice, trigger, etc.) | `database/database.sql` + seed correspondiente en `database/seeds/` si aplica | Reflejar siempre el estado real de la BD para que el repo sea reproducible desde cero. Si se modifica un seed existente, regenerar la verificación al final del archivo. |
 | **Carga inicial de datos nuevos** (ej: nuevas categorías, nuevos centros de formación) | Nuevo archivo en `database/seeds/` con número secuencial (06_, 07_, etc.) + actualizar `database/README.md` lista de archivos | Mantener el orden numérico de ejecución |
+| **Nueva pantalla o flujo visible al usuario** (admin o conductor) | `docs/MANUAL_DE_USO.md` sección correspondiente | Lenguaje claro paso a paso, pensado para entrega final como Word/PDF al SENA. NO incluir detalles técnicos invisibles al usuario. |
+| **Cambio en flujo existente que afecta cómo se usa** (ej: nuevos campos, redirección distinta, comportamiento diferente) | `docs/MANUAL_DE_USO.md` sección correspondiente | Reemplazar el texto desactualizado, no agregar al final. |
 
 ### Qué NO actualizo automáticamente (sería ruido)
 
@@ -734,6 +806,30 @@ Aplica a todos los `.sql` del proyecto: `database/database.sql`, todos los `data
 - **NO repetir lo obvio.** Si el código se lee solo, no hace falta comentario.
 - **NO usar grandes bloques de comentarios decorativos** estilo `// =================================`.
 
+### Contraste visual y bordes (accesibilidad)
+
+El usuario tiene un monitor con bajo contraste. Las reglas a seguir en TODOS los componentes nuevos:
+
+**❌ NO usar bordes claros** que pueden desaparecer en monitores de bajo contraste:
+- `border: 1px solid var(--color-gris-200)` → muy fino y muy claro
+- `box-shadow: var(--sombra-sm)` como única separación → demasiado suave
+
+**✅ SÍ usar bordes visibles y sombras con cuerpo:**
+- `border: 2px solid var(--color-gris-300)` (mínimo) para tarjetas y contenedores
+- `box-shadow: var(--sombra-md)` o superior como separación visual
+- Para tarjetas destacadas/clickeables: agregar borde de color (verde SENA, rojo, etc.) en al menos uno de los lados (`border-left: 6px solid var(--color-X)`)
+
+**❌ NO usar texto en gris claro** para subtítulos o descripciones que el usuario necesita leer:
+- `color: var(--color-gris-500)` para descripciones largas → ilegible
+- `color: var(--color-gris-200)` o `gris-300` para texto principal → ilegible
+
+**✅ SÍ usar:**
+- `color: var(--color-gris-900)` (casi negro) para descripciones que el usuario debe leer.
+- `gris-500` / `gris-700` SOLO para metadata corta tipo "3 DE 5 ÍTEMS RESPONDIDOS" o timestamps, donde la importancia es secundaria.
+- Si necesitas diferenciar visualmente un texto secundario de un título, usá `font-size`, `font-style: italic` o `font-weight` — NO bajés el contraste de color.
+
+Esto aplica a TODAS las pantallas del proyecto, no solo al flujo del conductor.
+
 ### Otros estilos del proyecto (recordatorio)
 
 - **Sin emojis en código ni UI** (salvo casos puntuales que el usuario apruebe — íconos del proyecto, logos institucionales).
@@ -750,3 +846,26 @@ Aplica a todos los `.sql` del proyecto: `database/database.sql`, todos los `data
 - **Bloques de código** con triple backtick + lenguaje.
 - **Listas con `-`** (no con `*`).
 - **Negritas** para resaltar palabras clave, **NO** para frases completas.
+
+### Formato de bugs en `bitacora.docx` (entrega formal al SENA)
+
+Cada entrada de bug en la sección "Problemas encontrados y soluciones" de la bitácora **debe seguir este formato exacto**:
+
+1. **Título del problema** (estilo `Ttulo3` en el XML — sale en azul):
+   - `PROBLEMA: <descripción corta del síntoma>`
+2. **Descripción** (etiqueta seguida del párrafo):
+   - El qué se observó, en lenguaje narrativo y formal.
+3. **Causa** (etiqueta seguida del párrafo):
+   - La razón técnica de fondo.
+4. **Solución** (etiqueta seguida del párrafo):
+   - Qué se hizo para resolverlo, alto nivel.
+
+**❌ NO incluir:**
+- Frases tipo *"Como lección para evitar repetir..."* / *"Para futuros endpoints..."*.
+- Nombres de archivos internos del proyecto (`bugs-conocidos.md`, `evidencias/`, etc.).
+- Referencias a tareas internas, IDs de bug (BUG-XXX), o herramientas del flujo (Thunder Client, GitHub).
+- Listas con viñetas dentro de Descripción/Causa/Solución — todo en prosa corrida.
+
+**Razón:** la `bitacora.docx` es la entrega formal al SENA. Las lecciones y referencias técnicas internas viven en `bugs-conocidos.md` (interno) — la bitácora oficial sólo lleva el problema, la causa y la solución de alto nivel.
+
+Recordable con: **"recordá el formato de bugs de la sección 17"**.

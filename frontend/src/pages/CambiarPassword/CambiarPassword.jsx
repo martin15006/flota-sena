@@ -21,24 +21,32 @@ function CambiarPassword() {
   // Si no esta autenticado, al login
   if (!usuario) return <Navigate to="/login" replace />;
 
+  const esPrimerLogin = usuario.debe_cambiar_password === true;
+
   const enviar = async (e) => {
     e.preventDefault();
     setError(null);
     setEnviando(true);
 
     try {
+      const body = {
+        password_nueva: passwordNueva,
+        password_confirmacion: passwordConfirmacion,
+      };
+      if (!esPrimerLogin) {
+        body.password_actual = passwordActual;
+      }
+
       await api("/auth/cambiar-password", {
         method: "POST",
-        body: {
-          password_actual: passwordActual,
-          password_nueva: passwordNueva,
-          password_confirmacion: passwordConfirmacion,
-        },
+        body,
       });
 
       setExito(true);
       // Esperar 1.5s para que el usuario vea el mensaje y luego redirigir
-      setTimeout(() => navigate("/dashboard"), 1500);
+      // Conductor va a /conductor, todos los admins a /dashboard
+      const destino = usuario.rol === "conductor" ? "/conductor" : "/dashboard";
+      setTimeout(() => navigate(destino), 1500);
     } catch (err) {
       setError(err.message);
     } finally {
@@ -61,9 +69,9 @@ function CambiarPassword() {
           />
           <h1 className="cambiar-pass-titulo">Cambia tu contraseña</h1>
           <p className="cambiar-pass-subtitulo">
-            {usuario.debe_cambiar_password
-              ? "Por seguridad, debes cambiar tu contraseña temporal antes de continuar."
-              : "Actualiza tu contraseña."}
+            {esPrimerLogin
+              ? "Por seguridad, debes definir una nueva contraseña antes de continuar."
+              : "Actualiza tu contraseña. Te pediremos la actual como verificación."}
           </p>
         </div>
 
@@ -75,18 +83,20 @@ function CambiarPassword() {
           </div>
         ) : (
           <form className="cambiar-pass-form" onSubmit={enviar}>
-            <div className="cambiar-pass-campo">
-              <label className="cambiar-pass-label">Contraseña actual</label>
-              <input
-                type="password"
-                className="cambiar-pass-input"
-                value={passwordActual}
-                onChange={(e) => setPasswordActual(e.target.value)}
-                required
-                autoFocus
-                disabled={enviando}
-              />
-            </div>
+            {!esPrimerLogin && (
+              <div className="cambiar-pass-campo">
+                <label className="cambiar-pass-label">Contraseña actual</label>
+                <input
+                  type="password"
+                  className="cambiar-pass-input"
+                  value={passwordActual}
+                  onChange={(e) => setPasswordActual(e.target.value)}
+                  required
+                  autoFocus
+                  disabled={enviando}
+                />
+              </div>
+            )}
 
             <div className="cambiar-pass-campo">
               <label className="cambiar-pass-label">Nueva contraseña</label>
@@ -96,6 +106,7 @@ function CambiarPassword() {
                 value={passwordNueva}
                 onChange={(e) => setPasswordNueva(e.target.value)}
                 required
+                autoFocus={esPrimerLogin}
                 disabled={enviando}
                 minLength={8}
               />
@@ -133,7 +144,7 @@ function CambiarPassword() {
               className="cambiar-pass-boton"
               disabled={
                 enviando ||
-                !passwordActual ||
+                (!esPrimerLogin && !passwordActual) ||
                 !passwordNueva ||
                 !passwordConfirmacion ||
                 passwordNueva !== passwordConfirmacion

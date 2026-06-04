@@ -42,7 +42,9 @@ const evaluarAptitud = async (respuestas) => {
     return { apto: fallas.length === 0, fallas, mapa };
 };
 
-// Registra un intento de chequeo que el sistema bloqueo (para auditoria y notificacion al admin)
+// Registra un intento de chequeo que el sistema bloqueo (para auditoria y notificacion al admin).
+// Si el vehiculo_id no existe en BD (viola FK), reintenta con null para que el intento
+// quede registrado de todas formas. Asi nunca se pierde un evento de auditoria.
 export const registrarIntentoBloqueado = async ({
     conductorId,
     vehiculoId,
@@ -50,16 +52,32 @@ export const registrarIntentoBloqueado = async ({
     razon,
     detalle,
 }) => {
-    const { error } = await supabase.from("intentos_chequeo_bloqueado").insert({
+    const payload = {
         conductor_id: conductorId,
         vehiculo_id: vehiculoId || null,
         centro_id: centroId || null,
         razon,
         detalle: detalle || null,
-    });
-    if (error) {
-        console.error("Error registrando intento bloqueado:", error.message);
+    };
+
+    const { error } = await supabase.from("intentos_chequeo_bloqueado").insert(payload);
+    if (!error) return;
+
+    // Si la falla fue por la FK del vehiculo, reintentamos sin vehiculo_id
+    const esFKVehiculo = error.message?.includes("vehiculo_id") || error.code === "23503";
+    if (esFKVehiculo && payload.vehiculo_id !== null) {
+        console.warn(
+            `[intento bloqueado] vehiculo_id ${payload.vehiculo_id} no existe en BD, reintentando con null`
+        );
+        const { error: retry } = await supabase
+            .from("intentos_chequeo_bloqueado")
+            .insert({ ...payload, vehiculo_id: null });
+        if (!retry) return;
+        console.error("Error registrando intento bloqueado (retry):", retry.message);
+        return;
     }
+
+    console.error("Error registrando intento bloqueado:", error.message);
 };
 
 // Valida que el vehiculo exista, este activo y pertenezca al centro del conductor
@@ -148,9 +166,11 @@ export const iniciarChequeo = async ({
     // 2. Verificar vehiculo
     const verif = await verificarVehiculoParaChequeo(vehiculoId, conductor.centro_id);
     if (!verif.valido) {
+        // Si el vehiculo no existe en BD, pasamos null para no violar la FK del log.
+        // Si existe pero esta desactivado o es de otro centro, guardamos su ID.
         await registrarIntentoBloqueado({
             conductorId: conductor.id,
-            vehiculoId: verif.vehiculo?.id || vehiculoId,
+            vehiculoId: verif.vehiculo?.id || null,
             centroId: conductor.centro_id,
             razon: verif.razon,
             detalle: verif.detalle,
@@ -372,6 +392,11 @@ export const cerrarChequeo = async ({ chequeoId, conductorId, notasGenerales }) 
     // Calcular el resultado final
     const resultado = calcularResultado(respuestas, setCriticos);
 
+    // Contar criticos que quedaron en NO CUMPLE (para mostrarselo al conductor)
+    const itemsCriticosNoCumple = respuestas.filter(
+        (r) => r.estado === "no_cumple" && setCriticos.has(r.item_id)
+    ).length;
+
     // Cerrar el chequeo con el resultado calculado
     const { data: chequeoCerrado, error: errCierre } = await supabase
         .from("chequeos_preoperacionales")
@@ -435,6 +460,7 @@ export const cerrarChequeo = async ({ chequeoId, conductorId, notasGenerales }) 
             id: vehiculo.id,
             placa: vehiculo.placa,
         },
+        items_criticos_no_cumple: itemsCriticosNoCumple,
         actualizacion_vehiculo: actualizacionVehiculo,
         sugerencia_admin: sugerenciaAdmin,
     };
@@ -540,12 +566,14 @@ export const listarChequeosParaAdmin = async ({
     const { data, error, count } = await query;
     if (error) throw error;
 
-    // Filtro por placa post-query (es un campo dentro del join)
+    // Filtro por placa post-query (es un campo dentro del join).
+    // Tolerante: ignora espacios, mayusculas y caracteres no alfanumericos
+    // (ej: "ABC 123" y "ABC123" matchean igual)
     let chequeos = data;
-    if (placa) {
-        const placaUpper = placa.toUpperCase();
+    const filtroPlaca = normalizarPlaca(placa);
+    if (filtroPlaca) {
         chequeos = chequeos.filter((c) =>
-            c.vehiculo?.placa?.toUpperCase().includes(placaUpper)
+            normalizarPlaca(c.vehiculo?.placa).includes(filtroPlaca)
         );
     }
 
@@ -668,14 +696,54 @@ export const listarIntentosBloqueados = async ({
     return { intentos: data, total: count, pagina, limite };
 };
 
+// Registra un intento bloqueado cuando el conductor responde no apto en la pantalla de aptitud
+// (todavia no ha seleccionado vehiculo, asi que vehiculo_id queda null)
+export const registrarIntentoNoApto = async ({ conductor, respuestasAptitud }) => {
+    const evaluacion = await evaluarAptitud(respuestasAptitud);
+
+    if (evaluacion.apto) {
+        return { apto: true, fallas: [] };
+    }
+
+    const idsFallidos = evaluacion.fallas.map((f) => f.pregunta_id);
+    await registrarIntentoBloqueado({
+        conductorId: conductor.id,
+        vehiculoId: null,
+        centroId: conductor.centro_id,
+        razon: "conductor_no_apto",
+        detalle: `Pregunta(s) no aptas: ${idsFallidos.join(", ")}`,
+    });
+
+    return { apto: false, fallas: evaluacion.fallas };
+};
+
+// Lista los chequeos del propio conductor logueado (para el dashboard del conductor)
+export const obtenerChequeosDelConductor = async (conductorId, limite = 10) => {
+    const { data, error } = await supabase
+        .from("chequeos_preoperacionales")
+        .select(`
+            id, fecha, tipo, es_oficial, cerrado, fecha_cierre,
+            resultado_estado, resultado_criticidad, tiene_falla_critica,
+            kilometraje,
+            vehiculo:vehiculos (id, placa, marca, linea, tipo)
+        `)
+        .eq("conductor_id", conductorId)
+        .order("fecha", { ascending: false })
+        .limit(limite);
+
+    if (error) throw error;
+    return data;
+};
+
 // Lista los vehiculos activos del centro del conductor para que pueda seleccionar
-// Soporta busqueda por placa con autocompletado (filtro insensible a mayusculas)
+// La busqueda por placa es tolerante: ignora espacios, mayusculas y caracteres no alfanumericos
+// (ej: "ABC 123", "ABC123", "abc-123" todos matchean con la placa "ABC 123")
 export const obtenerVehiculosDisponibles = async (centroId, busqueda = "") => {
     if (!centroId) {
         throw new Error("El conductor no tiene centro asignado");
     }
 
-    let query = supabase
+    const { data, error } = await supabase
         .from("vehiculos")
         .select(`
             id, placa, marca, linea, tipo, modelo_anio, color,
@@ -686,13 +754,19 @@ export const obtenerVehiculosDisponibles = async (centroId, busqueda = "") => {
         .eq("activo", true)
         .order("placa", { ascending: true });
 
-    if (busqueda) {
-        query = query.ilike("placa", `%${busqueda}%`);
-    }
-
-    const { data, error } = await query;
     if (error) throw error;
-    return data;
+
+    // Si no hay busqueda, devolver todo
+    const filtro = normalizarPlaca(busqueda);
+    if (!filtro) return data;
+
+    // Filtrar en JS normalizando ambos lados (la lista del centro es corta)
+    return data.filter((v) => normalizarPlaca(v.placa).includes(filtro));
+};
+
+// Helper: deja solo letras y numeros, en mayusculas (para comparar placas)
+const normalizarPlaca = (texto = "") => {
+    return String(texto).toUpperCase().replace(/[^A-Z0-9]/g, "");
 };
 
 // Devuelve el catalogo completo: categorias con sus items + preguntas de aptitud

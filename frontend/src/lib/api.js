@@ -1,4 +1,6 @@
-const API_URL = 'http://localhost:3001/api';
+// Usamos el hostname actual para que funcione tanto en localhost como cuando se accede
+// desde un celular conectado al mismo wifi (http://<IP_DEL_PC>:5173 -> API en :3001 de la misma IP)
+const API_URL = `http://${window.location.hostname}:3001/api`;
 
 export const api = async (endpoint, options = {}) => {
     const token = localStorage.getItem('token');

@@ -3,10 +3,13 @@ import { useAuth } from "../../hooks/useAuth.js";
 import './Dashboard.css';
 import Footer from "../../components/Footer/Footer.jsx";
 
+const ROLES_ADMIN = ['admin', 'admin_centro', 'admin_ciudad', 'admin_departamental', 'admin_regional', 'superadmin'];
+
 function Dashboard() {
     const { usuario, cerrarSesion } = useAuth();
     const navigate = useNavigate();
 
+    const esAdmin = ROLES_ADMIN.includes(usuario?.rol);
 
     const manejarLogout = () => {
         cerrarSesion();
@@ -40,7 +43,7 @@ function Dashboard() {
                         Sesión iniciada correctamente como {' '}
                         <strong>{usuario.rol}</strong>
                     </p>
-                    {usuario.rol === 'admin' && (
+                    {esAdmin && (
                         <div className="dashboard-acciones">
                             <button
                                 className="boton boton-primario"
@@ -53,6 +56,18 @@ function Dashboard() {
                                 onClick={() => navigate('/admin/usuarios')}
                             >
                                 Gestión de usuarios
+                            </button>
+                            <button
+                                className="boton boton-secundario"
+                                onClick={() => navigate('/admin/catalogo')}
+                            >
+                                Catálogo del chequeo
+                            </button>
+                            <button
+                                className="boton boton-primario"
+                                onClick={() => navigate('/admin/chequeos')}
+                            >
+                                Chequeos realizados
                             </button>
                         </div>
                     )}

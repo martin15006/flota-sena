@@ -148,7 +148,7 @@ function UsuariosAdmin() {
             className="usuarios-admin-boton-crear"
             onClick={() => setModalCrearAbierto(true)}
           >
-            + Crear conductor
+            + Crear Usuario
           </button>
         </div>
 

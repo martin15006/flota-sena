@@ -2,7 +2,7 @@
 <html lang="es">
 <head>
 <meta charset="UTF-8">
-<title>Requerimientos · Sistema de Gestión de Flota Vehicular SENA Tolima (v2.0)</title>
+<title>Requerimientos · Sistema de Gestión de Flota Vehicular SENA Tolima (v3.0)</title>
 <style>
   :root {
     --verde-sena: #39A900;
@@ -242,21 +242,32 @@
     <span class="meta">Proyecto ID+I — SENNOVA</span>
   </div>
   <div style="margin-top: 20px; opacity: 0.9; font-size: 0.95em;">
-    Documento de requerimientos · Versión 2.0 (actualizada al cierre de Fase 2)
+    Documento de requerimientos · Versión 3.0 (actualizada al cierre de Fase 3)
   </div>
   <div style="margin-top: 8px; opacity: 0.85; font-size: 0.85em;">
-    Actualización: 30 de mayo de 2026
+    Actualización: 3 de junio de 2026
   </div>
 </header>
 
 <div class="listo-box">
+  <strong>Cambios respecto a la versión 2.0 (cierre de Fase 2):</strong>
+  <ul style="margin: 8px 0 0;">
+    <li><strong>Estado del proyecto:</strong> <strong>Fase 3 completada el 3 de junio de 2026</strong>. El módulo de chequeo preoperacional está funcionando de extremo a extremo, incluyendo el flujo completo del conductor (aptitud, selección de vehículo, checklist con fotos de evidencia, resultado) y todas las pantallas administrativas (lista, detalle, intentos bloqueados, catálogo del chequeo).</li>
+    <li><strong>Fotos de evidencia:</strong> el conductor puede adjuntar hasta 3 fotos por ítem marcado como NO CUMPLE, tomadas con la cámara nativa del celular o subidas desde la galería. El sistema comprime las fotos del lado del cliente antes de enviarlas al servidor para optimizar el consumo de datos móviles. Política de retención: 12 meses automáticos, con opción de "preservar siempre" administrada por el administrador.</li>
+    <li><strong>Catálogo administrable:</strong> categorías, ítems y preguntas de aptitud son administrables desde el panel del administrador sin necesidad de modificar la base de datos directamente. Eliminación inteligente: hard delete si la entidad no ha sido usada en ningún chequeo, soft delete si ya tiene historial para no romper la trazabilidad.</li>
+    <li><strong>Trazabilidad:</strong> los chequeos cerrados <strong>no se pueden eliminar</strong> desde la interfaz ni desde un endpoint. El historial se conserva indefinidamente para auditorías y reclamaciones.</li>
+    <li><strong>Acceso móvil:</strong> el sistema soporta acceso desde dispositivos móviles conectados al mismo wifi del servidor de desarrollo, permitiendo probar el flujo del conductor en un teléfono real.</li>
+    <li><strong>Bugs detectados y resueltos:</strong> BUG-009 (resumen del chequeo en ceros por desajuste de nombres de campo) y BUG-010 (intentos bloqueados perdidos silenciosamente por violación de llave foránea). Ambos documentados en la bitácora.</li>
+  </ul>
+</div>
+
+<div class="listo-box" style="margin-top: 12px; opacity: 0.85;">
   <strong>Cambios respecto a la versión 1.0 (mayo 2026):</strong>
   <ul style="margin: 8px 0 0;">
     <li><strong>Roles:</strong> ampliado de 2 a <strong>6 roles</strong> en jerarquía multinivel (Super Administrador Nacional → Conductor) para que el sistema escale a nivel nacional sin migrar datos.</li>
     <li><strong>Semáforo del vehículo:</strong> ampliado de 3 colores a <strong>5 estados</strong> con rangos de criticidad asociados, para mayor granularidad en reportes y filtros.</li>
     <li><strong>Stack técnico:</strong> ajustado de PostgreSQL + Socket.io a <strong>Supabase</strong> (PostgreSQL + Realtime + Auth integrados). CSS modular puro en lugar de Tailwind.</li>
     <li><strong>Item 39 del checklist:</strong> agregada "Llanta de repuesto" a la categoría Varios.</li>
-    <li><strong>Estado del proyecto:</strong> Fase 2 entregada y commiteada al repositorio. Fase 3 (chequeo preoperacional) en curso.</li>
   </ul>
 </div>
 
@@ -283,7 +294,7 @@
 
 <h2 id="estado">1. Estado actual del proyecto</h2>
 
-<p>El proyecto se desarrolla en <strong>fases incrementales</strong>. Al cierre de Fase 2 (30 de mayo de 2026):</p>
+<p>El proyecto se desarrolla en <strong>fases incrementales</strong>. Al cierre de Fase 3 (3 de junio de 2026):</p>
 
 <table>
   <tr>
@@ -312,9 +323,9 @@
   </tr>
   <tr>
     <td>3</td>
-    <td>Flujo del conductor: 5 preguntas de aptitud + checklist de 39 ítems pre y post operacional</td>
-    <td><span class="badge badge-en-curso">En curso</span></td>
-    <td>Junio 2026</td>
+    <td>Chequeo preoperacional completo: flujo del conductor (aptitud + selección de vehículo + checklist de 39 ítems + fotos de evidencia + resultado) y todas las pantallas administrativas (lista, detalle, intentos bloqueados, catálogo)</td>
+    <td><span class="badge badge-ok">Completada</span></td>
+    <td>3 de junio de 2026</td>
   </tr>
   <tr>
     <td>4</td>
@@ -417,7 +428,7 @@
     <td><span class="badge badge-rol">conductor</span><br><small>Operario de vehículo</small></td>
     <td>Vehículos de su centro</td>
     <td>Hace chequeo preoperacional y post-operacional. Reporta hallazgos. Genera notificaciones al admin al finalizar el chequeo.</td>
-    <td><span class="badge badge-en-curso">En curso (Fase 3)</span></td>
+    <td><span class="badge badge-ok">Funcionando (Fase 3 cerrada)</span></td>
   </tr>
 </table>
 
@@ -955,7 +966,7 @@
 <footer>
   <p><strong>SENA Regional Tolima · Centro de Industria y Construcción</strong></p>
   <p>Proyecto ID+I — Sistema administrativo de mantenimiento preventivo y correctivo vehicular</p>
-  <p>Documento de requerimientos v2.0 · Actualizado al cierre de Fase 2 · 30 de mayo de 2026</p>
+  <p>Documento de requerimientos v3.0 · Actualizado al cierre de Fase 3 · 3 de junio de 2026</p>
 </footer>
 
 </body>

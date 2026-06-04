@@ -73,10 +73,22 @@ export const cambiarPassword = async (req, res) => {
     try {
         const { password_actual, password_nueva, password_confirmacion } = req.body;
 
+        // En primer login el flujo es distinto: el usuario tiene una password temporal
+        // que apunto pero ya no recuerda. Solo se le pide la nueva.
+        // En cambio voluntario (debe_cambiar_password=false) si se pide la actual
+        // como verificacion de identidad.
+        const esPrimerLogin = req.usuario.debe_cambiar_password === true;
+
         // Validaciones basicas
-        if (!password_actual || !password_nueva || !password_confirmacion) {
+        if (!password_nueva || !password_confirmacion) {
             return res.status(400).json({
-                error: "Todos los campos son obligatorios",
+                error: "La nueva contraseña y su confirmación son obligatorias",
+            });
+        }
+
+        if (!esPrimerLogin && !password_actual) {
+            return res.status(400).json({
+                error: "Debes ingresar tu contraseña actual",
             });
         }
 
@@ -92,20 +104,22 @@ export const cambiarPassword = async (req, res) => {
             });
         }
 
-        if (password_nueva === password_actual) {
-            return res.status(400).json({
-                error: "La nueva contraseña debe ser diferente a la actual",
+        // Solo en cambio voluntario verificamos la contraseña actual
+        if (!esPrimerLogin) {
+            if (password_nueva === password_actual) {
+                return res.status(400).json({
+                    error: "La nueva contraseña debe ser diferente a la actual",
+                });
+            }
+
+            const { error: errLogin } = await supabase.auth.signInWithPassword({
+                email: req.usuario.email,
+                password: password_actual,
             });
-        }
 
-        // Verificar la contraseña actual intentando un signIn
-        const { error: errLogin } = await supabase.auth.signInWithPassword({
-            email: req.usuario.email,
-            password: password_actual,
-        });
-
-        if (errLogin) {
-            return res.status(401).json({ error: "Contraseña actual incorrecta" });
+            if (errLogin) {
+                return res.status(401).json({ error: "Contraseña actual incorrecta" });
+            }
         }
 
         // Cambiar la password via Admin API

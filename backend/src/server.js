@@ -7,6 +7,8 @@ import usuariosRoutes from './routes/usuarios.routes.js';
 import uploadRoutes from './routes/upload.routes.js';
 import vehiculosRoutes from './routes/vehiculos.routes.js';
 import chequeosRoutes from './routes/chequeos.routes.js';
+import catalogoAdminRoutes from './routes/catalogoAdmin.routes.js';
+import fotosChequeoRoutes from './routes/fotosChequeo.routes.js';
 import { iniciarKeepAlive, detenerKeepAlive } from './utils/keepAlive.js';
 
 dotenv.config();
@@ -14,8 +16,31 @@ dotenv.config();
 const app = express();
 const PORT = process.env.PORT || 3001;
 
-// middleware 
-app.use(cors({ origin: process.env.CORS_ORIGIN }));
+// CORS: en development aceptamos localhost y cualquier IP LAN (192.168.x.x, 10.x.x.x, 172.16-31.x.x)
+// para permitir pruebas desde celulares conectados al mismo wifi. En produccion se respeta
+// estrictamente la variable CORS_ORIGIN del .env.
+const esDev = process.env.NODE_ENV !== 'production';
+
+app.use(cors({
+    origin: (origin, callback) => {
+        // Peticiones sin origin (Thunder Client, curl, mismo origen) siempre permitidas
+        if (!origin) return callback(null, true);
+
+        // En produccion solo CORS_ORIGIN literal
+        if (!esDev) {
+            return callback(
+                origin === process.env.CORS_ORIGIN ? null : new Error(`Origen no permitido: ${origin}`),
+                origin === process.env.CORS_ORIGIN
+            );
+        }
+
+        // En dev: aceptar localhost y rangos LAN privados (RFC 1918)
+        const permitidoDev = /^http:\/\/(localhost|127\.0\.0\.1|10\.[\d.]+|192\.168\.[\d.]+|172\.(1[6-9]|2[0-9]|3[01])\.[\d.]+)(:\d+)?$/;
+        if (permitidoDev.test(origin)) return callback(null, true);
+
+        callback(new Error(`Origen no permitido en dev: ${origin}`));
+    },
+}));
 
 app.use(express.json());
 
@@ -33,6 +58,8 @@ app.use('/api/usuarios', usuariosRoutes);
 app.use('/api/upload', uploadRoutes);
 app.use('/api/vehiculos', vehiculosRoutes);
 app.use('/api/chequeos', chequeosRoutes);
+app.use('/api/catalogo-admin', catalogoAdminRoutes);
+app.use('/api/respuestas', fotosChequeoRoutes);
 
 app.use((req, res) => {
     res.status(404).json({ error: 'Ruta no encontrada' });

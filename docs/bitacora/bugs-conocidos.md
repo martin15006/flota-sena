@@ -1,8 +1,10 @@
 # Bugs conocidos del proyecto
 
-Estado actualizado a: **30 de mayo de 2026**.
+Estado actualizado a: **2 de junio de 2026**.
 
 Cada bug tiene: síntoma, causa raíz, fix aplicado, estado (resuelto / parcheado / pendiente) y, si aplica, advertencia para producción.
+
+> 💡 Si un bug tiene capturas de pantalla, se guardan en `docs/bitacora/evidencias/` con el formato `BUG-XXX_descripcion.png`. Ver `evidencias/README.md` para la convención.
 
 ---
 
@@ -222,3 +224,113 @@ Rate limit interno de Supabase Auth para protección contra ataques. Si se confi
 
 **Acción pendiente:**
 Reproducir el bug intencionalmente para confirmar. Si es rate limit, mostrar mensaje claro al usuario: "Has intentado iniciar sesión muchas veces. Espera unos segundos."
+
+---
+
+## ✅ BUG-009 — Resumen del chequeo mostraba 0/0/0 en la pantalla de resultado
+
+**Estado:** Resuelto el 2026-06-02.
+
+**Síntoma:**
+Al finalizar un chequeo preoperacional (incluso con varios ítems marcados como NO CUMPLE), la pantalla de resultado mostraba el resumen en ceros:
+- Cumple: **0**
+- No cumple: **0**
+- N/A: **0**
+
+El estado general del vehículo (Operativo / No operativo / etc.) sí se calculaba correctamente, pero los conteos del resumen estaban vacíos. Esto desconcertaba al conductor porque parecía que el chequeo no había guardado nada.
+
+**📸 Evidencia visual:**
+- `evidencias/BUG-009_resumen-0-0-0.png` — captura del usuario mostrando la pantalla de "Vehículo NO OPERATIVO" con todos los conteos en 0.
+- *(Pendiente)* `evidencias/BUG-009_resumen-correcto-despues-del-fix.png` — captura tras el fix mostrando los conteos reales.
+
+**Causa raíz:**
+Desalineación de nombres de campo entre backend y frontend.
+
+| Concepto | Backend devolvía | Frontend leía |
+|---|---|---|
+| Cumple | `items_cumple_count` | `total_cumple` ❌ |
+| No cumple | `items_no_cumple_count` | `total_no_cumple` ❌ |
+| N/A | `items_no_aplica_count` | `total_no_aplica` ❌ |
+| Críticos en NO CUMPLE | *(no se calculaba)* | `total_criticos_no_cumple` ❌ |
+
+Como ningún nombre coincidía, cada lectura caía al fallback `?? 0`.
+
+Además, el cálculo del conteo de **ítems críticos en NO CUMPLE** (el badge rojo destacado de la pantalla de resultado) no existía en el backend: solo se guardaba el booleano `tiene_falla_critica`.
+
+**Fix aplicado:**
+
+1. **`backend/src/services/chequeos.service.js → cerrarChequeo()`**: se agregó el cálculo del conteo de críticos en NO CUMPLE y se devuelve como `items_criticos_no_cumple` a nivel root de la respuesta.
+
+```js
+const itemsCriticosNoCumple = respuestas.filter(
+    (r) => r.estado === "no_cumple" && setCriticos.has(r.item_id)
+).length;
+```
+
+2. **`backend/src/controllers/chequeos.controller.js → postCerrarChequeo`**: el controller no estaba reenviando el campo nuevo al frontend, se agregó al `res.json`.
+
+3. **`frontend/src/pages/Conductor/ChequeoResultado.jsx`**: se alinearon los nombres de campo a los que realmente devuelve el backend:
+
+```js
+const totalCumple = chequeo.items_cumple_count ?? 0;
+const totalNoCumple = chequeo.items_no_cumple_count ?? 0;
+const totalNoAplica = chequeo.items_no_aplica_count ?? 0;
+const totalCriticos = resp.items_criticos_no_cumple ?? 0;
+```
+
+**Lección para no repetirlo:**
+- Cuando se diseñe un endpoint nuevo, **pegar literalmente el JSON de respuesta** en el archivo del frontend que lo consume, como comentario o constante de referencia.
+- Considerar generar tipos compartidos o validar la respuesta con un schema (JSDoc, Zod, etc.) en próximas fases.
+- En sesiones de QA del flujo del conductor (Fase 3), no quedarse solo con que "el estado final se calcula bien" — verificar también los conteos del resumen.
+
+**Archivos relacionados:**
+- `backend/src/services/chequeos.service.js`
+- `backend/src/controllers/chequeos.controller.js`
+- `frontend/src/pages/Conductor/ChequeoResultado.jsx`
+
+---
+
+## ✅ BUG-010 — Intentos bloqueados con vehiculo_id inexistente no se guardaban
+
+**Estado:** Resuelto el 2026-06-02.
+
+**Síntoma:**
+Al hacer una prueba en Thunder Client del endpoint `POST /api/chequeos/iniciar` con un `vehiculo_id` que no existe en la BD (por ejemplo, el UUID de ceros `00000000-0000-0000-0000-000000000000`), el endpoint devolvía la respuesta correcta:
+
+```json
+{ "error": "Vehiculo no encontrado", "razon": "vehiculo_no_existe" }
+```
+
+Pero al ir a la pantalla del admin de intentos bloqueados (`/admin/chequeos/intentos-bloqueados`), el intento **no aparecía**. La tabla `intentos_chequeo_bloqueado` quedaba sin el registro.
+
+**Causa raíz:**
+La tabla `intentos_chequeo_bloqueado` tiene `vehiculo_id UUID REFERENCES vehiculos(id)`. Cuando el conductor mandaba un UUID que no existía en `vehiculos`, el INSERT al log violaba la **foreign key constraint** (código PostgreSQL `23503`).
+
+El servicio `registrarIntentoBloqueado` solo logueaba el error con `console.error()` y no propagaba la excepción, por lo que el endpoint seguía su flujo normal, devolvía el error al cliente, pero el intento se perdía. El admin nunca se enteraba del intento.
+
+Específicamente, en `iniciarChequeo` se hacía:
+
+```js
+vehiculoId: verif.vehiculo?.id || vehiculoId
+```
+
+Cuando `verif.vehiculo` era `null` (caso `vehiculo_no_existe`), terminaba pasando el UUID original del cliente, que no existía en la tabla `vehiculos`, generando la violación de FK.
+
+**Fix aplicado:**
+
+1. **`backend/src/services/chequeos.service.js → iniciarChequeo`**: cuando el vehículo no se pudo encontrar en la BD, se pasa explícitamente `null` en lugar del UUID del cliente:
+
+```js
+vehiculoId: verif.vehiculo?.id || null
+```
+
+2. **`backend/src/services/chequeos.service.js → registrarIntentoBloqueado`**: defensa adicional. Si el INSERT falla por la FK del vehículo (código `23503` o mensaje que mencione `vehiculo_id`), se reintenta automáticamente con `vehiculo_id = null`. Así el intento siempre queda registrado para auditoría, aunque el caller envíe un ID inválido por error.
+
+**Detectado por:** El usuario, al probar manualmente el escenario `vehiculo_no_existe` desde Thunder Client durante la fase de QA del Bloque 4 (vista del admin).
+
+**📸 Evidencia visual:**
+- `evidencias/BUG-010_intento-no-aparece.png` *(pendiente — captura del usuario)*
+- `evidencias/BUG-010_intento-correcto-despues-del-fix.png` *(pendiente)*
+
+**Archivos relacionados:**
+- `backend/src/services/chequeos.service.js`

@@ -7,6 +7,8 @@ import {
     listarChequeosParaAdmin,
     obtenerChequeoCompleto,
     listarIntentosBloqueados,
+    obtenerChequeosDelConductor,
+    registrarIntentoNoApto,
 } from "../services/chequeos.service.js";
 
 const ESTADOS_RESPUESTA_VALIDOS = ["cumple", "no_cumple", "no_aplica"];
@@ -172,6 +174,7 @@ export const postCerrarChequeo = async (req, res) => {
             mensaje: "Chequeo cerrado correctamente",
             chequeo: resultado.chequeo,
             vehiculo: resultado.vehiculo,
+            items_criticos_no_cumple: resultado.items_criticos_no_cumple,
             actualizacion_vehiculo: resultado.actualizacion_vehiculo,
             sugerencia_admin: resultado.sugerencia_admin,
         });
@@ -228,6 +231,52 @@ export const getChequeoPorId = async (req, res) => {
     } catch (err) {
         console.error("Error obteniendo chequeo:", err);
         res.status(500).json({ error: err.message || "Error al obtener el chequeo" });
+    }
+};
+
+// POST /api/chequeos/aptitud-no-apta
+// Body: { respuestas_aptitud: [{pregunta_id, respuesta}] }
+// Registra el intento bloqueado cuando el conductor responde no apto en la pantalla
+// de aptitud (antes de seleccionar vehiculo). Devuelve detalle de las preguntas fallidas.
+export const postAptitudNoApta = async (req, res) => {
+    try {
+        const { respuestas_aptitud } = req.body;
+
+        if (!Array.isArray(respuestas_aptitud) || respuestas_aptitud.length !== 5) {
+            return res.status(400).json({ error: "Se requieren las 5 respuestas de aptitud" });
+        }
+
+        const resultado = await registrarIntentoNoApto({
+            conductor: req.usuario,
+            respuestasAptitud: respuestas_aptitud,
+        });
+
+        if (resultado.apto) {
+            return res.status(400).json({
+                error: "Este endpoint es solo para registrar respuestas no aptas. Las tuyas son aptas, continua al endpoint /iniciar.",
+            });
+        }
+
+        res.json({
+            mensaje: "Intento bloqueado registrado. Se notifico al administrador.",
+            preguntas_fallidas: resultado.fallas,
+        });
+    } catch (err) {
+        console.error("Error registrando aptitud no apta:", err);
+        res.status(500).json({ error: err.message || "Error al registrar el intento" });
+    }
+};
+
+// GET /api/chequeos/mios?limite=10
+// Lista los chequeos del propio conductor logueado (para el dashboard del conductor)
+export const getMisChequeos = async (req, res) => {
+    try {
+        const limite = req.query.limite ? parseInt(req.query.limite, 10) : 10;
+        const chequeos = await obtenerChequeosDelConductor(req.usuario.id, limite);
+        res.json({ chequeos, total: chequeos.length });
+    } catch (err) {
+        console.error("Error obteniendo mis chequeos:", err);
+        res.status(500).json({ error: err.message || "Error al obtener tus chequeos" });
     }
 };
 

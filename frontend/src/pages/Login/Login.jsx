@@ -34,6 +34,8 @@ function Login() {
 
             if (usuario.debe_cambiar_password) {
                 navigate('/cambiar-password');
+            } else if (usuario.rol === 'conductor') {
+                navigate('/conductor');
             } else {
                 navigate('/dashboard');
             }

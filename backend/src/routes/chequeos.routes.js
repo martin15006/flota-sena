@@ -8,6 +8,8 @@ import {
     getChequeos,
     getChequeoPorId,
     getIntentosBloqueados,
+    getMisChequeos,
+    postAptitudNoApta,
 } from "../controllers/chequeos.controller.js";
 import {
     verificarToken,
@@ -35,6 +37,10 @@ router.get("/vehiculos-disponibles", soloConductor, getVehiculosDisponibles);
 // Crea un chequeo nuevo con sus respuestas de aptitud
 router.post("/iniciar", soloConductor, postIniciarChequeo);
 
+// POST /api/chequeos/aptitud-no-apta
+// Registra el intento bloqueado cuando el conductor no es apto (antes de vehiculo)
+router.post("/aptitud-no-apta", soloConductor, postAptitudNoApta);
+
 // PUT /api/chequeos/:id/respuestas
 // Guarda respuestas del checklist (1 a 39 a la vez, upsert por item)
 router.put("/:id/respuestas", soloConductor, putRespuestasChequeo);
@@ -42,6 +48,10 @@ router.put("/:id/respuestas", soloConductor, putRespuestasChequeo);
 // POST /api/chequeos/:id/cerrar
 // Calcula resultado, cierra el chequeo, actualiza vehiculo si aplica
 router.post("/:id/cerrar", soloConductor, postCerrarChequeo);
+
+// GET /api/chequeos/mios?limite=10
+// Lista los chequeos del propio conductor logueado
+router.get("/mios", soloConductor, getMisChequeos);
 
 // == Vista del admin ==
 
