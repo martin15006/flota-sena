@@ -37,3 +37,11 @@ build/
 # Base de datos local (backups)
 *.sql.gz
 backups/
+
+# Documentación interna en markdown (notas, planning, manuales en proceso,
+# bitácora técnica, mapa del código, bugs conocidos, contexto del proyecto).
+# Se mantienen solo en local porque son apoyo del equipo, no entregables.
+# Los README.md sí se mantienen porque son la portada del repo y subcarpetas.
+*.md
+!README.md
+!**/README.md
