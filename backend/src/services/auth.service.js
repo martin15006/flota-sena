@@ -37,12 +37,24 @@ export const resolverIdentificador = async (identificador) => {
 
 
 export const obtenerPerfil = async (userId) => {
+    // Join con centros_formacion para tener centro_nombre disponible en una sola query
     const { data, error } = await supabase
         .from('usuarios')
-        .select('*')
+        .select(`
+            *,
+            centros_formacion:centro_id (
+                id,
+                nombre
+            )
+        `)
         .eq('id', userId)
         .single();
 
     if (error) throw error;
+    // Aplanar el join: exponer solo centro_nombre como campo plano
+    if (data) {
+        data.centro_nombre = data.centros_formacion?.nombre || null;
+        delete data.centros_formacion;
+    }
     return data;
 };

@@ -16,9 +16,17 @@ export const verificarToken = async (req, res, next) => {
             return res.status(401).json({ error: 'Token invalido o expirado' });
         }
 
+        // Join con centros_formacion para que cualquier endpoint pueda usar
+        // perfil.centro_nombre sin hacer otra query.
         const { data: perfil, error: errPerfil } = await supabase
             .from('usuarios')
-            .select('*')
+            .select(`
+                *,
+                centros_formacion:centro_id (
+                    id,
+                    nombre
+                )
+            `)
             .eq('id', data.user.id)
             .single();
 
@@ -31,6 +39,10 @@ export const verificarToken = async (req, res, next) => {
         }
 
         perfil.email = data.user.email;
+        // Aplanar el join: el join devuelve el centro como objeto anidado, pero
+        // es mas comodo exponer solo el nombre como campo plano.
+        perfil.centro_nombre = perfil.centros_formacion?.nombre || null;
+        delete perfil.centros_formacion;
 
         req.usuario = perfil;
         req.token = token;

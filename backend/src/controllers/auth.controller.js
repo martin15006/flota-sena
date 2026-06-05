@@ -48,6 +48,11 @@ export const login = async (req, res) => {
                 rol: perfil.rol,
                 debe_cambiar_password: perfil.debe_cambiar_password,
                 foto_url: perfil.foto_url,
+                centro_id: perfil.centro_id,
+                centro_nombre: perfil.centro_nombre,
+                licencia_numero: perfil.licencia_numero,
+                licencia_categoria: perfil.licencia_categoria,
+                licencia_vencimiento: perfil.licencia_vencimiento,
             },
         });
     } catch (err) {
@@ -70,6 +75,8 @@ export const obtenerActual = (req, res) => {
             licencia_numero: req.usuario.licencia_numero,
             licencia_categoria: req.usuario.licencia_categoria,
             licencia_vencimiento: req.usuario.licencia_vencimiento,
+            centro_id: req.usuario.centro_id,
+            centro_nombre: req.usuario.centro_nombre,
         },
     });
 };
