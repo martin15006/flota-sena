@@ -2,6 +2,7 @@ import { useState } from "react";
 import { useNavigate, Navigate } from "react-router-dom";
 import { useAuth } from "../../hooks/useAuth.js";
 import { api } from "../../lib/api.js";
+import InputPassword from "../../components/InputPassword/InputPassword.jsx";
 import "./CambiarPassword.css";
 
 function CambiarPassword() {
@@ -86,8 +87,7 @@ function CambiarPassword() {
             {!esPrimerLogin && (
               <div className="cambiar-pass-campo">
                 <label className="cambiar-pass-label">Contraseña actual</label>
-                <input
-                  type="password"
+                <InputPassword
                   className="cambiar-pass-input"
                   value={passwordActual}
                   onChange={(e) => setPasswordActual(e.target.value)}
@@ -100,8 +100,7 @@ function CambiarPassword() {
 
             <div className="cambiar-pass-campo">
               <label className="cambiar-pass-label">Nueva contraseña</label>
-              <input
-                type="password"
+              <InputPassword
                 className="cambiar-pass-input"
                 value={passwordNueva}
                 onChange={(e) => setPasswordNueva(e.target.value)}
@@ -117,8 +116,7 @@ function CambiarPassword() {
 
             <div className="cambiar-pass-campo">
               <label className="cambiar-pass-label">Confirmar nueva contraseña</label>
-              <input
-                type="password"
+              <InputPassword
                 className="cambiar-pass-input"
                 value={passwordConfirmacion}
                 onChange={(e) => setPasswordConfirmacion(e.target.value)}

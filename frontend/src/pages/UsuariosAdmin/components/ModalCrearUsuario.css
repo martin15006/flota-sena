@@ -157,6 +157,82 @@
   font-size: var(--tamano-sm);
 }
 
+/* Campo sensible: input arriba + boton "Cambiar" abajo (para correo/cedula).
+   Lo ponemos en columna para que no se rompa cuando el grid usa columnas estrechas. */
+.form-usuario-campo-sensible {
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+}
+
+.form-usuario-boton-cambiar {
+  padding: 8px 14px;
+  background: var(--color-verde-sena);
+  color: var(--color-blanco);
+  border: 2px solid var(--color-verde-oscuro);
+  border-radius: var(--radio-md);
+  font-size: var(--tamano-xs);
+  font-weight: var(--peso-bold);
+  cursor: pointer;
+  transition: all var(--velocidad-rapida) var(--suavizado);
+  font-family: inherit;
+  white-space: nowrap;
+  letter-spacing: 0.3px;
+  box-shadow: var(--sombra-sm);
+  text-transform: uppercase;
+  align-self: flex-start;
+}
+
+.form-usuario-boton-cambiar:hover:not(:disabled) {
+  background: var(--color-verde-oscuro);
+  transform: translateY(-1px);
+  box-shadow: var(--sombra-md);
+}
+
+.form-usuario-boton-cambiar:disabled {
+  opacity: 0.5;
+  cursor: not-allowed;
+}
+
+/* Texto pequeño de ayuda debajo de un campo (gris-900 por accesibilidad) */
+.form-usuario-ayuda {
+  display: block;
+  margin-top: 4px;
+  font-size: var(--tamano-xs);
+  color: var(--color-gris-900);
+  font-style: italic;
+  line-height: 1.4;
+}
+
+/* Aviso temporal cuando se intenta escribir un caracter no permitido.
+   PROBANDO: fondo naranja + texto y borde negros (combinacion alto contraste
+   estilo senales de transito). Tipografia fina semibold sin letter-spacing. */
+.form-usuario-aviso-validacion {
+  display: block;
+  margin-top: 6px;
+  padding: 8px 12px;
+  background: #eb943e;
+  color: #1A1A1A;
+  border: 2px solid #e29a2d;
+  border-radius: var(--radio-md);
+  font-size: var(--tamano-sm);
+  font-weight: var(--peso-semibold);
+  line-height: 1.35;
+  box-shadow: var(--sombra-md);
+  animation: form-usuario-aviso-aparecer 0.18s ease-out;
+}
+
+@keyframes form-usuario-aviso-aparecer {
+  from {
+    opacity: 0;
+    transform: translateY(-3px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
 /* === BOTONES === */
 .form-usuario-acciones {
   display: flex;

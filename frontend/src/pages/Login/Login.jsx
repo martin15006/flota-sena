@@ -2,12 +2,15 @@ import { useState, useEffect } from "react";
 import { useNavigate } from 'react-router-dom';
 import { useAuth } from '../../hooks/useAuth.js';
 import Toast from '../../components/Toast/Toast.jsx';
+import InputPassword from '../../components/InputPassword/InputPassword.jsx';
 import './Login.css';
 
 function Login() {
     const [identificador, setIdentificador] = useState('');
     const [password, setPassword] = useState('');
     const [error, setError] = useState(null);
+    // tipoError: "credenciales" (rojo, error de validacion) | "cuenta_desactivada" (naranja, asunto admin)
+    const [tipoError, setTipoError] = useState("credenciales");
     const [cargando, setCargando] = useState(false);
     const [toast, setToast] = useState(null);
     const { iniciarSesion, sesionExpirada, consumirSesionExpirada } = useAuth();
@@ -27,6 +30,7 @@ function Login() {
     const manejarSubmit = async (e) => {
         e.preventDefault();
         setError(null);
+        setTipoError("credenciales");
         setCargando(true);
 
         try {
@@ -41,6 +45,13 @@ function Login() {
             }
 
         } catch (err) {
+            // 403 → la cuenta esta desactivada (asunto administrativo, no typo).
+            // Lo marcamos para que la UI lo muestre con estilo de advertencia.
+            if (err.status === 403) {
+                setTipoError("cuenta_desactivada");
+            } else {
+                setTipoError("credenciales");
+            }
             setError(err.message);
         } finally {
             setCargando(false);
@@ -83,9 +94,8 @@ function Login() {
                         <label htmlFor="password" className="login-label">
                             Contraseña
                         </label>
-                        <input
+                        <InputPassword
                             id='password'
-                            type='password'
                             className="login-input"
                             value={password}
                             onChange={(e) => setPassword(e.target.value)}
@@ -96,7 +106,16 @@ function Login() {
                     </div>
 
                     {error && (
-                        <div className="login-error animar-shake">
+                        <div
+                            className={
+                                tipoError === "cuenta_desactivada"
+                                    ? "login-error login-error-advertencia"
+                                    : "login-error animar-shake"
+                            }
+                        >
+                            {tipoError === "cuenta_desactivada" && (
+                                <span className="login-error-icono">🔒</span>
+                            )}
                             {error}
                         </div>
                     )}

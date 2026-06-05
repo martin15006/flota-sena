@@ -5,6 +5,7 @@ import { api } from "../../lib/api.js";
 import "./UsuariosAdmin.css";
 import ModalPasswordTemporal from "./components/ModalPasswordTemporal.jsx";
 import Footer from '../../components/Footer/Footer.jsx';
+import Toast from '../../components/Toast/Toast.jsx';
 import ModalCrearUsuario from "./components/ModalCrearUsuario.jsx";
 import ModalEditarUsuario from "./components/ModalEditarUsuario.jsx";
 
@@ -20,6 +21,10 @@ function UsuariosAdmin() {
   const [modalPassword, setModalPassword] = useState(null);
   const [modalCrearAbierto, setModalCrearAbierto] = useState(false);
   const [usuarioAEditar, setUsuarioAeditar] = useState(null);
+  const [toast, setToast] = useState(null);
+
+  // Helper para mostrar toast con tipo determinado (exito | error | advertencia | info)
+  const mostrarToast = (mensaje, tipo = "exito") => setToast({ mensaje, tipo });
 
   const cargarUsuarios = async () => {
     setCargando(true);
@@ -54,23 +59,25 @@ function UsuariosAdmin() {
     return true;
   });
 
-  // Acciones 
-  const desactivar = async (id) => {
-    if (!confirm("¿Desactivar este usuario?")) return;
+  // Acciones
+  const desactivar = async (id, nombre) => {
+    if (!confirm(`¿Desactivar al usuario ${nombre}?`)) return;
     try {
       await api(`/usuarios/${id}/desactivar`, { method: "PATCH" });
+      mostrarToast(`Usuario ${nombre} desactivado`, "advertencia");
       cargarUsuarios();
     } catch (err) {
-      alert(err.message);
+      if (!err.sesionExpirada) mostrarToast(err.message, "error");
     }
   };
 
-  const reactivar = async (id) => {
+  const reactivar = async (id, nombre) => {
     try {
       await api(`/usuarios/${id}/reactivar`, { method: "PATCH" });
+      mostrarToast(`Usuario ${nombre} reactivado`, "exito");
       cargarUsuarios();
     } catch (err) {
-      alert(err.message);
+      if (!err.sesionExpirada) mostrarToast(err.message, "error");
     }
   };
 
@@ -79,9 +86,10 @@ function UsuariosAdmin() {
       return;
     try {
       await api(`/usuarios/${id}`, { method: "DELETE" });
+      mostrarToast(`Usuario ${nombre} eliminado permanentemente`, "exito");
       cargarUsuarios();
     } catch (err) {
-      alert(err.message);
+      if (!err.sesionExpirada) mostrarToast(err.message, "error");
     }
   };
 
@@ -97,9 +105,10 @@ function UsuariosAdmin() {
         email: data.email,
         nombreUsuario: nombre,
       });
+      mostrarToast(`Contraseña temporal generada para ${nombre}`, "exito");
       cargarUsuarios();
     } catch (err) {
-      alert(err.message);
+      if (!err.sesionExpirada) mostrarToast(err.message, "error");
     }
   };
 
@@ -144,12 +153,22 @@ function UsuariosAdmin() {
               {usuarios.length} registrados · {usuariosFiltrados.length} visibles
             </p>
           </div>
-          <button
-            className="usuarios-admin-boton-crear"
-            onClick={() => setModalCrearAbierto(true)}
-          >
-            + Crear Usuario
-          </button>
+          <div className="usuarios-admin-acciones-encabezado">
+            <button
+              className="usuarios-admin-boton-refrescar"
+              onClick={cargarUsuarios}
+              disabled={cargando}
+              title="Recargar la lista sin reiniciar la página"
+            >
+              {cargando ? "Refrescando..." : "Refrescar"}
+            </button>
+            <button
+              className="usuarios-admin-boton-crear"
+              onClick={() => setModalCrearAbierto(true)}
+            >
+              + Crear Usuario
+            </button>
+          </div>
         </div>
 
         <div className="usuarios-admin-filtros animar-fade-in">
@@ -253,6 +272,13 @@ function UsuariosAdmin() {
                       <div className="usuarios-admin-acciones">
                         <button
                           className="usuarios-admin-accion"
+                          onClick={() => navigate(`/admin/usuarios/${u.id}`)}
+                          title="Ver perfil completo"
+                        >
+                          Ver perfil
+                        </button>
+                        <button
+                          className="usuarios-admin-accion"
                           onClick={() => setUsuarioAeditar(u)}
                           title="Editar"
                         >
@@ -270,7 +296,7 @@ function UsuariosAdmin() {
                         {u.activo ? (
                           <button
                             className="usuarios-admin-accion usuarios-admin-accion-warning"
-                            onClick={() => desactivar(u.id)}
+                            onClick={() => desactivar(u.id, u.nombre_completo)}
                             title="Desactivar"
                           >
                             Desactivar
@@ -278,7 +304,7 @@ function UsuariosAdmin() {
                         ) : (
                           <button
                             className="usuarios-admin-accion usuarios-admin-accion-success"
-                            onClick={() => reactivar(u.id)}
+                            onClick={() => reactivar(u.id, u.nombre_completo)}
                             title="Reactivar"
                           >
                             Reactivar
@@ -310,14 +336,37 @@ function UsuariosAdmin() {
       <ModalCrearUsuario
         abierto={modalCrearAbierto}
         onCerrar={() => setModalCrearAbierto(false)}
-        onCreado={(data) => setModalPassword(data)}
+        onCreado={(data) => {
+          setModalPassword(data);
+          mostrarToast(`Usuario ${data.nombreUsuario} creado correctamente`, "exito");
+          cargarUsuarios();
+        }}
       />
       <ModalEditarUsuario
         abierto={usuarioAEditar !== null}
         onCerrar={() => setUsuarioAeditar(null)}
         usuario={usuarioAEditar}
-        onEditado={cargarUsuarios}
+        onEditado={(nombre, mensajePersonalizado) => {
+          // Si viene un mensaje del backend (cambio de correo/cedula) lo usamos
+          // tal cual; si no, mostramos el genérico de "Cambios guardados".
+          const mensaje = mensajePersonalizado
+            ? mensajePersonalizado
+            : `Cambios guardados${nombre ? ` para ${nombre}` : ""}`;
+          mostrarToast(mensaje, "exito");
+          cargarUsuarios();
+        }}
       />
+
+      {toast && (
+        <Toast
+          mensaje={toast.mensaje}
+          tipo={toast.tipo}
+          duracion={3500}
+          posicion="arriba-centro"
+          onCerrar={() => setToast(null)}
+        />
+      )}
+
       <Footer />
     </div>
   );

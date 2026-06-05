@@ -9,6 +9,7 @@ import vehiculosRoutes from './routes/vehiculos.routes.js';
 import chequeosRoutes from './routes/chequeos.routes.js';
 import catalogoAdminRoutes from './routes/catalogoAdmin.routes.js';
 import fotosChequeoRoutes from './routes/fotosChequeo.routes.js';
+import geoRoutes from './routes/geo.routes.js';
 import { iniciarKeepAlive, detenerKeepAlive } from './utils/keepAlive.js';
 
 dotenv.config();
@@ -60,6 +61,7 @@ app.use('/api/vehiculos', vehiculosRoutes);
 app.use('/api/chequeos', chequeosRoutes);
 app.use('/api/catalogo-admin', catalogoAdminRoutes);
 app.use('/api/respuestas', fotosChequeoRoutes);
+app.use('/api/geo', geoRoutes);
 
 app.use((req, res) => {
     res.status(404).json({ error: 'Ruta no encontrada' });

@@ -28,8 +28,13 @@ export const login = async (req, res) => {
 
         const perfil = await obtenerPerfil(data.user.id);
 
+        // Llegamos aqui solo si la contraseña fue correcta (signInWithPassword OK).
+        // Si la cuenta esta desactivada, devolvemos 403 con mensaje claro para que
+        // el usuario sepa por que no puede entrar (no es un typo de contraseña).
         if (!perfil.activo) {
-            return res.status(403).json({ error: 'Cuenta desactivada' });
+            return res.status(403).json({
+                error: 'Tu cuenta esta desactivada. Contacta al administrador del SENA para reactivarla.',
+            });
         }
 
         res.json({

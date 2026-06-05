@@ -142,6 +142,39 @@
     box-shadow: var(--sombra-lg);
 }
 
+/* Contenedor de los dos botones del encabezado (refrescar + crear) */
+.usuarios-admin-acciones-encabezado {
+    display: flex;
+    gap: var(--espacio-sm);
+    align-items: center;
+    flex-wrap: wrap;
+}
+
+.usuarios-admin-boton-refrescar {
+    background: var(--color-blanco);
+    color: var(--color-verde-oscuro);
+    border: 2px solid var(--color-verde-sena);
+    padding: var(--espacio-md) var(--espacio-lg);
+    border-radius: var(--radio-md);
+    font-size: var(--tamano-md);
+    font-weight: var(--peso-semibold);
+    cursor: pointer;
+    transition: all var(--velocidad-media) var(--suavizado);
+    box-shadow: var(--sombra-sm);
+    font-family: inherit;
+}
+
+.usuarios-admin-boton-refrescar:hover:not(:disabled) {
+    background: var(--color-verde-claro);
+    transform: translateY(-2px);
+    box-shadow: var(--sombra-md);
+}
+
+.usuarios-admin-boton-refrescar:disabled {
+    opacity: 0.55;
+    cursor: not-allowed;
+}
+
 /*  FILTROS  */
 .usuarios-admin-filtros {
     background: var(--color-blanco);

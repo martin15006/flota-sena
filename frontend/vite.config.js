@@ -10,5 +10,12 @@ export default defineConfig({
     //   http://<IP_DEL_PC>:5173
     host: true,
     port: 5173,
+    // HMR (hot module replacement) explicito: hace que el WebSocket use el mismo
+    // hostname desde donde se accede (localhost o IP de red). Sin esto, al activar
+    // host:true el cliente intenta conectar a un hostname incorrecto y falla.
+    hmr: {
+      // clientPort 5173 fuerza al cliente a usar el mismo puerto del server
+      clientPort: 5173,
+    },
   },
 })

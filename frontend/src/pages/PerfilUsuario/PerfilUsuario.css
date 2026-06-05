@@ -1,0 +1,582 @@
+/* =================================================================
+   Pagina PerfilUsuario — vista detalle del perfil de un usuario.
+   Convenciones del proyecto seccion 17: bordes 2px+, sombras md+,
+   texto gris-900, sin matices claros.
+   ================================================================= */
+
+.perfil-pagina {
+    min-height: 100vh;
+    background: var(--color-gris-50);
+    display: flex;
+    flex-direction: column;
+}
+
+/* ===== Header (mismo patron que UsuariosAdmin) ===== */
+.perfil-header {
+    background: var(--color-blanco);
+    border-bottom: 2px solid var(--color-gris-300);
+    padding: var(--espacio-md) var(--espacio-xl);
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    box-shadow: var(--sombra-sm);
+}
+
+.perfil-logo-wrapper {
+    display: flex;
+    align-items: center;
+    gap: var(--espacio-md);
+}
+
+.perfil-logo-img {
+    height: 40px;
+    width: auto;
+}
+
+.perfil-logo {
+    font-size: var(--tamano-lg);
+    font-weight: var(--peso-bold);
+    color: var(--color-verde-oscuro);
+}
+
+.perfil-usuario-header {
+    display: flex;
+    align-items: center;
+    gap: var(--espacio-md);
+}
+
+.perfil-usuario-nombre {
+    font-size: var(--tamano-sm);
+    font-weight: var(--peso-bold);
+    color: var(--color-gris-900);
+}
+
+.perfil-usuario-rol {
+    font-size: var(--tamano-xs);
+    color: var(--color-gris-700);
+    text-transform: capitalize;
+}
+
+.perfil-logout {
+    padding: var(--espacio-sm) var(--espacio-md);
+    background: var(--color-blanco);
+    color: var(--color-rojo);
+    border: 2px solid var(--color-rojo);
+    border-radius: var(--radio-md);
+    font-size: var(--tamano-sm);
+    font-weight: var(--peso-semibold);
+    cursor: pointer;
+    transition: all var(--velocidad-rapida) var(--suavizado);
+}
+
+.perfil-logout:hover {
+    background: var(--color-rojo);
+    color: var(--color-blanco);
+}
+
+/* ===== Main ===== */
+.perfil-main {
+    max-width: 1100px;
+    width: 100%;
+    margin: 0 auto;
+    padding: var(--espacio-xl);
+    flex: 1;
+    display: flex;
+    flex-direction: column;
+    gap: var(--espacio-xl);
+}
+
+/* ===== Estados de carga / error ===== */
+.perfil-cargando,
+.perfil-error {
+    max-width: 1100px;
+    margin: var(--espacio-xl) auto;
+    padding: var(--espacio-xl);
+    background: var(--color-blanco);
+    border: 2px solid var(--color-gris-300);
+    border-radius: var(--radio-md);
+    text-align: center;
+    font-size: var(--tamano-md);
+    color: var(--color-gris-900);
+    box-shadow: var(--sombra-md);
+}
+
+.perfil-error {
+    background: #FFEBEE;
+    color: var(--color-rojo);
+    border: 2px solid var(--color-rojo);
+}
+
+/* ===== Acciones top (volver + editar) ===== */
+.perfil-acciones-top {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    gap: var(--espacio-md);
+}
+
+.perfil-volver {
+    padding: var(--espacio-sm) var(--espacio-md);
+    background: var(--color-blanco);
+    color: var(--color-verde-oscuro);
+    border: 2px solid var(--color-verde-sena);
+    border-radius: var(--radio-md);
+    font-size: var(--tamano-sm);
+    font-weight: var(--peso-semibold);
+    cursor: pointer;
+    transition: all var(--velocidad-rapida) var(--suavizado);
+}
+
+.perfil-volver:hover {
+    background: var(--color-verde-sena);
+    color: var(--color-blanco);
+}
+
+.perfil-boton-editar {
+    padding: var(--espacio-sm) var(--espacio-lg);
+    background: var(--color-verde-sena);
+    color: var(--color-blanco);
+    border: 2px solid var(--color-verde-oscuro);
+    border-radius: var(--radio-md);
+    font-size: var(--tamano-sm);
+    font-weight: var(--peso-bold);
+    cursor: pointer;
+    transition: all var(--velocidad-rapida) var(--suavizado);
+    box-shadow: var(--sombra-sm);
+    text-transform: uppercase;
+    letter-spacing: 0.3px;
+}
+
+.perfil-boton-editar:hover {
+    background: var(--color-verde-oscuro);
+    transform: translateY(-1px);
+    box-shadow: var(--sombra-md);
+}
+
+/* ===== Hero: foto + nombre + rol + estado ===== */
+.perfil-hero {
+    display: flex;
+    gap: var(--espacio-xl);
+    background: var(--color-blanco);
+    border: 2px solid var(--color-gris-300);
+    border-radius: var(--radio-lg);
+    padding: var(--espacio-xl);
+    box-shadow: var(--sombra-md);
+    align-items: center;
+}
+
+.perfil-hero-foto {
+    width: 160px;
+    height: 160px;
+    object-fit: cover;
+    border-radius: var(--radio-md);
+    border: 2px solid var(--color-verde-sena);
+    box-shadow: var(--sombra-md);
+    flex-shrink: 0;
+}
+
+.perfil-hero-foto-placeholder {
+    width: 160px;
+    height: 160px;
+    background: var(--color-verde-sena);
+    color: var(--color-blanco);
+    border-radius: var(--radio-md);
+    border: 2px solid var(--color-verde-oscuro);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 64px;
+    font-weight: var(--peso-bold);
+    box-shadow: var(--sombra-md);
+    flex-shrink: 0;
+}
+
+.perfil-hero-info {
+    display: flex;
+    flex-direction: column;
+    gap: var(--espacio-md);
+    flex: 1;
+}
+
+.perfil-hero-nombre {
+    margin: 0;
+    font-size: 28px;
+    font-weight: var(--peso-bold);
+    color: var(--color-gris-900);
+    line-height: 1.2;
+}
+
+.perfil-hero-meta {
+    display: flex;
+    flex-wrap: wrap;
+    gap: var(--espacio-md);
+    align-items: center;
+}
+
+.perfil-hero-centro {
+    color: var(--color-gris-900);
+    font-size: var(--tamano-sm);
+    font-weight: var(--peso-semibold);
+}
+
+.perfil-hero-estado {
+    display: flex;
+    flex-wrap: wrap;
+    gap: var(--espacio-sm);
+}
+
+/* ===== Badges (rol y estado) ===== */
+.perfil-rol-badge {
+    display: inline-block;
+    padding: 4px 12px;
+    border-radius: var(--radio-xl);
+    font-size: var(--tamano-xs);
+    font-weight: var(--peso-bold);
+    text-transform: uppercase;
+    letter-spacing: 0.5px;
+    border: 2px solid;
+}
+
+.perfil-rol-admin {
+    background: #E3F2FD;
+    color: #0D47A1;
+    border-color: #0D47A1;
+}
+
+.perfil-rol-conductor {
+    background: var(--color-verde-claro);
+    color: var(--color-verde-oscuro);
+    border-color: var(--color-verde-oscuro);
+}
+
+.perfil-rol-admin_centro {
+    background: #FFF3E0;
+    color: #E65100;
+    border-color: #E65100;
+}
+
+.perfil-estado-badge {
+    display: inline-flex;
+    align-items: center;
+    gap: 4px;
+    padding: 4px 12px;
+    border-radius: var(--radio-xl);
+    font-size: var(--tamano-xs);
+    font-weight: var(--peso-bold);
+    border: 2px solid;
+}
+
+.perfil-estado-badge.activo {
+    background: var(--color-verde-claro);
+    color: var(--color-verde-oscuro);
+    border-color: var(--color-verde-oscuro);
+}
+
+.perfil-estado-badge.inactivo {
+    background: #FFEBEE;
+    color: var(--color-rojo);
+    border-color: var(--color-rojo);
+}
+
+.perfil-estado-badge.advertencia {
+    background: #eb943e;
+    color: #1A1A1A;
+    border-color: #e29a2d;
+}
+
+/* ===== Secciones (datos personales, licencia, etc.) ===== */
+.perfil-seccion {
+    background: var(--color-blanco);
+    border: 2px solid var(--color-gris-300);
+    border-radius: var(--radio-lg);
+    padding: var(--espacio-xl);
+    box-shadow: var(--sombra-md);
+}
+
+.perfil-seccion-titulo {
+    margin: 0 0 var(--espacio-lg) 0;
+    font-size: var(--tamano-lg);
+    font-weight: var(--peso-bold);
+    color: var(--color-verde-oscuro);
+    padding-bottom: var(--espacio-sm);
+    border-bottom: 2px solid var(--color-gris-200);
+}
+
+/* Grid de datos label/valor */
+.perfil-grid-datos {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(220px, 1fr));
+    gap: var(--espacio-lg);
+}
+
+.perfil-dato {
+    display: flex;
+    flex-direction: column;
+    gap: 4px;
+}
+
+.perfil-dato-label {
+    font-size: var(--tamano-xs);
+    font-weight: var(--peso-bold);
+    color: var(--color-gris-700);
+    text-transform: uppercase;
+    letter-spacing: 0.5px;
+}
+
+.perfil-dato-valor {
+    font-size: var(--tamano-md);
+    color: var(--color-gris-900);
+    font-weight: var(--peso-semibold);
+    display: flex;
+    flex-wrap: wrap;
+    gap: var(--espacio-sm);
+    align-items: center;
+}
+
+.perfil-dato-vacio {
+    color: var(--color-gris-700);
+    font-style: italic;
+    font-weight: var(--peso-regular);
+}
+
+/* Indicador de tiempo restante (ej: "9 meses", "12 días") */
+.perfil-vencimiento {
+    font-size: var(--tamano-xs);
+    padding: 2px 8px;
+    border-radius: var(--radio-md);
+    background: var(--color-verde-claro);
+    color: var(--color-verde-oscuro);
+    font-weight: var(--peso-bold);
+    border: 1px solid var(--color-verde-oscuro);
+}
+
+.perfil-vencimiento.urgente {
+    background: #eb943e;
+    color: #1A1A1A;
+    border-color: #e29a2d;
+}
+
+.perfil-vencimiento.vencido {
+    background: var(--color-rojo);
+    color: var(--color-blanco);
+    border-color: #B71C1C;
+}
+
+/* ===== Sección de stats (chequeos) ===== */
+.perfil-stats {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(180px, 1fr));
+    gap: var(--espacio-lg);
+    margin-bottom: var(--espacio-xl);
+}
+
+.perfil-stat {
+    background: var(--color-gris-50);
+    border: 2px solid var(--color-gris-300);
+    border-radius: var(--radio-md);
+    padding: var(--espacio-lg);
+    text-align: center;
+}
+
+.perfil-stat-numero {
+    font-size: 36px;
+    font-weight: var(--peso-bold);
+    color: var(--color-verde-oscuro);
+    line-height: 1;
+}
+
+.perfil-stat-numero.advertencia {
+    color: #E65100;
+}
+
+.perfil-stat-label {
+    font-size: var(--tamano-sm);
+    color: var(--color-gris-900);
+    font-weight: var(--peso-semibold);
+    margin-top: var(--espacio-sm);
+}
+
+/* Bloque "último chequeo" */
+.perfil-ultimo-chequeo {
+    background: var(--color-gris-50);
+    border: 2px solid var(--color-gris-300);
+    border-radius: var(--radio-md);
+    padding: var(--espacio-lg);
+    display: flex;
+    flex-direction: column;
+    gap: var(--espacio-sm);
+}
+
+.perfil-ultimo-chequeo-header {
+    font-size: var(--tamano-sm);
+    font-weight: var(--peso-bold);
+    color: var(--color-verde-oscuro);
+    text-transform: uppercase;
+    letter-spacing: 0.5px;
+}
+
+.perfil-ultimo-chequeo-body {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(180px, 1fr));
+    gap: var(--espacio-md);
+}
+
+.perfil-ultimo-chequeo-body > div {
+    color: var(--color-gris-900);
+    font-size: var(--tamano-sm);
+}
+
+.perfil-ultimo-label {
+    color: var(--color-gris-700);
+    font-weight: var(--peso-semibold);
+    font-size: var(--tamano-xs);
+    text-transform: uppercase;
+    letter-spacing: 0.3px;
+}
+
+.perfil-link-ver-chequeo {
+    align-self: flex-start;
+    background: none;
+    border: none;
+    color: var(--color-verde-oscuro);
+    font-size: var(--tamano-sm);
+    font-weight: var(--peso-bold);
+    cursor: pointer;
+    padding: 0;
+    margin-top: var(--espacio-sm);
+    text-decoration: underline;
+}
+
+.perfil-link-ver-chequeo:hover {
+    color: var(--color-verde-sena);
+}
+
+/* Badges de resultado del último chequeo */
+.perfil-resultado-badge {
+    display: inline-block;
+    padding: 2px 10px;
+    border-radius: var(--radio-md);
+    font-size: var(--tamano-xs);
+    font-weight: var(--peso-bold);
+    text-transform: uppercase;
+    border: 2px solid;
+    letter-spacing: 0.3px;
+}
+
+.perfil-resultado-verde {
+    background: var(--color-verde-claro);
+    color: var(--color-verde-oscuro);
+    border-color: var(--color-verde-oscuro);
+}
+
+.perfil-resultado-amarillo {
+    background: #FFC107;
+    color: #1A1A1A;
+    border-color: #1A1A1A;
+}
+
+.perfil-resultado-naranja {
+    background: #eb943e;
+    color: #1A1A1A;
+    border-color: #e29a2d;
+}
+
+.perfil-resultado-rojo {
+    background: var(--color-rojo);
+    color: var(--color-blanco);
+    border-color: #B71C1C;
+}
+
+.perfil-resultado-gris {
+    background: var(--color-gris-200);
+    color: var(--color-gris-900);
+    border-color: var(--color-gris-700);
+}
+
+/* ===== Timeline de actividad ===== */
+.perfil-timeline {
+    list-style: none;
+    margin: 0;
+    padding: 0;
+    display: flex;
+    flex-direction: column;
+    gap: var(--espacio-md);
+}
+
+.perfil-timeline-item {
+    display: flex;
+    gap: var(--espacio-md);
+    padding: var(--espacio-md);
+    background: var(--color-gris-50);
+    border: 2px solid var(--color-gris-300);
+    border-radius: var(--radio-md);
+    align-items: center;
+}
+
+/* Marcador circular sobrio del timeline (reemplaza emojis decorativos).
+   Verde SENA pequeño y solido — funciona en cualquier monitor.
+   Centrado verticalmente por el align-items: center del item padre. */
+.perfil-timeline-marcador {
+    flex-shrink: 0;
+    width: 12px;
+    height: 12px;
+    background: var(--color-verde-sena);
+    border: 2px solid var(--color-verde-oscuro);
+    border-radius: 50%;
+}
+
+.perfil-timeline-body {
+    flex: 1;
+}
+
+.perfil-timeline-titulo {
+    font-size: var(--tamano-md);
+    color: var(--color-gris-900);
+    font-weight: var(--peso-bold);
+}
+
+.perfil-timeline-meta {
+    margin-top: 2px;
+    font-size: var(--tamano-xs);
+    color: var(--color-gris-700);
+}
+
+.perfil-timeline-meta strong {
+    color: var(--color-gris-900);
+}
+
+/* Vacío / sin datos */
+.perfil-sin-datos {
+    background: var(--color-gris-50);
+    border: 2px dashed var(--color-gris-300);
+    border-radius: var(--radio-md);
+    padding: var(--espacio-lg);
+    text-align: center;
+    color: var(--color-gris-700);
+    font-style: italic;
+    font-size: var(--tamano-sm);
+}
+
+/* ===== Responsive ===== */
+@media (max-width: 700px) {
+    .perfil-main {
+        padding: var(--espacio-md);
+        gap: var(--espacio-lg);
+    }
+
+    .perfil-hero {
+        flex-direction: column;
+        text-align: center;
+        gap: var(--espacio-md);
+    }
+
+    .perfil-hero-meta,
+    .perfil-hero-estado {
+        justify-content: center;
+    }
+
+    .perfil-acciones-top {
+        flex-direction: column-reverse;
+        align-items: stretch;
+    }
+}

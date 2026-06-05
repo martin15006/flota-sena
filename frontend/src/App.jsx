@@ -4,6 +4,7 @@ import ProtectedRoutes from "./components/ProtectedRoute/ProtectedRoute.jsx";
 import Login from "./pages/Login/Login.jsx";
 import Dashboard from "./pages/Dashboard/Dashboard.jsx";
 import UsuariosAdmin from "./pages/UsuariosAdmin/UsuariosAdmin.jsx";
+import PerfilUsuario from "./pages/PerfilUsuario/PerfilUsuario.jsx";
 import VehiculosAdmin from "./pages/VehiculosAdmin/VehiculosAdmin.jsx";
 import VehiculoDetalle from "./pages/VehiculoDetalle/VehiculoDetalle.jsx";
 import CambiarPassword from "./pages/CambiarPassword/CambiarPassword.jsx";
@@ -40,6 +41,12 @@ function App() {
                     <Route path="/admin/usuarios" element={
                         <ProtectedRoutes>
                             <UsuariosAdmin />
+                        </ProtectedRoutes>
+                    } />
+
+                    <Route path="/admin/usuarios/:id" element={
+                        <ProtectedRoutes>
+                            <PerfilUsuario />
                         </ProtectedRoutes>
                     } />
 

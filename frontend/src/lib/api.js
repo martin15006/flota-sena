@@ -48,7 +48,11 @@ export const api = async (endpoint, options = {}) => {
     }
 
     if (!response.ok) {
-        throw new Error(data.error || `Error ${response.status}`);
+        // Adjuntamos el status al Error para que los callers puedan diferenciar
+        // entre tipos de fallo (401, 403, 404, etc) y mostrar UI distinta.
+        const err = new Error(data.error || `Error ${response.status}`);
+        err.status = response.status;
+        throw err;
     }
 
     return data;
