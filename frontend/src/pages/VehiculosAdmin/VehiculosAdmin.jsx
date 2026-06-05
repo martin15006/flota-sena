@@ -2,7 +2,7 @@ import { useEffect, useState } from "react";
 import { useNavigate } from "react-router-dom";
 import { useAuth } from "../../hooks/useAuth.js";
 import { api } from "../../lib/api.js";
-import Footer from "../../components/Footer/Footer.jsx";
+import AdminLayout from "../../components/AdminLayout/AdminLayout.jsx";
 import Toast from "../../components/Toast/Toast.jsx";
 import ModalVehiculo from "./components/ModalVehiculo.jsx";
 import "./VehiculosAdmin.css";
@@ -27,7 +27,7 @@ const TIPOS_LABEL = {
 };
 
 function VehiculosAdmin() {
-    const { usuario, cerrarSesion } = useAuth();
+    const { usuario } = useAuth();
     const navigate = useNavigate();
     const [vehiculos, setVehiculos] = useState([]);
     const [cargando, setCargando] = useState(true);
@@ -134,39 +134,14 @@ function VehiculosAdmin() {
         }
     };
 
-    const cerrar = () => {
-        cerrarSesion();
-        navigate("/login");
-    };
-
     const obtenerFotoPrincipal = (v) => {
         const principal = v.fotos?.find((f) => f.es_principal);
         return principal?.url || v.fotos?.[0]?.url || null;
     };
 
     return (
-        <div className="vehiculos-admin">
-            <header className="vehiculos-admin-header">
-                <div className="vehiculos-admin-logo-wrapper">
-                    <img src="/logoverde.png" alt="SENA" className="vehiculos-admin-logo-img" />
-                    <div className="vehiculos-admin-titulo-pagina">Gestión de Flota</div>
-                </div>
-                <div className="vehiculos-admin-usuario">
-                    <div className="vehiculos-admin-usuario-info">
-                        <div className="vehiculos-admin-usuario-nombre">{usuario.nombre_completo}</div>
-                        <div className="vehiculos-admin-usuario-rol">{usuario.rol}</div>
-                    </div>
-                    <button className="vehiculos-admin-logout" onClick={cerrar}>
-                        Cerrar sesión
-                    </button>
-                </div>
-            </header>
-
-            <main className="vehiculos-admin-main">
-                <button className="vehiculos-admin-volver" onClick={() => navigate("/dashboard")}>
-                    ← Volver al dashboard
-                </button>
-
+        <AdminLayout titulo="Gestión de vehículos">
+            <div className="vehiculos-admin-contenido">
                 <div className="vehiculos-admin-encabezado">
                     <div>
                         <h1 className="vehiculos-admin-titulo">Vehículos</h1>
@@ -367,7 +342,7 @@ function VehiculosAdmin() {
                         })}
                     </div>
                 )}
-            </main>
+            </div>
 
             <ModalVehiculo
                 abierto={modalCrearAbierto}
@@ -409,9 +384,7 @@ function VehiculosAdmin() {
                     onCerrar={() => setToast(null)}
                 />
             )}
-
-            <Footer />
-        </div>
+        </AdminLayout>
     );
 }
 

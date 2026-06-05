@@ -4,13 +4,13 @@ import { useAuth } from "../../hooks/useAuth.js";
 import { api } from "../../lib/api.js";
 import "./UsuariosAdmin.css";
 import ModalPasswordTemporal from "./components/ModalPasswordTemporal.jsx";
-import Footer from '../../components/Footer/Footer.jsx';
+import AdminLayout from '../../components/AdminLayout/AdminLayout.jsx';
 import Toast from '../../components/Toast/Toast.jsx';
 import ModalCrearUsuario from "./components/ModalCrearUsuario.jsx";
 import ModalEditarUsuario from "./components/ModalEditarUsuario.jsx";
 
 function UsuariosAdmin() {
-  const { usuario, cerrarSesion } = useAuth();
+  const { usuario } = useAuth();
   const navigate = useNavigate();
   const [usuarios, setUsuarios] = useState([]);
   const [cargando, setCargando] = useState(true);
@@ -112,40 +112,9 @@ function UsuariosAdmin() {
     }
   };
 
-  const cerrar = () => {
-    cerrarSesion();
-    navigate("/login");
-  };
-
   return (
-    <div className="usuarios-admin">
-      <header className="usuarios-admin-header">
-        <div className="usuarios-admin-logo-wrapper">
-          <img src="/logoverde.png" alt="SENA" className="usuarios-admin-logo-img" />
-          <div className="usuarios-admin-logo">Gestión de Flota</div>
-        </div>
-        <div className="usuarios-admin-usuario">
-          <div className="usuarios-admin-usuario-info">
-            <div className="usuarios-admin-usuario-nombre">
-              {usuario.nombre_completo}
-            </div>
-            <div className="usuarios-admin-usuario-rol">{usuario.rol}</div>
-          </div>
-          <button className="usuarios-admin-logout" onClick={cerrar}>
-            Cerrar sesión
-          </button>
-
-        </div>
-      </header>
-
-      <main className="usuarios-admin-main">
-        <button
-          className="usuarios-admin-volver"
-          onClick={() => navigate("/dashboard")}
-        >
-          ← Volver al dashboard
-        </button>
-
+    <AdminLayout titulo="Gestión de usuarios">
+      <div className="usuarios-admin-contenido">
         <div className="usuarios-admin-encabezado">
           <div>
             <h1 className="usuarios-admin-titulo">Gestión de usuarios</h1>
@@ -219,6 +188,7 @@ function UsuariosAdmin() {
 
         {!cargando && !error && usuariosFiltrados.length > 0 && (
           <div className="usuarios-admin-tabla-wrapper animar-fade-in">
+            {/* Cierre del bloque cuando termina la tabla */}
             <table className="usuarios-admin-tabla">
               <thead>
                 <tr>
@@ -325,7 +295,7 @@ function UsuariosAdmin() {
             </table>
           </div>
         )}
-      </main>
+      </div>
       <ModalPasswordTemporal
         abierto={modalPassword !== null}
         onCerrar={() => setModalPassword(null)}
@@ -366,9 +336,7 @@ function UsuariosAdmin() {
           onCerrar={() => setToast(null)}
         />
       )}
-
-      <Footer />
-    </div>
+    </AdminLayout>
   );
 }
 

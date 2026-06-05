@@ -6,6 +6,7 @@ import { api } from "../../lib/api.js";
 import { useAuth } from "../../hooks/useAuth.js";
 import Toast from "../../components/Toast/Toast.jsx";
 import Footer from "../../components/Footer/Footer.jsx";
+import BotonVolver from "../../components/BotonVolver/BotonVolver.jsx";
 import "./ChequeoDetalle.css";
 
 const CONFIG_ESTADO = {
@@ -116,9 +117,7 @@ function ChequeoDetalle() {
                 <div className="cheqdet-error">
                     No se pudo cargar el chequeo. {error || ""}
                 </div>
-                <button className="cheqdet-volver" onClick={() => navigate("/admin/chequeos")}>
-                    ← Volver a la lista
-                </button>
+                <BotonVolver a="/admin/chequeos" texto="Volver al listado" />
             </div>
         );
     }
@@ -166,9 +165,7 @@ function ChequeoDetalle() {
 
             {/* Barra de página */}
             <section className="cheqdet-barra-pagina">
-                <button className="cheqdet-volver" onClick={() => navigate("/admin/chequeos")}>
-                    ← Volver a la lista
-                </button>
+                <BotonVolver a="/admin/chequeos" texto="Volver al listado" />
                 <div className="cheqdet-barra-titulo">
                     <h1>Detalle del chequeo</h1>
                     <p>{v.placa || "—"} · {formatearFecha(chequeo.fecha)}</p>

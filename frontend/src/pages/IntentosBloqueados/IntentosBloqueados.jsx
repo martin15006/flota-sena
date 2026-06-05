@@ -5,7 +5,7 @@ import { useNavigate } from "react-router-dom";
 import { api } from "../../lib/api.js";
 import { useAuth } from "../../hooks/useAuth.js";
 import Toast from "../../components/Toast/Toast.jsx";
-import Footer from "../../components/Footer/Footer.jsx";
+import AdminLayout from "../../components/AdminLayout/AdminLayout.jsx";
 import "./IntentosBloqueados.css";
 
 const RAZONES = [
@@ -45,7 +45,7 @@ const formatearFechaHora = (iso) => {
 
 function IntentosBloqueados() {
     const navigate = useNavigate();
-    const { usuario, cerrarSesion } = useAuth();
+    const { usuario } = useAuth();
 
     const [intentos, setIntentos] = useState([]);
     const [total, setTotal] = useState(0);
@@ -58,11 +58,6 @@ function IntentosBloqueados() {
     const [razon, setRazon] = useState("");
     const [soloNoNotificados, setSoloNoNotificados] = useState(false);
     const [pagina, setPagina] = useState(1);
-
-    const manejarLogout = () => {
-        cerrarSesion();
-        navigate("/login");
-    };
 
     const cargarIntentos = useCallback(async () => {
         setCargando(true);
@@ -102,29 +97,9 @@ function IntentosBloqueados() {
     const totalPaginas = Math.max(1, Math.ceil(total / LIMITE_POR_PAGINA));
 
     return (
-        <div className="bloq-pagina">
-            {/* Header SENA */}
-            <header className="bloq-header-sena">
-                <div className="bloq-logo-wrapper">
-                    <img src="/logoverde.png" alt="SENA" className="bloq-logo-img" />
-                    <div className="bloq-titulo-app">Gestión de Flota</div>
-                </div>
-                <div className="bloq-usuario">
-                    <div className="bloq-usuario-info">
-                        <div className="bloq-usuario-nombre">{usuario?.nombre_completo}</div>
-                        <div className="bloq-usuario-rol">{usuario?.rol}</div>
-                    </div>
-                    <button className="bloq-logout" onClick={manejarLogout}>
-                        Cerrar sesión
-                    </button>
-                </div>
-            </header>
-
-            {/* Barra de página */}
+        <AdminLayout titulo="Intentos bloqueados">
+            {/* Barra de página (sin botones de navegacion — el sidebar los cubre) */}
             <section className="bloq-barra-pagina">
-                <button className="bloq-volver" onClick={() => navigate("/admin/chequeos")}>
-                    ← Volver a chequeos
-                </button>
                 <div className="bloq-barra-titulo">
                     <h1>Intentos bloqueados</h1>
                     <p>{total} intento{total === 1 ? "" : "s"} registrado{total === 1 ? "" : "s"} por el sistema</p>
@@ -303,9 +278,7 @@ function IntentosBloqueados() {
                     onCerrar={() => setToast(null)}
                 />
             )}
-
-            <Footer />
-        </div>
+        </AdminLayout>
     );
 }
 

@@ -1,80 +1,314 @@
+// Dashboard administrativo — version final con datos reales (Bloque B paso 4).
+// Consume /api/dashboard/stats y muestra:
+//   1) Saludo + fecha de hoy
+//   2) 4 cajas grandes de KPIs del dia
+//   3) Seccion "Necesita atencion" con 3 grupos de alertas linkeables
+//
+// Auto-refresh cada 60 segundos para que el admin vea los numeros del dia
+// actualizados sin tener que recargar manualmente.
+
+import { useEffect, useState } from "react";
 import { useNavigate } from "react-router-dom";
 import { useAuth } from "../../hooks/useAuth.js";
-import './Dashboard.css';
-import Footer from "../../components/Footer/Footer.jsx";
+import { api } from "../../lib/api.js";
+import AdminLayout from "../../components/AdminLayout/AdminLayout.jsx";
+import "./Dashboard.css";
 
-const ROLES_ADMIN = ['admin', 'admin_centro', 'admin_ciudad', 'admin_departamental', 'admin_regional', 'superadmin'];
+// Helper: formato de fecha tipo "viernes 5 de junio de 2026"
+const formatearFechaHoy = () => {
+    const ahora = new Date();
+    return ahora.toLocaleDateString("es-CO", {
+        weekday: "long",
+        day: "numeric",
+        month: "long",
+        year: "numeric",
+    });
+};
+
+// Helper: clasifica los dias restantes en niveles de urgencia
+const nivelLicencia = (dias) => {
+    if (dias < 0) return "vencido";   // ya vencio
+    if (dias <= 7) return "critico";   // <= 1 semana
+    if (dias <= 30) return "urgente";  // <= 1 mes
+    return "normal";
+};
+
+// Helper: texto humano para dias restantes
+const textoLicencia = (dias) => {
+    if (dias < 0) return `vencida hace ${Math.abs(dias)} día${Math.abs(dias) === 1 ? "" : "s"}`;
+    if (dias === 0) return "vence hoy";
+    if (dias === 1) return "vence mañana";
+    return `vence en ${dias} días`;
+};
 
 function Dashboard() {
-    const { usuario, cerrarSesion } = useAuth();
+    const { usuario } = useAuth();
     const navigate = useNavigate();
 
-    const esAdmin = ROLES_ADMIN.includes(usuario?.rol);
+    const [stats, setStats] = useState(null);
+    const [cargando, setCargando] = useState(true);
+    const [error, setError] = useState(null);
 
-    const manejarLogout = () => {
-        cerrarSesion();
-        navigate('/login');
+    const cargarStats = async () => {
+        try {
+            const data = await api("/dashboard/stats");
+            setStats(data);
+            setError(null);
+        } catch (err) {
+            if (!err.sesionExpirada) setError(err.message);
+        } finally {
+            setCargando(false);
+        }
     };
 
+    useEffect(() => {
+        if (usuario) cargarStats();
+        // eslint-disable-next-line react-hooks/exhaustive-deps
+    }, [usuario]);
+
+    // Auto-refresh cada 60s para mantener los numeros del dia actualizados
+    useEffect(() => {
+        if (!usuario) return;
+        const interval = setInterval(cargarStats, 60000);
+        return () => clearInterval(interval);
+        // eslint-disable-next-line react-hooks/exhaustive-deps
+    }, [usuario]);
+
+    if (!usuario) return null;
+
+    // Conteo total de alertas para mostrar al usuario en el header de la seccion
+    const totalAlertas = stats
+        ? stats.alertas.licencias_por_vencer.length +
+          stats.alertas.vehiculos_sin_runt.length +
+          stats.alertas.vehiculos_no_operativos.length
+        : 0;
+
+    // Flag de scope para mostrar texto contextual al admin
+    const esScopeCentro = stats?.scope?.tipo === "centro";
+
     return (
-        <div className="dashboard">
-            <header className="dashboard-header">
-                <div className='dashboard-logo-wrapper'>
-                    <img src="/logoverde.png" alt='SENA' className="dashboard-logo-img" />
-                    <div className="dashboard-titulo">Gestión de Flota</div>
-                </div>
-                <div className="dashboard-usuario">
-                    <div className="dashboard-usuario-info">
-                        <div className="dashboard-usuario-nombre">
-                            {usuario.nombre_completo}
-                        </div>
-                        <div className="dashboard-usuario-rol">{usuario.rol}</div>
-                    </div>
-                    <button className="dashboard-logout" onClick={manejarLogout}>
-                        Cerrar sesión
+        <AdminLayout titulo="Dashboard" tieneNotificaciones={totalAlertas > 0}>
+            {/* ===== Saludo ===== */}
+            <div className="dashboard-bienvenida animar-fade-in-up">
+                <h2 className="dashboard-saludo">
+                    Hola, {usuario.nombre_completo?.split(" ")[0]}
+                </h2>
+                <p className="dashboard-fecha">{formatearFechaHoy()}</p>
+                {esScopeCentro && (
+                    <p className="dashboard-scope">
+                        Estás viendo datos de tu centro asignado.
+                    </p>
+                )}
+            </div>
+
+            {/* ===== Estado de error ===== */}
+            {error && (
+                <div className="dashboard-error animar-shake">
+                    ⚠️ {error}
+                    <button className="dashboard-error-reintentar" onClick={cargarStats}>
+                        Reintentar
                     </button>
                 </div>
-            </header>
+            )}
 
-            <main className="dashboard-main">
-                <div className="dashboard-bienvenida animar-fade-in-up">
-                    <h1>Bienvenido, {usuario.nombre_completo?.split(' ')[0]}</h1>
-                    <p>
-                        Sesión iniciada correctamente como {' '}
-                        <strong>{usuario.rol}</strong>
-                    </p>
-                    {esAdmin && (
-                        <div className="dashboard-acciones">
-                            <button
-                                className="boton boton-primario"
-                                onClick={() => navigate('/admin/vehiculos')}
-                            >
-                                Gestión de vehículos
-                            </button>
-                            <button
-                                className="boton boton-secundario"
-                                onClick={() => navigate('/admin/usuarios')}
-                            >
-                                Gestión de usuarios
-                            </button>
-                            <button
-                                className="boton boton-secundario"
-                                onClick={() => navigate('/admin/catalogo')}
-                            >
-                                Catálogo del chequeo
-                            </button>
-                            <button
-                                className="boton boton-primario"
-                                onClick={() => navigate('/admin/chequeos')}
-                            >
-                                Chequeos realizados
-                            </button>
+            {/* ===== KPIs del dia ===== */}
+            <section className="dashboard-seccion animar-fade-in">
+                <h3 className="dashboard-seccion-titulo">Números de hoy</h3>
+                <div className="dashboard-kpis">
+                    <div
+                        className="dashboard-kpi dashboard-kpi-clickeable"
+                        onClick={() => navigate("/admin/chequeos")}
+                        title="Ir a chequeos realizados"
+                    >
+                        <div className="dashboard-kpi-numero">
+                            {cargando ? "—" : stats?.kpis.chequeos_del_dia ?? 0}
                         </div>
-                    )}
+                        <div className="dashboard-kpi-label">Chequeos del día</div>
+                    </div>
+
+                    <div
+                        className={`dashboard-kpi dashboard-kpi-clickeable ${
+                            !cargando && stats?.kpis.chequeos_no_operativos_del_dia > 0
+                                ? "dashboard-kpi-alerta"
+                                : ""
+                        }`}
+                        onClick={() => navigate("/admin/chequeos")}
+                        title="Ver chequeos con resultado no operativo"
+                    >
+                        <div className="dashboard-kpi-numero">
+                            {cargando ? "—" : stats?.kpis.chequeos_no_operativos_del_dia ?? 0}
+                        </div>
+                        <div className="dashboard-kpi-label">No operativos</div>
+                    </div>
+
+                    <div
+                        className={`dashboard-kpi dashboard-kpi-clickeable ${
+                            !cargando && stats?.kpis.intentos_bloqueados_del_dia > 0
+                                ? "dashboard-kpi-alerta"
+                                : ""
+                        }`}
+                        onClick={() => navigate("/admin/chequeos/intentos-bloqueados")}
+                        title="Ver intentos bloqueados"
+                    >
+                        <div className="dashboard-kpi-numero">
+                            {cargando ? "—" : stats?.kpis.intentos_bloqueados_del_dia ?? 0}
+                        </div>
+                        <div className="dashboard-kpi-label">Intentos bloqueados</div>
+                    </div>
+
+                    <div
+                        className="dashboard-kpi dashboard-kpi-clickeable"
+                        onClick={() => navigate("/admin/usuarios")}
+                        title="Ir a gestión de usuarios"
+                    >
+                        <div className="dashboard-kpi-numero">
+                            {cargando ? "—" : stats?.kpis.conductores_activos ?? 0}
+                        </div>
+                        <div className="dashboard-kpi-label">Conductores activos</div>
+                    </div>
                 </div>
-            </main>
-            <Footer />
-        </div>
+            </section>
+
+            {/* ===== Necesita atencion ===== */}
+            <section className="dashboard-seccion animar-fade-in">
+                <h3 className="dashboard-seccion-titulo">
+                    Necesita atención
+                    {totalAlertas > 0 && (
+                        <span className="dashboard-seccion-badge">{totalAlertas}</span>
+                    )}
+                </h3>
+
+                {cargando && (
+                    <div className="dashboard-cargando">Cargando alertas...</div>
+                )}
+
+                {!cargando && totalAlertas === 0 && (
+                    <div className="dashboard-sin-alertas">
+                        Todo está en orden. No hay nada que requiera atención inmediata.
+                    </div>
+                )}
+
+                {!cargando && totalAlertas > 0 && (
+                    <div className="dashboard-alertas">
+                        {/* === Licencias por vencer === */}
+                        {stats.alertas.licencias_por_vencer.length > 0 && (
+                            <div className="dashboard-grupo-alerta">
+                                <div className="dashboard-grupo-titulo">
+                                    Licencias por vencer
+                                    <span className="dashboard-grupo-cantidad">
+                                        {stats.alertas.licencias_por_vencer.length}
+                                    </span>
+                                </div>
+                                <ul className="dashboard-lista-alerta">
+                                    {stats.alertas.licencias_por_vencer.slice(0, 5).map((u) => {
+                                        const nivel = nivelLicencia(u.dias_restantes);
+                                        return (
+                                            <li
+                                                key={u.id}
+                                                className={`dashboard-item-alerta dashboard-item-${nivel}`}
+                                                onClick={() => navigate(`/admin/usuarios/${u.id}`)}
+                                                title="Ver perfil del conductor"
+                                            >
+                                                <span className="dashboard-item-nombre">
+                                                    {u.nombre_completo}
+                                                </span>
+                                                <span className="dashboard-item-meta">
+                                                    {textoLicencia(u.dias_restantes)}
+                                                </span>
+                                            </li>
+                                        );
+                                    })}
+                                </ul>
+                                {stats.alertas.licencias_por_vencer.length > 5 && (
+                                    <button
+                                        className="dashboard-ver-mas"
+                                        onClick={() => navigate("/admin/usuarios")}
+                                    >
+                                        Ver los {stats.alertas.licencias_por_vencer.length - 5} restantes →
+                                    </button>
+                                )}
+                            </div>
+                        )}
+
+                        {/* === Vehiculos sin RUNT === */}
+                        {stats.alertas.vehiculos_sin_runt.length > 0 && (
+                            <div className="dashboard-grupo-alerta">
+                                <div className="dashboard-grupo-titulo">
+                                    Vehículos sin RUNT cargado
+                                    <span className="dashboard-grupo-cantidad">
+                                        {stats.alertas.vehiculos_sin_runt.length}
+                                    </span>
+                                </div>
+                                <ul className="dashboard-lista-alerta">
+                                    {stats.alertas.vehiculos_sin_runt.slice(0, 5).map((v) => (
+                                        <li
+                                            key={v.id}
+                                            className="dashboard-item-alerta dashboard-item-urgente"
+                                            onClick={() => navigate(`/admin/vehiculos/${v.id}`)}
+                                            title="Ver detalle del vehículo"
+                                        >
+                                            <span className="dashboard-item-nombre">{v.placa}</span>
+                                            <span className="dashboard-item-meta">
+                                                {v.marca}
+                                                {v.linea ? ` ${v.linea}` : ""}
+                                            </span>
+                                        </li>
+                                    ))}
+                                </ul>
+                                {stats.alertas.vehiculos_sin_runt.length > 5 && (
+                                    <button
+                                        className="dashboard-ver-mas"
+                                        onClick={() => navigate("/admin/vehiculos")}
+                                    >
+                                        Ver los {stats.alertas.vehiculos_sin_runt.length - 5} restantes →
+                                    </button>
+                                )}
+                            </div>
+                        )}
+
+                        {/* === Vehiculos no operativos o bloqueados === */}
+                        {stats.alertas.vehiculos_no_operativos.length > 0 && (
+                            <div className="dashboard-grupo-alerta">
+                                <div className="dashboard-grupo-titulo">
+                                    Vehículos no operativos o bloqueados
+                                    <span className="dashboard-grupo-cantidad">
+                                        {stats.alertas.vehiculos_no_operativos.length}
+                                    </span>
+                                </div>
+                                <ul className="dashboard-lista-alerta">
+                                    {stats.alertas.vehiculos_no_operativos.slice(0, 5).map((v) => (
+                                        <li
+                                            key={v.id}
+                                            className="dashboard-item-alerta dashboard-item-critico"
+                                            onClick={() => navigate(`/admin/vehiculos/${v.id}`)}
+                                            title="Ver detalle del vehículo"
+                                        >
+                                            <span className="dashboard-item-nombre">{v.placa}</span>
+                                            <span className="dashboard-item-meta">
+                                                {!v.activo
+                                                    ? "desactivado"
+                                                    : v.estado === "no_operativo"
+                                                        ? "no operativo"
+                                                        : v.estado}
+                                            </span>
+                                        </li>
+                                    ))}
+                                </ul>
+                                {stats.alertas.vehiculos_no_operativos.length > 5 && (
+                                    <button
+                                        className="dashboard-ver-mas"
+                                        onClick={() => navigate("/admin/vehiculos")}
+                                    >
+                                        Ver los {stats.alertas.vehiculos_no_operativos.length - 5} restantes →
+                                    </button>
+                                )}
+                            </div>
+                        )}
+                    </div>
+                )}
+            </section>
+
+        </AdminLayout>
     );
 }
 

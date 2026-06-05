@@ -15,6 +15,7 @@ import { useAuth } from "../../hooks/useAuth.js";
 import { api } from "../../lib/api.js";
 import Footer from "../../components/Footer/Footer.jsx";
 import Toast from "../../components/Toast/Toast.jsx";
+import BotonVolver from "../../components/BotonVolver/BotonVolver.jsx";
 import ModalEditarUsuario from "../UsuariosAdmin/components/ModalEditarUsuario.jsx";
 import "./PerfilUsuario.css";
 
@@ -130,9 +131,7 @@ function PerfilUsuario() {
         return (
             <div className="perfil-pagina">
                 <div className="perfil-error animar-shake">⚠️ {error}</div>
-                <button className="perfil-volver" onClick={() => navigate("/admin/usuarios")}>
-                    ← Volver a usuarios
-                </button>
+                <BotonVolver a="/admin/usuarios" texto="Volver a usuarios" />
             </div>
         );
     }
@@ -164,12 +163,7 @@ function PerfilUsuario() {
 
             <main className="perfil-main">
                 <div className="perfil-acciones-top">
-                    <button
-                        className="perfil-volver"
-                        onClick={() => navigate("/admin/usuarios")}
-                    >
-                        ← Volver a usuarios
-                    </button>
+                    <BotonVolver a="/admin/usuarios" texto="Volver a usuarios" />
                     <button
                         className="perfil-boton-editar"
                         onClick={() => setModalEditarAbierto(true)}

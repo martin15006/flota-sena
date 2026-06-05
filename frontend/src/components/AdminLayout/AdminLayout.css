@@ -1,0 +1,184 @@
+/* =================================================================
+   AdminLayout — layout reutilizable de todas las paginas admin.
+   Sigue convencion seccion 17: bordes 2px+, sombras md+, texto gris-900.
+   ================================================================= */
+
+.admin-layout {
+    min-height: 100vh;
+    display: flex;
+    background: var(--color-gris-50);
+}
+
+/* ===== Sidebar siempre tiene un ancho fijo en escritorio ===== */
+.admin-layout.sidebar-abierto .sidebar {
+    width: 260px;
+}
+
+.admin-layout.sidebar-cerrado .sidebar {
+    width: 0;
+    overflow: hidden;
+    border-right-width: 0;
+}
+
+/* ===== Backdrop para movil cuando el sidebar esta abierto ===== */
+.admin-layout-backdrop {
+    display: none;
+}
+
+/* ===== Area principal a la derecha del sidebar ===== */
+.admin-layout-main {
+    flex: 1;
+    display: flex;
+    flex-direction: column;
+    min-width: 0;  /* evita overflow del contenido en flexbox */
+    min-height: 100vh;
+}
+
+/* ===== Header de la pagina ===== */
+.admin-layout-header {
+    background: var(--color-blanco);
+    border-bottom: 2px solid var(--color-gris-300);
+    padding: var(--espacio-md) var(--espacio-xl);
+    display: flex;
+    align-items: center;
+    gap: var(--espacio-md);
+    box-shadow: var(--sombra-sm);
+    position: sticky;
+    top: 0;
+    z-index: 50;
+}
+
+.admin-layout-hamburguesa {
+    width: 40px;
+    height: 40px;
+    border: 2px solid var(--color-gris-300);
+    background: var(--color-blanco);
+    color: var(--color-gris-900);
+    border-radius: var(--radio-md);
+    cursor: pointer;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    transition: all var(--velocidad-rapida) var(--suavizado);
+    padding: 0;
+    flex-shrink: 0;
+}
+
+.admin-layout-hamburguesa:hover {
+    background: var(--color-verde-claro);
+    color: var(--color-verde-oscuro);
+    border-color: var(--color-verde-oscuro);
+}
+
+.admin-layout-hamburguesa:active {
+    transform: scale(0.95);
+}
+
+.admin-layout-titulo {
+    margin: 0;
+    font-size: var(--tamano-lg);
+    font-weight: var(--peso-bold);
+    color: var(--color-gris-900);
+    flex: 1;
+    /* Truncar si el titulo es muy largo */
+    overflow: hidden;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+}
+
+.admin-layout-acciones {
+    display: flex;
+    align-items: center;
+    gap: var(--espacio-md);
+    flex-shrink: 0;
+}
+
+.admin-layout-perfil {
+    text-align: right;
+}
+
+.admin-layout-perfil-nombre {
+    font-size: var(--tamano-sm);
+    font-weight: var(--peso-bold);
+    color: var(--color-gris-900);
+    line-height: 1.2;
+}
+
+.admin-layout-perfil-rol {
+    font-size: var(--tamano-xs);
+    color: var(--color-gris-700);
+    text-transform: capitalize;
+}
+
+/* ===== Contenido principal de la pagina ===== */
+.admin-layout-contenido {
+    flex: 1;
+    padding: var(--espacio-xl);
+    max-width: 100%;
+    overflow-x: hidden;
+}
+
+/* =================================================================
+   RESPONSIVE — pantallas chicas: sidebar es overlay con backdrop.
+   ================================================================= */
+@media (max-width: 900px) {
+    .admin-layout .sidebar {
+        position: fixed;
+        top: 0;
+        left: 0;
+        height: 100vh;
+        z-index: 100;
+        transition: transform var(--velocidad-media) var(--suavizado);
+    }
+
+    /* En movil el sidebar ocupa hasta 280px o 80% (lo que sea menor) */
+    .admin-layout.sidebar-abierto .sidebar {
+        width: min(280px, 80vw);
+        transform: translateX(0);
+    }
+
+    .admin-layout.sidebar-cerrado .sidebar {
+        width: min(280px, 80vw);
+        transform: translateX(-100%);
+        overflow: hidden;
+        border-right-width: 2px;
+    }
+
+    /* Backdrop solo aparece en movil */
+    .admin-layout.sidebar-abierto .admin-layout-backdrop {
+        display: block;
+        position: fixed;
+        top: 0;
+        left: 0;
+        width: 100vw;
+        height: 100vh;
+        background: rgba(0, 0, 0, 0.4);
+        z-index: 99;
+        animation: backdrop-aparecer var(--velocidad-rapida) ease-out;
+    }
+
+    .admin-layout-contenido {
+        padding: var(--espacio-md);
+    }
+
+    .admin-layout-header {
+        padding: var(--espacio-sm) var(--espacio-md);
+    }
+
+    /* En movil ocultamos el rol bajo el nombre para ahorrar espacio */
+    .admin-layout-perfil-rol {
+        display: none;
+    }
+
+    /* Y si el ancho es muy chico, ocultamos el nombre tambien */
+    @media (max-width: 480px) {
+        .admin-layout-perfil {
+            display: none;
+        }
+    }
+}
+
+@keyframes backdrop-aparecer {
+    from { opacity: 0; }
+    to { opacity: 1; }
+}

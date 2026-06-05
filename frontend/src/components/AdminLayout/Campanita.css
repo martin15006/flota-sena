@@ -1,0 +1,53 @@
+/* =================================================================
+   Campanita de notificaciones en el header del admin.
+   ================================================================= */
+
+.campanita {
+    position: relative;
+    width: 40px;
+    height: 40px;
+    border: 2px solid var(--color-gris-300);
+    background: var(--color-blanco);
+    color: var(--color-gris-900);
+    border-radius: var(--radio-md);
+    cursor: pointer;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    transition: all var(--velocidad-rapida) var(--suavizado);
+    padding: 0;
+    flex-shrink: 0;
+}
+
+.campanita:hover {
+    background: var(--color-verde-claro);
+    color: var(--color-verde-oscuro);
+    border-color: var(--color-verde-oscuro);
+}
+
+.campanita:active {
+    transform: scale(0.95);
+}
+
+.campanita svg {
+    display: block;
+}
+
+/* Punto rojo cuando hay notificaciones — posicionado en la esquina sup-derecha
+   con un borde blanco para que se "pegue" sobre el icono. */
+.campanita-punto {
+    position: absolute;
+    top: 5px;
+    right: 5px;
+    width: 10px;
+    height: 10px;
+    background: var(--color-rojo);
+    border: 2px solid var(--color-blanco);
+    border-radius: 50%;
+    animation: campanita-pulso 1.8s infinite ease-out;
+}
+
+@keyframes campanita-pulso {
+    0%, 100% { transform: scale(1); }
+    50% { transform: scale(1.15); }
+}

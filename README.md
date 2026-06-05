@@ -115,8 +115,8 @@ Después del login exitoso te lleva al panel `/dashboard`.
 | 0 | Fundación: estructura, frontend base, backend base, Supabase | ✅ |
 | 1 | Autenticación: login, roles, gestión de usuarios | ✅ |
 | 2 | Gestión de vehículos: CRUD admin, fotos, datos | ✅ |
-| 3 | Flujo del conductor: aptitud + chequeo de 39 ítems | 🔄 En curso |
-| 4 | Dashboard del admin: semáforo, historial, alertas | ⏳ |
+| 3 | Flujo del conductor: aptitud + chequeo de 39 ítems | ✅ |
+| 4 | Dashboard del admin + navegación unificada + módulo usuarios | 🔄 En curso |
 | 5 | Notificaciones: campanita en sitio + correo | ⏳ |
 | 6 | Reportes: exportación Excel/PDF, envío automático | ⏳ |
 | 7 | Vencimientos automáticos: SOAT, RTM, extintor, licencia | ⏳ |
@@ -176,26 +176,102 @@ Después del login exitoso te lleva al panel `/dashboard`.
 - [x] Vista detallada de vehículo con galería de fotos navegable (Lightbox con teclas)
 - [x] Visor del RUNT en PDF embebido (iframe nativo del navegador)
 
-### Detalle Fase 3 (en curso)
+### Detalle Fase 3 (completada)
 
 **Base de datos**
-- [ ] Tabla `items_chequeo` con los 39 ítems normativos, su categoría y a qué tipos de vehículo aplican
-- [ ] Tabla `chequeos_preoperacionales` (cabecera de cada chequeo: vehículo, conductor, fecha, resultado)
-- [ ] Tabla `chequeo_respuestas` (respuesta por ítem en cada chequeo)
-- [ ] Configuración de ítems no aplicables por vehículo específico (excepciones puntuales además del filtro por tipo)
+- [x] Tabla `categorias_chequeo` con las categorías del checklist (con icono y orden)
+- [x] Tabla `items_chequeo` con los 39 ítems normativos, su categoría, criticidad y a qué tipos de vehículo aplican
+- [x] Tabla `preguntas_aptitud` con las 5 preguntas eliminatorias del conductor
+- [x] Tabla `chequeos_preoperacionales` (cabecera con vehículo, conductor, fecha, resultado, contadores)
+- [x] Tabla `respuestas_chequeo` (una respuesta por ítem en cada chequeo)
+- [x] Tabla `respuestas_aptitud` (5 respuestas de aptitud por chequeo)
+- [x] Tabla `fotos_chequeo` (evidencia fotográfica de ítems NO CUMPLE)
+- [x] Tabla `intentos_chequeo_bloqueado` (registro de chequeos bloqueados por el sistema)
+- [x] Tabla `auditoria_chequeos` (todas las acciones sobre chequeos)
+- [x] Tabla `excepciones_items_vehiculo` (ítems no aplicables a vehículos específicos)
 
 **Backend**
-- [ ] Endpoints CRUD del catálogo de ítems (admin)
-- [ ] Endpoint para iniciar chequeo, guardar respuestas en lote y cerrar chequeo
-- [ ] Lógica de cálculo automático de resultado (verde/amarillo/rojo)
-- [ ] Endpoint de historial de chequeos por vehículo y por conductor
+- [x] Endpoint del catálogo del chequeo (`GET /api/chequeos/catalogo`) con categorías, ítems y preguntas
+- [x] Endpoints CRUD del catálogo desde admin (categorías, ítems, preguntas de aptitud)
+- [x] Endpoint para iniciar chequeo (`POST /api/chequeos/iniciar`) con validación de aptitud y registro de intentos bloqueados
+- [x] Endpoint para guardar las 39 respuestas en lote (`PUT /api/chequeos/:id/respuestas`)
+- [x] Endpoint para cerrar chequeo (`POST /api/chequeos/:id/cerrar`) con cálculo automático del resultado y detección de fallas críticas
+- [x] Endpoints de la vista admin: lista con filtros (`GET /api/chequeos`), detalle (`GET /api/chequeos/:id`), intentos bloqueados (`GET /api/chequeos/intentos-bloqueados`)
+- [x] Endpoint de vehículos disponibles del conductor (`GET /api/chequeos/vehiculos-disponibles`)
+- [x] Endpoints de fotos de evidencia: subir, eliminar, marcar como preservar siempre
+- [x] Eliminación inteligente del catálogo (hard delete si no tiene historial, soft delete si ya fue usado)
 
 **Frontend del conductor**
-- [ ] Dashboard del conductor (distinto al del admin)
-- [ ] Pantalla de selección de vehículo a operar
-- [ ] Formulario de aptitud personal del conductor
-- [ ] Pantalla del chequeo con los 39 ítems (UI optimizada para móvil)
-- [ ] Pantalla de resultado con semáforo y opción de descargar reporte
+- [x] Dashboard del conductor (distinto al del admin) con 2 círculos centrales
+- [x] Pantalla de aptitud con las 5 preguntas eliminatorias
+- [x] Pantalla de selección de vehículo con búsqueda tolerante de placa (ignora espacios y mayúsculas)
+- [x] Checklist en 5 pantallas (una por categoría) optimizado para móvil
+- [x] Subida y eliminación de fotos de evidencia para ítems NO CUMPLE
+- [x] Compresión de imágenes en el navegador antes de subir (canvas, max 1600px, calidad 0.85)
+- [x] Pantalla de resultado con semáforo y resumen de contadores
+- [x] Cambio de contraseña en primer login sin pedir la actual
+
+**Frontend del admin (chequeos)**
+- [x] Lista de chequeos con filtros (fecha, placa tolerante, estado, oficial/cerrado) y paginación
+- [x] Detalle del chequeo con cabecera, vehículo, conductor, aptitud, checklist por categoría
+- [x] Página de intentos bloqueados con filtros por razón y paginación
+- [x] Botón "Preservar siempre" en fotos del detalle admin
+- [x] Admin del catálogo (`/admin/catalogo`) con CRUD para categorías, ítems y preguntas
+
+**Infraestructura**
+- [x] Acceso desde celular en LAN (URLs dinámicas + Vite host + CORS amplio en dev)
+- [x] Documento `docs/MAPA_DEL_CODIGO.md` como guía rápida para desarrolladores nuevos
+- [x] Convención de contraste accesible añadida a `CONTEXTO_PROYECTO.md` §17
+- [x] Reorganización de bitácora en `docs/bitacora/` con sección de bugs conocidos y carpeta de evidencias
+
+### Detalle Fase 4 (en curso)
+
+**Bloque A — Módulo de usuarios admin (completado)**
+- [x] Hacer `centro_id` obligatorio para conductores y `admin_centro` (frontend + backend)
+- [x] Validación de licencia + EPS + ARL obligatorios para conductores
+- [x] Mostrar correo del conductor en modal editar (merge con `auth.users`)
+- [x] Cambiar correo del conductor con verificación de contraseña del admin
+- [x] Cambiar cédula del conductor con verificación de contraseña del admin + aviso amarillo crítico
+- [x] Vista detalle del perfil de usuario (`/admin/usuarios/:id`) con historial de chequeos + timeline de actividad
+- [x] Validaciones de inputs en formularios (cédula numérica, nombre solo letras, teléfono, licencia)
+- [x] Avisos visuales temporales al escribir caracteres inválidos
+- [x] Toast notifications en lugar de `alert()` para todas las acciones
+- [x] Botón "Refrescar" en lista de usuarios
+- [x] Endpoint `GET /api/geo/centros` para selector de centro
+- [x] Componente reutilizable `InputPassword` con botón "ojo" en los 3 lugares con contraseña (Login, CambiarPassword, ModalVerificacionAdmin)
+- [x] Fix login con cuenta desactivada: mensaje claro "Cuenta desactivada" tras validar contraseña (opción C híbrida sin account enumeration)
+
+**Bloque B — Navegación unificada + dashboard administrativo (completado)**
+- [x] Componente `AdminLayout` con sidebar siempre abierto en escritorio (colapsable) y overlay en móvil
+- [x] Componente `Sidebar` con 6 items y NavLink que detecta el activo
+- [x] Componente `Campanita` placeholder con punto rojo controlado por prop
+- [x] Componente reutilizable `BotonVolver` para páginas de detalle
+- [x] Refactor de 8 páginas admin para usar `AdminLayout` (5 con sidebar, 3 de detalle con `BotonVolver`)
+- [x] Endpoint `GET /api/dashboard/stats` con KPIs del día + alertas, diferenciado por rol del usuario
+- [x] Dashboard rediseñado con 4 cajas grandes clicables y sección "Necesita atención"
+- [x] Alertas accionables: licencias por vencer (30 días), vehículos sin RUNT, vehículos no operativos
+- [x] Auto-refresh cada 60s y campanita activa automáticamente cuando hay alertas
+
+**Bloque C — Notificaciones en tiempo real (pendiente)**
+- [ ] Tabla `notificaciones` en BD
+- [ ] Endpoint `GET /api/notificaciones`, `PATCH /api/notificaciones/:id/leer`
+- [ ] Cablear campanita real con lista desplegable
+- [ ] Realtime con Supabase Realtime para nuevas notificaciones
+- [ ] Eventos que disparan notificación: chequeo no operativo, intento bloqueado, vehículo desactivado, licencia próxima a vencer
+
+**Bloque D — Preparación del despliegue (pendiente)**
+- [ ] Build de producción del frontend
+- [ ] Despliegue del backend
+- [ ] Variables de entorno de producción
+- [ ] Pruebas end-to-end del flujo completo
+- [ ] Documentación de despliegue
+
+### Pendientes futuros (decididos con el equipo, ver `docs/bitacora/semana-4-cambios.md`)
+
+- [ ] Perfil propio del administrador (con regla: cédula/correo solo cambiable por superior)
+- [ ] Módulo de Ajustes con modo claro/oscuro
+- [ ] Roles administrativos multinivel (superadmin → admin_centro) con scope filtrado por nivel
+- [ ] Repulir interfaz del conductor con la misma calidad visual del admin
 
 ---
 

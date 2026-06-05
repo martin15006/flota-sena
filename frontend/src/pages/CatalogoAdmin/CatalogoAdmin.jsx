@@ -7,7 +7,7 @@ import { api } from "../../lib/api.js";
 import { useAuth } from "../../hooks/useAuth.js";
 import Modal from "../../components/Modal/Modal.jsx";
 import Toast from "../../components/Toast/Toast.jsx";
-import Footer from "../../components/Footer/Footer.jsx";
+import AdminLayout from "../../components/AdminLayout/AdminLayout.jsx";
 import "./CatalogoAdmin.css";
 
 // Emojis sugeridos para categorias (selector visual)
@@ -21,12 +21,7 @@ const TIPOS_VEHICULO = ["preoperacional", "postoperacional"];
 
 function CatalogoAdmin() {
     const navigate = useNavigate();
-    const { usuario, cerrarSesion } = useAuth();
-
-    const manejarLogout = () => {
-        cerrarSesion();
-        navigate("/login");
-    };
+    const { usuario } = useAuth();
 
     // Tab activa
     const [tab, setTab] = useState("categorias");
@@ -176,29 +171,9 @@ function CatalogoAdmin() {
     };
 
     return (
-        <div className="catadmin-pagina">
-            {/* Header SENA */}
-            <header className="catadmin-header-sena">
-                <div className="catadmin-logo-wrapper">
-                    <img src="/logoverde.png" alt="SENA" className="catadmin-logo-img" />
-                    <div className="catadmin-titulo-app">Gestión de Flota</div>
-                </div>
-                <div className="catadmin-usuario">
-                    <div className="catadmin-usuario-info">
-                        <div className="catadmin-usuario-nombre">{usuario?.nombre_completo}</div>
-                        <div className="catadmin-usuario-rol">{usuario?.rol}</div>
-                    </div>
-                    <button className="catadmin-logout" onClick={manejarLogout}>
-                        Cerrar sesión
-                    </button>
-                </div>
-            </header>
-
+        <AdminLayout titulo="Catálogo del chequeo">
             {/* Barra de página */}
             <section className="catadmin-barra-pagina">
-                <button className="catadmin-volver" onClick={() => navigate("/dashboard")}>
-                    ← Dashboard
-                </button>
                 <div className="catadmin-barra-titulo">
                     <h1>Catálogo del chequeo</h1>
                     <p>Gestiona categorías, ítems y preguntas de aptitud</p>
@@ -454,9 +429,7 @@ function CatalogoAdmin() {
                     onCerrar={() => setToast(null)}
                 />
             )}
-
-            <Footer />
-        </div>
+        </AdminLayout>
     );
 }
 

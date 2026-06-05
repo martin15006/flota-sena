@@ -5,7 +5,7 @@ import { useNavigate } from "react-router-dom";
 import { api } from "../../lib/api.js";
 import { useAuth } from "../../hooks/useAuth.js";
 import Toast from "../../components/Toast/Toast.jsx";
-import Footer from "../../components/Footer/Footer.jsx";
+import AdminLayout from "../../components/AdminLayout/AdminLayout.jsx";
 import "./ChequeosAdmin.css";
 
 const ESTADOS = [
@@ -36,12 +36,7 @@ const formatearFecha = (iso) => {
 
 function ChequeosAdmin() {
     const navigate = useNavigate();
-    const { usuario, cerrarSesion } = useAuth();
-
-    const manejarLogout = () => {
-        cerrarSesion();
-        navigate("/login");
-    };
+    const { usuario } = useAuth();
 
     // Datos
     const [chequeos, setChequeos] = useState([]);
@@ -102,39 +97,13 @@ function ChequeosAdmin() {
     const totalPaginas = Math.max(1, Math.ceil(total / LIMITE_POR_PAGINA));
 
     return (
-        <div className="cheqadmin-pagina">
-            {/* Header SENA (mismo patrón que el resto del admin) */}
-            <header className="cheqadmin-header-sena">
-                <div className="cheqadmin-logo-wrapper">
-                    <img src="/logoverde.png" alt="SENA" className="cheqadmin-logo-img" />
-                    <div className="cheqadmin-titulo-app">Gestión de Flota</div>
-                </div>
-                <div className="cheqadmin-usuario">
-                    <div className="cheqadmin-usuario-info">
-                        <div className="cheqadmin-usuario-nombre">{usuario?.nombre_completo}</div>
-                        <div className="cheqadmin-usuario-rol">{usuario?.rol}</div>
-                    </div>
-                    <button className="cheqadmin-logout" onClick={manejarLogout}>
-                        Cerrar sesión
-                    </button>
-                </div>
-            </header>
-
-            {/* Barra de página */}
+        <AdminLayout titulo="Chequeos preoperacionales">
+            {/* Barra de página (sin botones de navegacion — el sidebar los cubre) */}
             <section className="cheqadmin-barra-pagina">
-                <button className="cheqadmin-volver" onClick={() => navigate("/dashboard")}>
-                    ← Dashboard
-                </button>
                 <div className="cheqadmin-barra-titulo">
                     <h1>Chequeos preoperacionales</h1>
                     <p>{total} chequeo{total === 1 ? "" : "s"} encontrado{total === 1 ? "" : "s"}</p>
                 </div>
-                <button
-                    className="cheqadmin-boton-intentos"
-                    onClick={() => navigate("/admin/chequeos/intentos-bloqueados")}
-                >
-                    Intentos bloqueados
-                </button>
             </section>
 
             {/* Filtros */}
@@ -325,9 +294,7 @@ function ChequeosAdmin() {
                     onCerrar={() => setToast(null)}
                 />
             )}
-
-            <Footer />
-        </div>
+        </AdminLayout>
     );
 }
 

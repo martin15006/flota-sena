@@ -5,6 +5,7 @@ import { api } from "../../lib/api.js";
 import Footer from "../../components/Footer/Footer.jsx";
 import Lightbox from "../../components/Lightbox/Lightbox.jsx";
 import Toast from "../../components/Toast/Toast.jsx";
+import BotonVolver from "../../components/BotonVolver/BotonVolver.jsx";
 import ModalVehiculo from "../VehiculosAdmin/components/ModalVehiculo.jsx";
 import "./VehiculoDetalle.css";
 
@@ -99,12 +100,7 @@ function VehiculoDetalle() {
                 <div className="vehiculo-detalle-estado-error animar-shake">
                     {error || "Vehículo no encontrado"}
                 </div>
-                <button
-                    className="vehiculo-detalle-volver"
-                    onClick={() => navigate("/admin/vehiculos")}
-                >
-                    ← Volver al listado
-                </button>
+                <BotonVolver a="/admin/vehiculos" texto="Volver al listado" />
             </div>
         );
     }
@@ -142,12 +138,7 @@ function VehiculoDetalle() {
             </header>
 
             <main className="vehiculo-detalle-main">
-                <button
-                    className="vehiculo-detalle-volver"
-                    onClick={() => navigate("/admin/vehiculos")}
-                >
-                    ← Volver al listado
-                </button>
+                <BotonVolver a="/admin/vehiculos" texto="Volver al listado" />
 
                 <section className={`vehiculo-detalle-hero vehiculo-detalle-hero-${estadoInfo.color} ${!vehiculo.activo ? "vehiculo-detalle-hero-inactivo" : ""}`}>
                     <div className="vehiculo-detalle-hero-foto">
