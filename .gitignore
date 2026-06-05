@@ -17,9 +17,13 @@ Thumbs.db
 desktop.ini
 
 # Archivos temporales de Office (Word, Excel, PowerPoint)
+# Cuando tienes un .docx abierto, Word crea estos archivos de bloqueo/recuperacion
+# que no deben llegar al repo.
 ~$*.docx
 ~$*.xlsx
 ~$*.pptx
+~WRL*.tmp
+~WRD*.tmp
 
 # Editor
 .vscode/
