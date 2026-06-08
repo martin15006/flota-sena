@@ -38,10 +38,23 @@ function CambiarPassword() {
         body.password_actual = passwordActual;
       }
 
-      await api("/auth/cambiar-password", {
+      const resp = await api("/auth/cambiar-password", {
         method: "POST",
         body,
       });
+
+      // IMPORTANTE: Supabase Auth invalida el token actual al cambiar la contraseña.
+      // El backend devuelve un nuevo token (signInWithPassword con la clave nueva)
+      // para que el usuario siga la navegacion sin tener que volver al login.
+      if (resp.token) {
+        localStorage.setItem("token", resp.token);
+      } else if (resp.requiere_relogin) {
+        // Edge case raro: el cambio funciono pero no se pudo emitir token nuevo
+        localStorage.removeItem("token");
+        setExito(true);
+        setTimeout(() => navigate("/login"), 1500);
+        return;
+      }
 
       setExito(true);
       // Esperar 1.5s para que el usuario vea el mensaje y luego redirigir

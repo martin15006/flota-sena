@@ -22,7 +22,8 @@ const formatearFechaHoy = () => {
     });
 };
 
-// Helper: texto humano para "tiempo hasta el vencimiento" de la licencia
+// Helper: texto humano para "tiempo hasta el vencimiento" de la licencia.
+// Umbrales: <0=vencido, <=15=critico (rojo), <=30=urgente (naranja), >30=normal (verde).
 const tiempoHasta = (iso) => {
     if (!iso) return null;
     const ahora = new Date();
@@ -32,6 +33,7 @@ const tiempoHasta = (iso) => {
 
     if (dias < 0) return { texto: `vencida hace ${Math.abs(dias)} días`, nivel: "vencido" };
     if (dias === 0) return { texto: "vence hoy", nivel: "critico" };
+    if (dias <= 15) return { texto: `${dias} día${dias === 1 ? "" : "s"}`, nivel: "critico" };
     if (dias <= 30) return { texto: `${dias} día${dias === 1 ? "" : "s"}`, nivel: "urgente" };
     if (dias <= 365) {
         const meses = Math.round(dias / 30);

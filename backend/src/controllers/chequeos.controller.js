@@ -10,6 +10,8 @@ import {
     obtenerChequeosDelConductor,
     registrarIntentoNoApto,
 } from "../services/chequeos.service.js";
+import { crearNotificacion } from "../services/notificaciones.service.js";
+import { supabase } from "../config/supabase.js";
 
 const ESTADOS_RESPUESTA_VALIDOS = ["cumple", "no_cumple", "no_aplica"];
 
@@ -77,6 +79,46 @@ export const postIniciarChequeo = async (req, res) => {
         });
 
         if (!resultado.exito) {
+            // Bloque C paso 2: notificar al admin del intento bloqueado.
+            // Razones: conductor_no_apto, vehiculo_desactivado, vehiculo_no_existe.
+            try {
+                const razon = resultado.razon;
+                const nombreConductor = req.usuario.nombre_completo;
+                const centroId = req.usuario.centro_id;
+
+                const config = {
+                    conductor_no_apto: {
+                        tipo: 'intento_bloqueado_aptitud',
+                        titulo: `${nombreConductor} no pasó la aptitud`,
+                        mensaje: 'Intento de chequeo bloqueado: el conductor declaro no estar en condiciones aptas.',
+                    },
+                    vehiculo_desactivado: {
+                        tipo: 'intento_bloqueado_vehiculo',
+                        titulo: `${nombreConductor} intentó usar un vehículo desactivado`,
+                        mensaje: 'Intento de chequeo bloqueado: el vehiculo esta desactivado por el admin.',
+                    },
+                    vehiculo_no_existe: {
+                        tipo: 'intento_bloqueado_vehiculo',
+                        titulo: `${nombreConductor} intentó usar un vehículo inexistente`,
+                        mensaje: 'Intento de chequeo bloqueado: el vehiculo no existe o no es del centro.',
+                    },
+                }[razon];
+
+                if (config) {
+                    await crearNotificacion({
+                        tipo: config.tipo,
+                        titulo: config.titulo,
+                        mensaje: config.mensaje,
+                        url_destino: '/admin/chequeos/intentos-bloqueados',
+                        centro_id: centroId,
+                        conductor_id: req.usuario.id,
+                        vehiculo_id: vehiculo_id || null,
+                    });
+                }
+            } catch (notifErr) {
+                console.warn('[notificaciones] no se pudo crear notif de intento bloqueado:', notifErr.message);
+            }
+
             return res.status(resultado.status).json({
                 error: resultado.error,
                 razon: resultado.razon,
@@ -168,6 +210,35 @@ export const postCerrarChequeo = async (req, res) => {
 
         if (resultado.error) {
             return res.status(resultado.error.status).json({ error: resultado.error.mensaje });
+        }
+
+        // Bloque C paso 2: notificar al admin si el resultado merece atencion.
+        // Solo notificamos NO OPERATIVO y CRITICO (los dos peores estados).
+        // Otros estados (operativo/observacion/alerta) no generan notificacion
+        // para no saturar al admin con eventos rutinarios.
+        try {
+            const ch = resultado.chequeo;
+            const veh = resultado.vehiculo;
+            const estado = ch?.resultado_estado;
+
+            if (estado === 'no_operativo' || estado === 'critico') {
+                const placa = veh?.placa || 'sin placa';
+                const tipoNotif = estado === 'no_operativo' ? 'chequeo_no_operativo' : 'chequeo_critico';
+                const tituloEstado = estado === 'no_operativo' ? 'NO OPERATIVO' : 'CRÍTICO';
+
+                await crearNotificacion({
+                    tipo: tipoNotif,
+                    titulo: `Vehículo ${placa} quedó ${tituloEstado}`,
+                    mensaje: `El chequeo termino con resultado ${tituloEstado}. Revisar el detalle para tomar accion.`,
+                    url_destino: `/admin/chequeos/${id}`,
+                    centro_id: ch?.centro_id,
+                    chequeo_id: id,
+                    vehiculo_id: ch?.vehiculo_id,
+                    conductor_id: ch?.conductor_id,
+                });
+            }
+        } catch (notifErr) {
+            console.warn('[notificaciones] no se pudo crear notif de cierre:', notifErr.message);
         }
 
         res.json({
@@ -307,5 +378,108 @@ export const getIntentosBloqueados = async (req, res) => {
     } catch (err) {
         console.error("Error listando intentos bloqueados:", err);
         res.status(500).json({ error: err.message || "Error al listar intentos bloqueados" });
+    }
+};
+
+// POST /api/chequeos/:id/abandonar
+// Marca un chequeo en curso como abandonado por el conductor (Tarea #104).
+// Disparadores:
+//   - inactividad: el frontend detecto 2 minutos sin clicks/touch
+//   - cerro_pestana: onbeforeunload del navegador
+//   - cerro_sesion: el conductor pulso cerrar sesion (no aplica hoy porque
+//     las pantallas del flujo no tienen ese boton, pero queda preparado)
+//
+// Reglas:
+//   - Solo el dueño del chequeo (conductor) o un admin pueden marcarlo.
+//   - No se puede abandonar un chequeo ya cerrado.
+//   - Si ya estaba abandonado, devuelve 200 silencioso (idempotente).
+//
+// Al marcarlo, crea una notificacion para los admins del centro (Bloque C paso 2).
+export const postAbandonarChequeo = async (req, res) => {
+    try {
+        const { id } = req.params;
+        const { motivo } = req.body;
+        const usuario = req.usuario;
+
+        const motivosValidos = ['inactividad', 'cerro_sesion', 'cerro_pestana', 'manual'];
+        const motivoFinal = motivosValidos.includes(motivo) ? motivo : 'inactividad';
+
+        // Cargar el chequeo + datos para la notificacion en un solo query
+        const { data: chequeo, error: errLoad } = await supabase
+            .from('chequeos_preoperacionales')
+            .select(`
+                id, conductor_id, cerrado, abandonado, centro_id, vehiculo_id,
+                vehiculo:vehiculo_id ( placa ),
+                conductor:conductor_id ( nombre_completo )
+            `)
+            .eq('id', id)
+            .single();
+
+        if (errLoad || !chequeo) {
+            return res.status(404).json({ error: 'Chequeo no encontrado' });
+        }
+
+        const esConductorDueno = chequeo.conductor_id === usuario.id;
+        const esAdmin = usuario.rol !== 'conductor';
+        if (!esConductorDueno && !esAdmin) {
+            return res.status(403).json({ error: 'No tienes permiso para abandonar este chequeo' });
+        }
+
+        if (chequeo.cerrado) {
+            return res.status(400).json({ error: 'No se puede abandonar un chequeo ya cerrado' });
+        }
+
+        if (chequeo.abandonado) {
+            return res.json({ mensaje: 'El chequeo ya estaba marcado como abandonado' });
+        }
+
+        const motivoAplicado = esAdmin ? 'manual' : motivoFinal;
+        const ahora = new Date().toISOString();
+        const { error: errUpdate } = await supabase
+            .from('chequeos_preoperacionales')
+            .update({
+                abandonado: true,
+                abandonado_en: ahora,
+                motivo_abandono: motivoAplicado,
+                updated_at: ahora,
+            })
+            .eq('id', id);
+
+        if (errUpdate) {
+            console.error('Error marcando chequeo como abandonado:', errUpdate);
+            return res.status(500).json({ error: 'Error al marcar el chequeo' });
+        }
+
+        // Crear notificacion para los admins del centro (Bloque C).
+        // Falla silenciosa: si la tabla notificaciones no existe todavia o falla la
+        // insercion, no rompemos el flujo principal del abandono.
+        try {
+            const nombreConductor = chequeo.conductor?.nombre_completo || 'Un conductor';
+            const placa = chequeo.vehiculo?.placa || 'sin placa';
+            const motivoTexto = {
+                inactividad: 'por inactividad de 2 minutos',
+                cerro_pestana: 'al cerrar la pestaña del navegador',
+                cerro_sesion: 'al cerrar sesion',
+                manual: 'cancelado manualmente por un administrador',
+            }[motivoAplicado] || '';
+
+            await crearNotificacion({
+                tipo: 'chequeo_abandonado',
+                titulo: `${nombreConductor} abandonó un chequeo`,
+                mensaje: `Vehículo ${placa} · ${motivoTexto}`,
+                url_destino: `/admin/chequeos/${id}`,
+                centro_id: chequeo.centro_id,
+                chequeo_id: id,
+                vehiculo_id: chequeo.vehiculo_id,
+                conductor_id: chequeo.conductor_id,
+            });
+        } catch (notifErr) {
+            console.warn('[notificaciones] no se pudo crear notificacion de abandono:', notifErr.message);
+        }
+
+        res.json({ mensaje: 'Chequeo marcado como abandonado' });
+    } catch (err) {
+        console.error('Error en postAbandonarChequeo:', err);
+        res.status(500).json({ error: err.message || 'Error al abandonar el chequeo' });
     }
 };

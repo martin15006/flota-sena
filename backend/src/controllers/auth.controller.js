@@ -81,6 +81,78 @@ export const obtenerActual = (req, res) => {
     });
 };
 
+// PATCH /api/auth/mi-perfil
+// Permite que CUALQUIER usuario logueado (admin o conductor) edite SUS PROPIOS
+// datos personales seguros: nombre_completo, telefono, foto_url.
+//
+// IMPORTANTE: NO permite cambiar cedula, email, rol, centro_id, activo,
+// debe_cambiar_password ni licencia. Esos datos solo los puede tocar:
+//   - un admin de rango superior (cedula/correo via ModalVerificacionAdmin)
+//   - el sistema (debe_cambiar_password al cambiar la contraseña)
+//   - el admin del centro (datos del conductor desde UsuariosAdmin)
+export const actualizarMiPerfil = async (req, res) => {
+    try {
+        const { nombre_completo, telefono, foto_url } = req.body;
+
+        // Construir solo con campos seguros que vinieron en el body.
+        // Asi un PATCH parcial es valido (solo cambiar la foto, por ejemplo).
+        const cambios = {};
+        if (nombre_completo !== undefined) {
+            const limpio = String(nombre_completo).trim();
+            if (!limpio) {
+                return res.status(400).json({ error: 'El nombre no puede estar vacio' });
+            }
+            cambios.nombre_completo = limpio;
+        }
+        if (telefono !== undefined) {
+            cambios.telefono = telefono ? String(telefono).trim() : null;
+        }
+        if (foto_url !== undefined) {
+            cambios.foto_url = foto_url || null;
+        }
+
+        if (Object.keys(cambios).length === 0) {
+            return res.status(400).json({ error: 'No hay nada que actualizar' });
+        }
+
+        cambios.updated_at = new Date().toISOString();
+
+        const { data, error } = await supabase
+            .from('usuarios')
+            .update(cambios)
+            .eq('id', req.usuario.id)
+            .select()
+            .single();
+
+        if (error) {
+            console.error('Error actualizando mi perfil:', error);
+            return res.status(500).json({ error: 'Error al actualizar el perfil' });
+        }
+
+        res.json({
+            mensaje: 'Perfil actualizado correctamente',
+            usuario: {
+                id: data.id,
+                cedula: data.cedula,
+                nombre_completo: data.nombre_completo,
+                telefono: data.telefono,
+                email: req.usuario.email,
+                rol: data.rol,
+                foto_url: data.foto_url,
+                debe_cambiar_password: data.debe_cambiar_password,
+                licencia_numero: data.licencia_numero,
+                licencia_categoria: data.licencia_categoria,
+                licencia_vencimiento: data.licencia_vencimiento,
+                centro_id: data.centro_id,
+                centro_nombre: req.usuario.centro_nombre,
+            },
+        });
+    } catch (err) {
+        console.error('Error en actualizarMiPerfil:', err);
+        res.status(500).json({ error: 'Error interno del servidor' });
+    }
+};
+
 export const cambiarPassword = async (req, res) => {
     try {
         const { password_actual, password_nueva, password_confirmacion } = req.body;
@@ -152,7 +224,34 @@ export const cambiarPassword = async (req, res) => {
             .update({ debe_cambiar_password: false })
             .eq("id", req.usuario.id);
 
-        res.json({ mensaje: "Contraseña actualizada correctamente" });
+        // IMPORTANTE: Supabase Auth invalida los tokens activos cuando se cambia
+        // la contraseña. Si simplemente respondieramos OK, la siguiente peticion
+        // del frontend devolveria 401 y el usuario seria desconectado.
+        //
+        // Solucion: hacer un login fresco con la nueva contraseña y devolver el
+        // nuevo token. El frontend lo reemplaza en localStorage y sigue navegando
+        // sin interrupcion.
+        const { data: sesionNueva, error: errLoginNuevo } = await supabase.auth
+            .signInWithPassword({
+                email: req.usuario.email,
+                password: password_nueva,
+            });
+
+        if (errLoginNuevo) {
+            // Caso raro: el cambio funciono pero no podemos generar token nuevo.
+            // El frontend debera redirigir al login con un mensaje claro.
+            return res.json({
+                mensaje: "Contraseña actualizada. Por favor inicia sesión de nuevo.",
+                requiere_relogin: true,
+            });
+        }
+
+        res.json({
+            mensaje: "Contraseña actualizada correctamente",
+            token: sesionNueva.session.access_token,
+            refresh_token: sesionNueva.session.refresh_token,
+            expira_en: sesionNueva.session.expires_in,
+        });
     } catch (err) {
         console.error("Error cambiando password:", err);
         res.status(500).json({ error: "Error al cambiar la contraseña" });

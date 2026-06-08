@@ -10,6 +10,7 @@ import {
     getIntentosBloqueados,
     getMisChequeos,
     postAptitudNoApta,
+    postAbandonarChequeo,
 } from "../controllers/chequeos.controller.js";
 import {
     verificarToken,
@@ -48,6 +49,11 @@ router.put("/:id/respuestas", soloConductor, putRespuestasChequeo);
 // POST /api/chequeos/:id/cerrar
 // Calcula resultado, cierra el chequeo, actualiza vehiculo si aplica
 router.post("/:id/cerrar", soloConductor, postCerrarChequeo);
+
+// POST /api/chequeos/:id/abandonar
+// Marca el chequeo como abandonado (inactividad / cierre de pestaña / etc).
+// Accesible tanto a conductor (su propio chequeo) como a admin (intervencion manual).
+router.post("/:id/abandonar", adminOConductor, postAbandonarChequeo);
 
 // GET /api/chequeos/mios?limite=10
 // Lista los chequeos del propio conductor logueado

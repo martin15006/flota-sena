@@ -10,6 +10,7 @@ import {
     limpiarChequeoEnCurso,
 } from "../../lib/chequeoEnCurso.js";
 import Toast from "../../components/Toast/Toast.jsx";
+import useTimeoutAbandono from "../../hooks/useTimeoutAbandono.js";
 import "./ChequeoItems.css";
 
 const MAX_FOTOS_POR_ITEM = 3;
@@ -87,6 +88,11 @@ function ChequeoItems() {
     const [categorias, setCategorias] = useState([]);
     const [cargando, setCargando] = useState(true);
     const [error, setError] = useState(null);
+
+    // Tarea #104: detectar abandono por inactividad (2 min) o cierre de pestaña.
+    // Si el chequeo se desmonta porque el conductor lo cierra normalmente, el hook
+    // limpia el timer por su cuenta gracias al cleanup del useEffect.
+    useTimeoutAbandono(chequeoEnCurso?.chequeo_id);
 
     // Indice de la categoria actual + respuestas acumuladas
     const [indiceCategoria, setIndiceCategoria] = useState(0);

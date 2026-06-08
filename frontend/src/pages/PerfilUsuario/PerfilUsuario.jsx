@@ -64,7 +64,8 @@ const formatearFechaSimple = (iso) => {
     });
 };
 
-// Devuelve string tipo "9 meses", "12 días", "vencida hace 3 días"
+// Devuelve string tipo "9 meses", "12 días", "vencida hace 3 días".
+// Umbrales: <0=vencido (rojo invertido), <=15=critico (rojo), <=30=urgente (naranja), >30=normal (verde)
 const tiempoHasta = (iso) => {
     if (!iso) return null;
     const ahora = new Date();
@@ -73,7 +74,8 @@ const tiempoHasta = (iso) => {
     const dias = Math.round(diffMs / (1000 * 60 * 60 * 24));
 
     if (dias < 0) return { texto: `vencida hace ${Math.abs(dias)} días`, vencido: true };
-    if (dias === 0) return { texto: "vence hoy", vencido: false, urgente: true };
+    if (dias === 0) return { texto: "vence hoy", vencido: false, critico: true };
+    if (dias <= 15) return { texto: `${dias} días`, vencido: false, critico: true };
     if (dias <= 30) return { texto: `${dias} días`, vencido: false, urgente: true };
     if (dias <= 365) {
         const meses = Math.round(dias / 30);
@@ -267,9 +269,11 @@ function PerfilUsuario() {
                                         <span
                                             className={`perfil-vencimiento ${vencimiento.vencido
                                                 ? "vencido"
-                                                : vencimiento.urgente
-                                                    ? "urgente"
-                                                    : ""
+                                                : vencimiento.critico
+                                                    ? "critico"
+                                                    : vencimiento.urgente
+                                                        ? "urgente"
+                                                        : ""
                                                 }`}
                                         >
                                             {vencimiento.texto}

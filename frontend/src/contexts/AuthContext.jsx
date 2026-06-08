@@ -50,6 +50,13 @@ export const AuthProvider = ({ children }) => {
         setUsuario(null);
     };
 
+    // Permite a paginas como MiPerfil o ModalEditarUsuario reemplazar el usuario
+    // global sin tener que cerrar y reabrir sesion. Asi el header y los demas
+    // componentes reflejan los cambios al instante.
+    const actualizarUsuario = (nuevoUsuario) => {
+        setUsuario(nuevoUsuario);
+    };
+
     const consumirSesionExpirada = () => setSesionExpirada(false);
 
     return (
@@ -60,6 +67,7 @@ export const AuthProvider = ({ children }) => {
                 sesionExpirada,
                 iniciarSesion,
                 cerrarSesion,
+                actualizarUsuario,
                 consumirSesionExpirada,
             }}>
             {children}

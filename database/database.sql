@@ -277,6 +277,18 @@ CREATE TABLE IF NOT EXISTS chequeos_preoperacionales (
     cerrado                 BOOLEAN NOT NULL DEFAULT false,
     fecha_cierre            TIMESTAMPTZ,
 
+    -- Abandono: cuando el conductor sale sin cerrar el chequeo (cierra sesion,
+    -- cierra pestaña, o queda inactivo durante mas de 2 minutos). El admin recibe
+    -- una alerta. Ver tarea #104.
+    abandonado              BOOLEAN NOT NULL DEFAULT false,
+    abandonado_en           TIMESTAMPTZ,
+    motivo_abandono         TEXT CHECK (motivo_abandono IN (
+                                'inactividad',     -- 2 min sin tocar la pantalla
+                                'cerro_sesion',    -- pulso cerrar sesion (futuro)
+                                'cerro_pestana',   -- onbeforeunload
+                                'manual'           -- admin lo cancelo
+                            )),
+
     notas_generales         TEXT,
 
     -- Timestamps
@@ -370,6 +382,54 @@ CREATE TABLE IF NOT EXISTS auditoria_chequeos (
 
 
 -- ==
+-- FASE 4 BLOQUE C · NOTIFICACIONES
+-- ==
+
+-- Notificaciones para los admins. Una notificacion se crea automaticamente
+-- cuando ocurre un evento relevante (chequeo abandonado, vehiculo no operativo,
+-- intento bloqueado, licencia por vencer). El admin la ve en la campanita del
+-- header y puede marcarla como leida al hacer clic.
+CREATE TABLE IF NOT EXISTS notificaciones (
+    id                  UUID PRIMARY KEY DEFAULT gen_random_uuid(),
+
+    -- A quien le llega
+    destinatario_id     UUID NOT NULL REFERENCES usuarios(id) ON DELETE CASCADE,
+
+    -- Que tipo de evento la genero
+    tipo                TEXT NOT NULL CHECK (tipo IN (
+                            'chequeo_abandonado',
+                            'chequeo_no_operativo',
+                            'chequeo_critico',
+                            'intento_bloqueado_aptitud',
+                            'intento_bloqueado_vehiculo',
+                            'licencia_proxima_vencer',
+                            'licencia_vencida',
+                            'vehiculo_sin_runt',
+                            'sistema'
+                        )),
+
+    -- Texto visible al usuario
+    titulo              TEXT NOT NULL,
+    mensaje             TEXT NOT NULL,
+
+    -- A donde ir si se hace clic (opcional)
+    url_destino         TEXT,
+
+    -- Contexto: ids de las entidades relacionadas (opcionales)
+    chequeo_id          UUID,
+    vehiculo_id         UUID,
+    conductor_id        UUID,
+
+    -- Estado de lectura
+    leida               BOOLEAN NOT NULL DEFAULT false,
+    leida_en            TIMESTAMPTZ,
+
+    -- Timestamp
+    created_at          TIMESTAMPTZ NOT NULL DEFAULT NOW()
+);
+
+
+-- ==
 -- FUNCIONES Y TRIGGERS
 -- ==
 
@@ -459,6 +519,20 @@ CREATE INDEX IF NOT EXISTS idx_chequeos_oficial_fecha
     ON chequeos_preoperacionales(es_oficial, fecha)
     WHERE es_oficial = true;
 
+-- Indice parcial para chequeos abandonados (Tarea #104): solo indexa filas con
+-- abandonado=true, mucho mas eficiente que un indice normal cuando la mayoria
+-- de chequeos no estan abandonados. Lo usa el dashboard para listar los del dia.
+CREATE INDEX IF NOT EXISTS idx_chequeos_abandonados
+    ON chequeos_preoperacionales(abandonado_en DESC)
+    WHERE abandonado = true;
+
+-- Notificaciones (Bloque C)
+CREATE INDEX IF NOT EXISTS idx_notificaciones_destinatario
+    ON notificaciones(destinatario_id, created_at DESC);
+CREATE INDEX IF NOT EXISTS idx_notificaciones_no_leidas
+    ON notificaciones(destinatario_id)
+    WHERE leida = false;
+
 CREATE INDEX IF NOT EXISTS idx_respuestas_chequeo_chequeo    ON respuestas_chequeo(chequeo_id);
 CREATE INDEX IF NOT EXISTS idx_respuestas_aptitud_chequeo    ON respuestas_aptitud(chequeo_id);
 
@@ -506,6 +580,7 @@ ALTER TABLE respuestas_aptitud          DISABLE ROW LEVEL SECURITY;
 ALTER TABLE fotos_chequeo               DISABLE ROW LEVEL SECURITY;
 ALTER TABLE intentos_chequeo_bloqueado  DISABLE ROW LEVEL SECURITY;
 ALTER TABLE auditoria_chequeos          DISABLE ROW LEVEL SECURITY;
+ALTER TABLE notificaciones              DISABLE ROW LEVEL SECURITY;
 
 
 -- ==

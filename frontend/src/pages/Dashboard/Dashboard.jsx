@@ -25,12 +25,13 @@ const formatearFechaHoy = () => {
     });
 };
 
-// Helper: clasifica los dias restantes en niveles de urgencia
+// Helper: clasifica los dias restantes en niveles de urgencia.
+// Umbrales acordados con el usuario: <=15 dias = critico (rojo), <=30 dias = urgente (naranja)
 const nivelLicencia = (dias) => {
-    if (dias < 0) return "vencido";   // ya vencio
-    if (dias <= 7) return "critico";   // <= 1 semana
-    if (dias <= 30) return "urgente";  // <= 1 mes
-    return "normal";
+    if (dias < 0) return "vencido";   // ya vencio (rojo invertido)
+    if (dias <= 15) return "critico"; // <= 15 dias (rojo)
+    if (dias <= 30) return "urgente"; // <= 30 dias (naranja)
+    return "normal";                  // > 30 dias (verde)
 };
 
 // Helper: texto humano para dias restantes
@@ -76,18 +77,20 @@ function Dashboard() {
 
     if (!usuario) return null;
 
-    // Conteo total de alertas para mostrar al usuario en el header de la seccion
+    // Conteo total de alertas para mostrar al usuario en el header de la seccion.
+    // chequeos_abandonados puede no venir en backends viejos -> uso optional chaining.
     const totalAlertas = stats
         ? stats.alertas.licencias_por_vencer.length +
           stats.alertas.vehiculos_sin_runt.length +
-          stats.alertas.vehiculos_no_operativos.length
+          stats.alertas.vehiculos_no_operativos.length +
+          (stats.alertas.chequeos_abandonados?.length || 0)
         : 0;
 
     // Flag de scope para mostrar texto contextual al admin
     const esScopeCentro = stats?.scope?.tipo === "centro";
 
     return (
-        <AdminLayout titulo="Dashboard" tieneNotificaciones={totalAlertas > 0}>
+        <AdminLayout titulo="Dashboard">
             {/* ===== Saludo ===== */}
             <div className="dashboard-bienvenida animar-fade-in-up">
                 <h2 className="dashboard-saludo">
@@ -261,6 +264,43 @@ function Dashboard() {
                                         onClick={() => navigate("/admin/vehiculos")}
                                     >
                                         Ver los {stats.alertas.vehiculos_sin_runt.length - 5} restantes →
+                                    </button>
+                                )}
+                            </div>
+                        )}
+
+                        {/* === Chequeos abandonados hoy (Tarea #104) === */}
+                        {stats.alertas.chequeos_abandonados?.length > 0 && (
+                            <div className="dashboard-grupo-alerta">
+                                <div className="dashboard-grupo-titulo">
+                                    Chequeos abandonados hoy
+                                    <span className="dashboard-grupo-cantidad">
+                                        {stats.alertas.chequeos_abandonados.length}
+                                    </span>
+                                </div>
+                                <ul className="dashboard-lista-alerta">
+                                    {stats.alertas.chequeos_abandonados.slice(0, 5).map((c) => (
+                                        <li
+                                            key={c.id}
+                                            className="dashboard-item-alerta dashboard-item-critico"
+                                            onClick={() => navigate(`/admin/chequeos/${c.id}`)}
+                                            title="Ver detalle del chequeo abandonado"
+                                        >
+                                            <span className="dashboard-item-nombre">
+                                                {c.conductor_nombre}
+                                            </span>
+                                            <span className="dashboard-item-meta">
+                                                {c.placa} · {c.motivo_abandono || "abandonado"}
+                                            </span>
+                                        </li>
+                                    ))}
+                                </ul>
+                                {stats.alertas.chequeos_abandonados.length > 5 && (
+                                    <button
+                                        className="dashboard-ver-mas"
+                                        onClick={() => navigate("/admin/chequeos")}
+                                    >
+                                        Ver los {stats.alertas.chequeos_abandonados.length - 5} restantes →
                                     </button>
                                 )}
                             </div>

@@ -210,6 +210,10 @@ function ChequeosAdmin() {
                                         )}
                                         {c.cerrado ? (
                                             <span className="cheqadmin-badge-cerrado">CERRADO</span>
+                                        ) : c.abandonado ? (
+                                            <span className="cheqadmin-badge-abandonado">
+                                                ABANDONADO
+                                            </span>
                                         ) : (
                                             <span className="cheqadmin-badge-abierto">EN PROCESO</span>
                                         )}

@@ -538,6 +538,7 @@ export const listarChequeosParaAdmin = async ({
         .from("chequeos_preoperacionales")
         .select(`
             id, fecha, tipo, es_oficial, kilometraje, cerrado, fecha_cierre,
+            abandonado, abandonado_en, motivo_abandono,
             resultado_estado, resultado_criticidad,
             items_cumple_count, items_no_cumple_count, items_no_aplica_count,
             tiene_falla_critica,

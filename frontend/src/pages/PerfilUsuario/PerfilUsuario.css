@@ -356,6 +356,15 @@
     border-color: #e29a2d;
 }
 
+/* Crítico: rojo claro con texto oscuro (vence en 15 días o menos) */
+.perfil-vencimiento.critico {
+    background: #FFEBEE;
+    color: var(--color-rojo);
+    border-color: var(--color-rojo);
+    font-weight: var(--peso-bold);
+}
+
+/* Vencido: rojo sólido invertido (ya pasó la fecha) */
 .perfil-vencimiento.vencido {
     background: var(--color-rojo);
     color: var(--color-blanco);

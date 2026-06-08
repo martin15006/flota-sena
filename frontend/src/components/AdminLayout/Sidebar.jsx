@@ -54,6 +54,12 @@ const Icono = {
             <line x1="4.93" y1="4.93" x2="19.07" y2="19.07" />
         </svg>
     ),
+    miPerfil: (
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" aria-hidden="true">
+            <path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2" />
+            <circle cx="12" cy="7" r="4" />
+        </svg>
+    ),
     logout: (
         <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" aria-hidden="true">
             <path d="M9 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h4" />
@@ -72,6 +78,7 @@ const ITEMS = [
     { ruta: "/admin/catalogo", etiqueta: "Catálogo del chequeo", icono: Icono.catalogo },
     { ruta: "/admin/chequeos", etiqueta: "Chequeos realizados", icono: Icono.chequeos, end: true },
     { ruta: "/admin/chequeos/intentos-bloqueados", etiqueta: "Intentos bloqueados", icono: Icono.bloqueados },
+    { ruta: "/admin/mi-perfil", etiqueta: "Mi perfil", icono: Icono.miPerfil },
 ];
 
 function Sidebar({ abierto, onCerrar, usuario, onLogout }) {

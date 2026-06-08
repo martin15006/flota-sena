@@ -91,17 +91,26 @@ export const obtenerStatsDashboard = async (req, res) => {
             .eq('rol', 'conductor')
             .eq('activo', true);
 
+        // e) Chequeos abandonados hoy (Tarea #104)
+        const abandonadosHoyQuery = supabase
+            .from('chequeos_preoperacionales')
+            .select('id', { count: 'exact', head: true })
+            .gte('abandonado_en', desdeHoy)
+            .eq('abandonado', true);
+
         // Aplicar filtro de centro si aplica y ejecutar todo en paralelo
         const [
             { count: chequeosDelDia },
             { count: chequeosNoOperativosDelDia },
             { count: intentosBloqueadosDelDia },
             { count: conductoresActivos },
+            { count: chequeosAbandonadosDelDia },
         ] = await Promise.all([
             filtrarPorCentroSiAplica(chequeosHoyQuery, usuario),
             filtrarPorCentroSiAplica(noOperativosHoyQuery, usuario),
             filtrarPorCentroSiAplica(intentosHoyQuery, usuario),
             filtrarPorCentroSiAplica(conductoresActivosQuery, usuario),
+            filtrarPorCentroSiAplica(abandonadosHoyQuery, usuario),
         ]);
 
         // ====================================================================
@@ -153,6 +162,33 @@ export const obtenerStatsDashboard = async (req, res) => {
         noOperativosQuery = filtrarPorCentroSiAplica(noOperativosQuery, usuario);
         const { data: vehiculosNoOperativos } = await noOperativosQuery;
 
+        // d) Chequeos abandonados hoy (con datos del conductor y vehiculo).
+        // Solo para visualizacion — el contador completo del dia ya esta en kpis.
+        let abandonadosListaQuery = supabase
+            .from('chequeos_preoperacionales')
+            .select(`
+                id,
+                abandonado_en,
+                motivo_abandono,
+                tipo,
+                conductor:conductor_id ( id, nombre_completo ),
+                vehiculo:vehiculo_id ( id, placa )
+            `)
+            .eq('abandonado', true)
+            .gte('abandonado_en', desdeHoy)
+            .order('abandonado_en', { ascending: false })
+            .limit(10);
+        abandonadosListaQuery = filtrarPorCentroSiAplica(abandonadosListaQuery, usuario);
+        const { data: abandonadosRaw } = await abandonadosListaQuery;
+        const chequeosAbandonados = (abandonadosRaw || []).map((c) => ({
+            id: c.id,
+            abandonado_en: c.abandonado_en,
+            motivo_abandono: c.motivo_abandono,
+            tipo: c.tipo,
+            conductor_nombre: c.conductor?.nombre_completo || '—',
+            placa: c.vehiculo?.placa || '—',
+        }));
+
         // ====================================================================
         // 3) Respuesta
         // ====================================================================
@@ -167,11 +203,13 @@ export const obtenerStatsDashboard = async (req, res) => {
                 chequeos_no_operativos_del_dia: chequeosNoOperativosDelDia || 0,
                 intentos_bloqueados_del_dia: intentosBloqueadosDelDia || 0,
                 conductores_activos: conductoresActivos || 0,
+                chequeos_abandonados_del_dia: chequeosAbandonadosDelDia || 0,
             },
             alertas: {
                 licencias_por_vencer: licenciasPorVencer,
                 vehiculos_sin_runt: vehiculosSinRunt || [],
                 vehiculos_no_operativos: vehiculosNoOperativos || [],
+                chequeos_abandonados: chequeosAbandonados,
             },
         });
     } catch (err) {

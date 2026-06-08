@@ -4,11 +4,21 @@ export const verificarToken = async (req, res, next) => {
     try {
         const authHeader = req.headers.authorization;
 
-        if (!authHeader || !authHeader.startsWith('Bearer ')) {
-            return res.status(401).json({ error: 'Token no proporcionado' });
+        // Token normal en header Authorization. Como fallback aceptamos token en body
+        // SOLO para el endpoint de abandono — navigator.sendBeacon no soporta headers
+        // y necesitamos detectar el cierre de pestaña en medio del chequeo (Tarea #104).
+        let token = null;
+        if (authHeader && authHeader.startsWith('Bearer ')) {
+            token = authHeader.slice(7);
+        } else if (
+            req.body &&
+            typeof req.body.token === 'string' &&
+            req.path.endsWith('/abandonar')
+        ) {
+            token = req.body.token;
+            // Limpiar el token del body para que el controller no lo vea
+            delete req.body.token;
         }
-
-        const token = authHeader.slice(7);
 
         const { data, error } = await supabase.auth.getUser(token);
 

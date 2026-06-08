@@ -360,7 +360,8 @@
 .cheqadmin-badge-oficial,
 .cheqadmin-badge-rechequeo,
 .cheqadmin-badge-cerrado,
-.cheqadmin-badge-abierto {
+.cheqadmin-badge-abierto,
+.cheqadmin-badge-abandonado {
     padding: 3px 8px;
     border-radius: var(--radio-xl);
     font-size: 10px;
@@ -399,6 +400,14 @@
     background: #FFF8E1;
     color: #E65100;
     border: 1px solid #FFB74D;
+}
+
+/* Badge ABANDONADO (Tarea #104): chequeo cancelado por inactividad o cierre del navegador */
+.cheqadmin-badge-abandonado {
+    background: #FFEBEE;
+    color: #B71C1C;
+    border: 1px solid #B71C1C;
+    font-weight: var(--peso-bold);
 }
 
 .cheqadmin-card-vehiculo {

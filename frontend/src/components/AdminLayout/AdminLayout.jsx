@@ -27,7 +27,7 @@ const STORAGE_KEY = "flota_sena__sidebar_colapsado";
 // coincidir con el media query del CSS.
 const esMovil = () => window.innerWidth <= 900;
 
-function AdminLayout({ titulo, children, tieneNotificaciones = false }) {
+function AdminLayout({ titulo, children }) {
     const { usuario, cerrarSesion } = useAuth();
     const navigate = useNavigate();
 
@@ -121,13 +121,23 @@ function AdminLayout({ titulo, children, tieneNotificaciones = false }) {
                     )}
 
                     <div className="admin-layout-acciones">
-                        <Campanita tieneNotificaciones={tieneNotificaciones} />
-                        <div className="admin-layout-perfil">
+                        {/* La campanita maneja su propio estado global (polling cada 30s).
+                            Por eso ya no necesita prop tieneNotificaciones — funciona igual
+                            en todas las paginas del admin, no solo en dashboard. */}
+                        <Campanita />
+                        {/* Bloque del usuario es un boton: clic lleva a "Mi perfil" */}
+                        <button
+                            type="button"
+                            className="admin-layout-perfil"
+                            onClick={() => navigate("/admin/mi-perfil")}
+                            title="Ver mi perfil"
+                            aria-label="Ver mi perfil"
+                        >
                             <div className="admin-layout-perfil-nombre">
                                 {usuario.nombre_completo}
                             </div>
                             <div className="admin-layout-perfil-rol">{usuario.rol}</div>
-                        </div>
+                        </button>
                     </div>
                 </header>
 
