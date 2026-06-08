@@ -212,24 +212,33 @@ export const postCerrarChequeo = async (req, res) => {
             return res.status(resultado.error.status).json({ error: resultado.error.mensaje });
         }
 
-        // Bloque C paso 2: notificar al admin si el resultado merece atencion.
-        // Solo notificamos NO OPERATIVO y CRITICO (los dos peores estados).
-        // Otros estados (operativo/observacion/alerta) no generan notificacion
-        // para no saturar al admin con eventos rutinarios.
+        // Bloque C paso 2: notificar al admin de TODO chequeo completado.
+        // El tipo de notificacion lleva el estado del resultado (chequeo_operativo,
+        // chequeo_observacion, etc.) para que el frontend pueda colorear el icono
+        // segun el semaforo: verde/azul/amarillo/rojo/gris.
         try {
             const ch = resultado.chequeo;
             const veh = resultado.vehiculo;
             const estado = ch?.resultado_estado;
 
-            if (estado === 'no_operativo' || estado === 'critico') {
+            // Texto legible por estado
+            const ESTADO_TEXTO = {
+                operativo: 'OPERATIVO',
+                observacion: 'EN OBSERVACIÓN',
+                alerta: 'EN ALERTA',
+                critico: 'CRÍTICO',
+                no_operativo: 'NO OPERATIVO',
+            };
+
+            if (estado && ESTADO_TEXTO[estado]) {
                 const placa = veh?.placa || 'sin placa';
-                const tipoNotif = estado === 'no_operativo' ? 'chequeo_no_operativo' : 'chequeo_critico';
-                const tituloEstado = estado === 'no_operativo' ? 'NO OPERATIVO' : 'CRÍTICO';
+                const nombreConductor = req.usuario.nombre_completo || 'Un conductor';
+                const tituloEstado = ESTADO_TEXTO[estado];
 
                 await crearNotificacion({
-                    tipo: tipoNotif,
-                    titulo: `Vehículo ${placa} quedó ${tituloEstado}`,
-                    mensaje: `El chequeo termino con resultado ${tituloEstado}. Revisar el detalle para tomar accion.`,
+                    tipo: `chequeo_${estado}`, // chequeo_operativo, chequeo_observacion, ...
+                    titulo: `${nombreConductor} completó un chequeo`,
+                    mensaje: `Vehículo ${placa} quedó ${tituloEstado}.`,
                     url_destino: `/admin/chequeos/${id}`,
                     centro_id: ch?.centro_id,
                     chequeo_id: id,

@@ -8,36 +8,8 @@
 import { useEffect, useRef, useState } from "react";
 import { useNavigate } from "react-router-dom";
 import useNotificaciones from "../../hooks/useNotificaciones.js";
+import { iconoDe, colorDe, tiempoRelativo } from "../../lib/notificacionesUtils.js";
 import "./Campanita.css";
-
-// Etiquetas legibles segun el tipo de notificacion
-const ICONOS_TIPO = {
-    chequeo_abandonado: "✗",
-    chequeo_no_operativo: "!",
-    chequeo_critico: "!",
-    intento_bloqueado_aptitud: "✗",
-    intento_bloqueado_vehiculo: "✗",
-    licencia_proxima_vencer: "⏱",
-    licencia_vencida: "⏱",
-    vehiculo_sin_runt: "📋",
-    sistema: "•",
-};
-
-// Devuelve "hace 5 minutos", "hace 2 horas", etc.
-const tiempoRelativo = (iso) => {
-    if (!iso) return "";
-    const ahora = new Date();
-    const cuando = new Date(iso);
-    const segs = Math.floor((ahora - cuando) / 1000);
-    if (segs < 60) return "ahora mismo";
-    const mins = Math.floor(segs / 60);
-    if (mins < 60) return `hace ${mins} min`;
-    const hrs = Math.floor(mins / 60);
-    if (hrs < 24) return `hace ${hrs} ${hrs === 1 ? "hora" : "horas"}`;
-    const dias = Math.floor(hrs / 24);
-    if (dias < 7) return `hace ${dias} ${dias === 1 ? "día" : "días"}`;
-    return cuando.toLocaleDateString("es-CO", { day: "2-digit", month: "short" });
-};
 
 function Campanita() {
     const navigate = useNavigate();
@@ -144,8 +116,8 @@ function Campanita() {
                                     className={`campanita-item ${n.leida ? "" : "campanita-item-no-leida"}`}
                                     onClick={() => onClickNotif(n)}
                                 >
-                                    <span className="campanita-item-icono">
-                                        {ICONOS_TIPO[n.tipo] || "•"}
+                                    <span className={`campanita-item-icono campanita-icono-${colorDe(n.tipo)}`}>
+                                        {iconoDe(n.tipo)}
                                     </span>
                                     <div className="campanita-item-cuerpo">
                                         <div className="campanita-item-titulo">

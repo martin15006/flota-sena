@@ -6,6 +6,7 @@ import Dashboard from "./pages/Dashboard/Dashboard.jsx";
 import UsuariosAdmin from "./pages/UsuariosAdmin/UsuariosAdmin.jsx";
 import PerfilUsuario from "./pages/PerfilUsuario/PerfilUsuario.jsx";
 import MiPerfil from "./pages/MiPerfil/MiPerfil.jsx";
+import Notificaciones from "./pages/Notificaciones/Notificaciones.jsx";
 import VehiculosAdmin from "./pages/VehiculosAdmin/VehiculosAdmin.jsx";
 import VehiculoDetalle from "./pages/VehiculoDetalle/VehiculoDetalle.jsx";
 import CambiarPassword from "./pages/CambiarPassword/CambiarPassword.jsx";
@@ -48,6 +49,12 @@ function App() {
                     <Route path="/admin/mi-perfil" element={
                         <ProtectedRoutes>
                             <MiPerfil />
+                        </ProtectedRoutes>
+                    } />
+
+                    <Route path="/admin/notificaciones" element={
+                        <ProtectedRoutes>
+                            <Notificaciones />
                         </ProtectedRoutes>
                     } />
 

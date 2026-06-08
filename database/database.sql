@@ -395,18 +395,14 @@ CREATE TABLE IF NOT EXISTS notificaciones (
     -- A quien le llega
     destinatario_id     UUID NOT NULL REFERENCES usuarios(id) ON DELETE CASCADE,
 
-    -- Que tipo de evento la genero
-    tipo                TEXT NOT NULL CHECK (tipo IN (
-                            'chequeo_abandonado',
-                            'chequeo_no_operativo',
-                            'chequeo_critico',
-                            'intento_bloqueado_aptitud',
-                            'intento_bloqueado_vehiculo',
-                            'licencia_proxima_vencer',
-                            'licencia_vencida',
-                            'vehiculo_sin_runt',
-                            'sistema'
-                        )),
+    -- Que tipo de evento la genero. Sin CHECK a proposito: la validacion de
+    -- tipos vive en el codigo (notificaciones.service.js) para poder agregar
+    -- tipos nuevos sin migrar la BD. Tipos actuales:
+    --   chequeo_operativo, chequeo_observacion, chequeo_alerta, chequeo_critico,
+    --   chequeo_no_operativo, chequeo_abandonado, intento_bloqueado_aptitud,
+    --   intento_bloqueado_vehiculo, licencia_proxima_vencer, licencia_vencida,
+    --   vehiculo_sin_runt, sistema
+    tipo                TEXT NOT NULL,
 
     -- Texto visible al usuario
     titulo              TEXT NOT NULL,

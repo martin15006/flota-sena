@@ -105,9 +105,6 @@ export const crearNotificacion = async ({
         return { cantidadCreada: 0 };
     }
 
-    // Log temporal de diagnostico (se puede quitar cuando confirmemos que funciona)
-    console.log(`[notificaciones] creadas ${filas.length} (tipo=${tipo}, centro_id=${centro_id || 'ninguno'})`);
-
     return { cantidadCreada: filas.length };
 };
 

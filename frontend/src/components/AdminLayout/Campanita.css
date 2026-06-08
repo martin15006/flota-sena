@@ -167,7 +167,6 @@
 .campanita-item-icono {
     width: 32px;
     height: 32px;
-    background: var(--color-verde-sena);
     color: var(--color-blanco);
     border-radius: 50%;
     display: flex;
@@ -176,8 +175,16 @@
     font-size: 18px;
     font-weight: var(--peso-bold);
     flex-shrink: 0;
-    border: 2px solid var(--color-verde-oscuro);
+    border: 2px solid rgba(0, 0, 0, 0.25);
 }
+
+/* Colores del icono segun el tipo de notificacion (semaforo del sistema) */
+.campanita-icono-verde    { background: var(--color-verde-sena); }
+.campanita-icono-azul     { background: #1565C0; }
+.campanita-icono-amarillo { background: #F9A825; color: #1A1A1A; }
+.campanita-icono-rojo     { background: var(--color-rojo); }
+.campanita-icono-gris     { background: #374151; }
+.campanita-icono-naranja  { background: #E65100; }
 
 .campanita-item-cuerpo {
     flex: 1;
