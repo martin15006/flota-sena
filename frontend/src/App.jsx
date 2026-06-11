@@ -19,6 +19,7 @@ import CatalogoAdmin from "./pages/CatalogoAdmin/CatalogoAdmin.jsx";
 import ChequeosAdmin from "./pages/ChequeosAdmin/ChequeosAdmin.jsx";
 import ChequeoDetalle from "./pages/ChequeoDetalle/ChequeoDetalle.jsx";
 import IntentosBloqueados from "./pages/IntentosBloqueados/IntentosBloqueados.jsx";
+import GeografiaAdmin from "./pages/GeografiaAdmin/GeografiaAdmin.jsx";
 
 function App() {
     return (
@@ -55,6 +56,12 @@ function App() {
                     <Route path="/admin/notificaciones" element={
                         <ProtectedRoutes>
                             <Notificaciones />
+                        </ProtectedRoutes>
+                    } />
+
+                    <Route path="/admin/geografia" element={
+                        <ProtectedRoutes>
+                            <GeografiaAdmin />
                         </ProtectedRoutes>
                     } />
 

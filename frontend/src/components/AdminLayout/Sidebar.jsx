@@ -61,6 +61,13 @@ const Icono = {
             <circle cx="12" cy="7" r="4" />
         </svg>
     ),
+    geografia: (
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" aria-hidden="true">
+            <circle cx="12" cy="12" r="10" />
+            <line x1="2" y1="12" x2="22" y2="12" />
+            <path d="M12 2a15.3 15.3 0 0 1 4 10 15.3 15.3 0 0 1-4 10 15.3 15.3 0 0 1-4-10 15.3 15.3 0 0 1 4-10z" />
+        </svg>
+    ),
     notificaciones: (
         <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" aria-hidden="true">
             <path d="M18 8A6 6 0 0 0 6 8c0 7-3 9-3 9h18s-3-2-3-9" />
@@ -76,15 +83,25 @@ const Icono = {
     ),
 };
 
-// Items del menu. Si en el futuro queremos ocultar items por rol, agregamos
-// una prop `roles: ['admin']` y filtramos antes de render.
+// Items del menu, diferenciados por NIVEL del admin (#102/#116):
+//   - El admin de CENTRO (alias 'admin') es el rol operativo: catalogo,
+//     chequeos e intentos viven en su menu del dia a dia.
+//   - Los niveles superiores (ciudad/departamental/regional/superadmin) son
+//     gestores de personas y estructura: usuarios, vehiculos y dashboard.
+//     Chequeos/intentos los supervisan desde las cajas del dashboard (las
+//     rutas siguen accesibles; solo se ocultan del menu).
+//   - La geografia (ciudades/centros) es exclusiva del superadmin.
+// `roles` ausente = visible para todos los admins.
+const SOLO_CENTRO = ["admin", "admin_centro"];
+
 const ITEMS = [
     { ruta: "/dashboard", etiqueta: "Dashboard", icono: Icono.dashboard, end: true },
     { ruta: "/admin/vehiculos", etiqueta: "Gestión de vehículos", icono: Icono.vehiculos },
     { ruta: "/admin/usuarios", etiqueta: "Gestión de usuarios", icono: Icono.usuarios },
-    { ruta: "/admin/catalogo", etiqueta: "Catálogo del chequeo", icono: Icono.catalogo },
-    { ruta: "/admin/chequeos", etiqueta: "Chequeos realizados", icono: Icono.chequeos, end: true },
-    { ruta: "/admin/chequeos/intentos-bloqueados", etiqueta: "Intentos bloqueados", icono: Icono.bloqueados },
+    { ruta: "/admin/geografia", etiqueta: "Gestión de geografía", icono: Icono.geografia, roles: ["superadmin"] },
+    { ruta: "/admin/catalogo", etiqueta: "Catálogo del chequeo", icono: Icono.catalogo, roles: SOLO_CENTRO },
+    { ruta: "/admin/chequeos", etiqueta: "Chequeos realizados", icono: Icono.chequeos, end: true, roles: SOLO_CENTRO },
+    { ruta: "/admin/chequeos/intentos-bloqueados", etiqueta: "Intentos bloqueados", icono: Icono.bloqueados, roles: SOLO_CENTRO },
     { ruta: "/admin/notificaciones", etiqueta: "Notificaciones", icono: Icono.notificaciones },
     { ruta: "/admin/mi-perfil", etiqueta: "Mi perfil", icono: Icono.miPerfil },
 ];
@@ -105,10 +122,12 @@ function Sidebar({ abierto, onCerrar, usuario, onLogout }) {
                 </div>
             </div>
 
-            {/* Lista de items de navegacion */}
+            {/* Lista de items de navegacion (filtrada por el nivel del admin) */}
             <nav className="sidebar-nav">
                 <ul className="sidebar-lista">
-                    {ITEMS.map((item) => (
+                    {ITEMS.filter(
+                        (item) => !item.roles || item.roles.includes(usuario.rol)
+                    ).map((item) => (
                         <li key={item.ruta}>
                             <NavLink
                                 to={item.ruta}
