@@ -116,7 +116,7 @@ Después del login exitoso te lleva al panel `/dashboard`.
 | 1 | Autenticación: login, roles, gestión de usuarios | ✅ |
 | 2 | Gestión de vehículos: CRUD admin, fotos, datos | ✅ |
 | 3 | Flujo del conductor: aptitud + chequeo de 39 ítems | ✅ |
-| 4 | Dashboard del admin + navegación unificada + módulo usuarios | 🔄 En curso |
+| 4 | Dashboard admin + navegación + notificaciones + roles multinivel | 🔄 En curso (falta Ajustes y despliegue) |
 | 5 | Notificaciones: campanita en sitio + correo | ⏳ |
 | 6 | Reportes: exportación Excel/PDF, envío automático | ⏳ |
 | 7 | Vencimientos automáticos: SOAT, RTM, extintor, licencia | ⏳ |
@@ -266,12 +266,22 @@ Después del login exitoso te lleva al panel `/dashboard`.
 - [ ] Pruebas end-to-end del flujo completo
 - [ ] Documentación de despliegue
 
-### Pendientes futuros (decididos con el equipo, ver `docs/bitacora/semana-4-cambios.md`)
+**Roles administrativos multinivel (✅ completado)**
+- [x] Jerarquía de 5 niveles: superadmin → admin regional → departamental → ciudad → centro (+ conductor)
+- [x] Scope territorial: cada admin solo ve y gestiona lo de su área (servicio `scope.service.js`)
+- [x] Reglas de jerarquía: solo se crean/gestionan roles de rango inferior; nadie elimina a un par (`jerarquia.service.js`)
+- [x] Creación y edición de usuarios con selector de rol limitado y territorio adaptativo (centro/ciudad/departamento/región)
+- [x] Cambio de rol desde edición con validaciones (nadie cambia su propio rol)
+- [x] Superadmin puede nombrar otros superadmins (continuidad), pero no eliminarlos/editarlos
+- [x] Columna "Ámbito" y filtro por ciudad en Gestión de usuarios
+- [x] Seed de geografía nacional: 33 capitales + Espinal y centros SENA de muestra
 
-- [ ] Perfil propio del administrador (con regla: cédula/correo solo cambiable por superior)
+### Pendientes futuros (ver `docs/bitacora/semana-5-cambios.md`)
+
+- [x] Perfil propio del administrador (con regla: cédula/correo solo cambiable por superior)
 - [ ] Módulo de Ajustes con modo claro/oscuro
-- [ ] Roles administrativos multinivel (superadmin → admin_centro) con scope filtrado por nivel
-- [ ] Repulir interfaz del conductor con la misma calidad visual del admin
+- [ ] Pantallas de gestión de la geografía (añadir ciudades y centros desde la app, sin SQL)
+- [x] Repulir interfaz del conductor con la misma calidad visual del admin
 
 ---
 
@@ -280,7 +290,8 @@ Después del login exitoso te lleva al panel `/dashboard`.
 - Las variables sensibles viven en `backend/.env` (excluido por `.gitignore`)
 - La `service_role key` de Supabase y las API keys de Cloudinary nunca se exponen al frontend
 - Contraseñas de usuarios manejadas por Supabase Auth (bcrypt interno)
-- Sesiones manejadas por Supabase Auth (access token con TTL de ~1h, refresh token disponible para extender)
+- Sesiones manejadas por Supabase Auth (access token con TTL de 24h, refresh token disponible para extender)
+- Control de acceso multinivel validado en el servidor: scope territorial + jerarquía de rangos en cada operación sobre usuarios
 - Contraseñas temporales generadas automáticamente al crear usuarios
 - Cambio obligatorio de contraseña en el primer inicio de sesión
 - Verificación de contraseña actual antes de permitir cambios
