@@ -1,5 +1,16 @@
 import { supabase } from "../config/supabase.js";
 import { resolverIdentificador, obtenerPerfil } from "../services/auth.service.js";
+import { crearNotificacion } from "../services/notificaciones.service.js";
+
+// Helper: ¿la fecha de vencimiento (YYYY-MM-DD) ya paso? Compara solo fechas.
+const licenciaEstaVencida = (fechaVencimiento) => {
+    if (!fechaVencimiento) return false;
+    const hoy = new Date();
+    hoy.setHours(0, 0, 0, 0);
+    const v = new Date(fechaVencimiento);
+    v.setHours(0, 0, 0, 0);
+    return v < hoy;
+};
 
 
 export const login = async (req, res) => {
@@ -35,6 +46,26 @@ export const login = async (req, res) => {
             return res.status(403).json({
                 error: 'Tu cuenta esta desactivada. Contacta al administrador del SENA para reactivarla.',
             });
+        }
+
+        // Si un conductor inicia sesion con la licencia vencida, avisar al admin.
+        // Limite: maximo 5 avisos por dia por conductor (dedupeHoras=24, maxPorVentana=5)
+        // para que el admin lo vea varias veces sin saturarse si el conductor entra
+        // muchas veces. Fire-and-forget: no bloquea ni falla el login.
+        if (perfil.rol === 'conductor' && licenciaEstaVencida(perfil.licencia_vencimiento)) {
+            const fechaLegible = new Date(perfil.licencia_vencimiento).toLocaleDateString('es-CO', {
+                day: '2-digit', month: 'long', year: 'numeric',
+            });
+            crearNotificacion({
+                tipo: 'licencia_vencida',
+                titulo: `${perfil.nombre_completo} inició sesión con la licencia vencida`,
+                mensaje: `Su licencia venció el ${fechaLegible}. Necesita renovarla para poder operar vehículos.`,
+                url_destino: `/admin/usuarios/${perfil.id}`,
+                centro_id: perfil.centro_id,
+                conductor_id: perfil.id,
+                dedupeHoras: 24,
+                maxPorVentana: 5,
+            }).catch((e) => console.warn('[notificaciones] login licencia vencida:', e.message));
         }
 
         res.json({

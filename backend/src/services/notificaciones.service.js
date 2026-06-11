@@ -34,6 +34,12 @@ const ROLES_DESTINATARIOS = [
 //   contexto     — { chequeo_id?, vehiculo_id?, conductor_id? }
 //
 // Devuelve { cantidadCreada: N } o lanza error si algo falla.
+//
+// Limite de frecuencia (opcional): si se pasan dedupeHoras + maxPorVentana,
+// solo se permite crear hasta `maxPorVentana` notificaciones del mismo tipo para
+// el mismo conductor dentro de esa ventana de horas. Asi el admin recibe el aviso
+// varias veces (para que no se le pase) pero sin saturarse.
+// Ej: dedupeHoras=24, maxPorVentana=5 -> hasta 5 avisos por dia por conductor.
 export const crearNotificacion = async ({
     tipo,
     titulo,
@@ -43,9 +49,26 @@ export const crearNotificacion = async ({
     chequeo_id = null,
     vehiculo_id = null,
     conductor_id = null,
+    dedupeHoras = null,
+    maxPorVentana = 1,
 }) => {
     if (!tipo || !titulo || !mensaje) {
         throw new Error('tipo, titulo y mensaje son obligatorios');
+    }
+
+    // Control de frecuencia: contar cuantas notificaciones del mismo tipo para el
+    // mismo conductor existen en la ventana. Si ya se alcanzo el maximo, no crear.
+    if (dedupeHoras && conductor_id) {
+        const desde = new Date(Date.now() - dedupeHoras * 60 * 60 * 1000).toISOString();
+        const { count } = await supabase
+            .from('notificaciones')
+            .select('id', { count: 'exact', head: true })
+            .eq('tipo', tipo)
+            .eq('conductor_id', conductor_id)
+            .gte('created_at', desde);
+        if (count && count >= maxPorVentana) {
+            return { cantidadCreada: 0, omitidaPorLimite: true };
+        }
     }
 
     // Traer TODOS los admins activos y filtrar el destinatario en JS, porque la

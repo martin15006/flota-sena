@@ -86,8 +86,9 @@ function Dashboard() {
           (stats.alertas.chequeos_abandonados?.length || 0)
         : 0;
 
-    // Flag de scope para mostrar texto contextual al admin
-    const esScopeCentro = stats?.scope?.tipo === "centro";
+    // Flag de scope para mostrar texto contextual al admin.
+    // 'global' = superadmin (ve todo); cualquier otro = ve su area asignada.
+    const esScopeLimitado = stats?.scope && stats.scope.tipo !== "global";
 
     return (
         <AdminLayout titulo="Dashboard">
@@ -97,9 +98,9 @@ function Dashboard() {
                     Hola, {usuario.nombre_completo?.split(" ")[0]}
                 </h2>
                 <p className="dashboard-fecha">{formatearFechaHoy()}</p>
-                {esScopeCentro && (
+                {esScopeLimitado && (
                     <p className="dashboard-scope">
-                        Estás viendo datos de tu centro asignado.
+                        Estás viendo los datos de tu área asignada.
                     </p>
                 )}
             </div>

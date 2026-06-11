@@ -238,12 +238,13 @@ function MiPerfil() {
                         />
                     </div>
 
-                    {/* Aviso explicativo */}
+                    {/* Aviso explicativo (segun el nivel: el superadmin no tiene
+                        a nadie por encima — su via es el soporte tecnico) */}
                     <div className="mi-perfil-aviso-bloqueado">
-                        <strong>¿Necesitas cambiar tu cédula o correo?</strong> Por
-                        seguridad, estos datos solo pueden ser modificados por un
-                        administrador de rango superior. Contáctalo si los datos son
-                        incorrectos.
+                        <strong>¿Necesitas cambiar tu cédula o correo?</strong>{" "}
+                        {usuario?.rol === "superadmin"
+                            ? "Eres el nivel más alto del sistema: estos datos se gestionan directamente con el soporte técnico de la plataforma."
+                            : "Por seguridad, estos datos solo pueden ser modificados por un administrador de rango superior. Contáctalo si los datos son incorrectos."}
                     </div>
 
                     {/* Nombre — editable */}

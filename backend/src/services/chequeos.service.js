@@ -1,4 +1,5 @@
 import { supabase } from "../config/supabase.js";
+import { obtenerScope } from "./scope.service.js";
 
 // Trae todas las preguntas de aptitud activas indexadas por id para evaluacion rapida
 // Incluye el texto de la pregunta para devolver mensajes claros al frontend
@@ -139,6 +140,39 @@ export const iniciarChequeo = async ({
     kilometraje,
     respuestasAptitud,
 }) => {
+    // 0. Validar licencia vigente (Tarea #106).
+    // Una licencia vencida es un bloqueo legal absoluto: el conductor no puede
+    // operar el vehiculo aunque este apto y el vehiculo este disponible.
+    // Se evalua primero por ser el impedimento mas fundamental.
+    if (conductor.licencia_vencimiento) {
+        // Comparar solo fechas (sin hora) para que "vence hoy" todavia sea valido.
+        const hoy = new Date();
+        hoy.setHours(0, 0, 0, 0);
+        const vencimiento = new Date(conductor.licencia_vencimiento);
+        vencimiento.setHours(0, 0, 0, 0);
+
+        if (vencimiento < hoy) {
+            await registrarIntentoBloqueado({
+                conductorId: conductor.id,
+                vehiculoId: null, // aun no validamos el vehiculo
+                centroId: conductor.centro_id,
+                razon: "licencia_vencida",
+                detalle: `Licencia vencida el ${conductor.licencia_vencimiento}`,
+            });
+            const fechaLegible = vencimiento.toLocaleDateString("es-CO", {
+                day: "2-digit",
+                month: "long",
+                year: "numeric",
+            });
+            return {
+                exito: false,
+                status: 403,
+                error: `Tu licencia de conducción está vencida desde el ${fechaLegible}. Debes renovarla antes de operar un vehículo. Contacta al administrador del SENA.`,
+                razon: "licencia_vencida",
+            };
+        }
+    }
+
     // 1. Evaluar aptitud
     const evaluacion = await evaluarAptitud(respuestasAptitud);
     if (!evaluacion.apto) {
@@ -466,58 +500,14 @@ export const cerrarChequeo = async ({ chequeoId, conductorId, notasGenerales }) 
     };
 };
 
-// Dado un admin, devuelve los centro_id que tiene permitido ver segun su rol
-// - superadmin: null (todos los centros)
-// - admin_regional: los centros de su regional
-// - admin_departamental: los centros de su departamento
-// - admin_ciudad: los centros de su ciudad
-// - admin_centro (o alias 'admin'): solo su propio centro_id
+// Dado un admin, devuelve los centro_id que tiene permitido ver segun su rol.
+// Delega en el helper compartido scope.service.js (una sola fuente de verdad para
+// todo el sistema). Mantiene el contrato historico de esta funcion:
+//   - null  = sin filtro (superadmin, ve todos los centros)
+//   - array = lista de centro_id que puede ver
 const obtenerCentrosVisiblesParaAdmin = async (usuario) => {
-    if (usuario.rol === "superadmin") return null; // null = sin filtro
-
-    if (usuario.rol === "admin_centro" || usuario.rol === "admin") {
-        return usuario.centro_id ? [usuario.centro_id] : [];
-    }
-
-    // Los otros niveles dependen de columnas de jerarquia en la tabla usuarios
-    // que se implementaran en fases futuras. Por ahora retornan vacio para
-    // protegerse: si no esta implementado, mejor no ver nada que ver todo.
-    if (usuario.rol === "admin_ciudad" && usuario.ciudad_id) {
-        const { data } = await supabase
-            .from("centros_formacion")
-            .select("id")
-            .eq("ciudad_id", usuario.ciudad_id);
-        return (data || []).map((c) => c.id);
-    }
-    if (usuario.rol === "admin_departamental" && usuario.departamento_id) {
-        const { data } = await supabase
-            .from("centros_formacion")
-            .select("id, ciudades!inner(departamento_id)")
-            .eq("ciudades.departamento_id", usuario.departamento_id);
-        return (data || []).map((c) => c.id);
-    }
-    if (usuario.rol === "admin_regional" && usuario.region_id) {
-        // No hay un join directo; se hace en varios pasos
-        const { data: deps } = await supabase
-            .from("departamentos")
-            .select("id")
-            .eq("region_id", usuario.region_id);
-        const idsDeps = (deps || []).map((d) => d.id);
-        if (idsDeps.length === 0) return [];
-        const { data: ciudades } = await supabase
-            .from("ciudades")
-            .select("id")
-            .in("departamento_id", idsDeps);
-        const idsCiudades = (ciudades || []).map((c) => c.id);
-        if (idsCiudades.length === 0) return [];
-        const { data: centros } = await supabase
-            .from("centros_formacion")
-            .select("id")
-            .in("ciudad_id", idsCiudades);
-        return (centros || []).map((c) => c.id);
-    }
-
-    return [];
+    const scope = await obtenerScope(usuario);
+    return scope.tipo === "global" ? null : scope.centroIds;
 };
 
 // Lista chequeos visibles para el admin segun su scope, con filtros opcionales

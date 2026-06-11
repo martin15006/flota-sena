@@ -102,14 +102,25 @@ export const postIniciarChequeo = async (req, res) => {
                         titulo: `${nombreConductor} intentó usar un vehículo inexistente`,
                         mensaje: 'Intento de chequeo bloqueado: el vehiculo no existe o no es del centro.',
                     },
+                    licencia_vencida: {
+                        tipo: 'licencia_vencida',
+                        titulo: `${nombreConductor} tiene la licencia vencida`,
+                        mensaje: 'Intento de chequeo bloqueado: la licencia de conduccion del conductor esta vencida. Debe renovarla.',
+                    },
                 }[razon];
 
                 if (config) {
+                    // La licencia vencida lleva al perfil del conductor (para
+                    // renovar/actualizar la fecha); los demas intentos llevan a la
+                    // pagina de intentos bloqueados.
+                    const urlDestino = razon === 'licencia_vencida'
+                        ? `/admin/usuarios/${req.usuario.id}`
+                        : '/admin/chequeos/intentos-bloqueados';
                     await crearNotificacion({
                         tipo: config.tipo,
                         titulo: config.titulo,
                         mensaje: config.mensaje,
-                        url_destino: '/admin/chequeos/intentos-bloqueados',
+                        url_destino: urlDestino,
                         centro_id: centroId,
                         conductor_id: req.usuario.id,
                         vehiculo_id: vehiculo_id || null,

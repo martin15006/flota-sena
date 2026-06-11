@@ -6,6 +6,7 @@
 // que tenemos pertenecen al ambito del admin.
 
 import { NavLink } from "react-router-dom";
+import { ETIQUETA_ROL } from "../../lib/roles.js";
 import "./Sidebar.css";
 
 // SVGs inline para iconos del menu — todos siguen el mismo estilo "stroke" para
@@ -132,7 +133,17 @@ function Sidebar({ abierto, onCerrar, usuario, onLogout }) {
             <div className="sidebar-pie">
                 <div className="sidebar-usuario">
                     <div className="sidebar-usuario-nombre">{usuario.nombre_completo}</div>
-                    <div className="sidebar-usuario-rol">{usuario.rol}</div>
+                    <div className="sidebar-usuario-rol">
+                        {ETIQUETA_ROL[usuario.rol] || usuario.rol}
+                        {/* Area segun el nivel: el superadmin administra todo el pais
+                            (no su centro legado); los roles de centro muestran su centro. */}
+                        {usuario.rol === "superadmin"
+                            ? " · Nacional"
+                            : usuario.centro_nombre &&
+                              ["admin", "admin_centro", "conductor"].includes(usuario.rol)
+                            ? ` · ${usuario.centro_nombre}`
+                            : ""}
+                    </div>
                 </div>
                 <button type="button" className="sidebar-logout" onClick={onLogout}>
                     <span className="sidebar-item-icono">{Icono.logout}</span>

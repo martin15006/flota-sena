@@ -19,7 +19,7 @@ import {
 // -- Categorias --
 
 export const getCategorias = async (req, res) => {
-    try {
+     try{
         const data = await listarCategoriasAdmin();
         res.json({ categorias: data, total: data.length });
     } catch (err) {

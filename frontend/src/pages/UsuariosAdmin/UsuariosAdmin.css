@@ -312,6 +312,24 @@
     color: var(--color-verde-oscuro);
 }
 
+/* Columna Ámbito: de dónde es (conductor) / qué administra (admin) */
+.usuarios-admin-ambito {
+    display: flex;
+    flex-direction: column;
+    gap: 2px;
+    line-height: 1.25;
+}
+
+.usuarios-admin-ambito-nombre {
+    font-weight: var(--peso-semibold);
+    color: var(--color-gris-900);
+}
+
+.usuarios-admin-ambito-nivel {
+    font-size: var(--tamano-xs);
+    color: var(--color-gris-700);
+}
+
 .usuarios-admin-estado {
     display: inline-flex;
     align-items: center;

@@ -96,12 +96,38 @@
     margin-top: var(--espacio-sm);
 }
 
+/* Aviso de licencia vencida (Tarea #106): bloquea el inicio de chequeos */
+.cond-licencia-bloqueo {
+    background: var(--color-rojo);
+    color: var(--color-blanco);
+    border: 2px solid #B71C1C;
+    border-radius: var(--radio-md);
+    padding: var(--espacio-md) var(--espacio-lg);
+    font-size: var(--tamano-sm);
+    font-weight: var(--peso-bold);
+    line-height: 1.4;
+    text-align: center;
+    box-shadow: var(--sombra-md);
+}
+
 /* ===== CIRCULOS centrales (mantengo el diseño original, refinado) ===== */
 .cond-circulos {
     display: flex;
     gap: var(--espacio-xl);
     justify-content: center;
     flex-wrap: wrap;
+}
+
+/* Circulo deshabilitado cuando la licencia esta vencida */
+.cond-circulo-bloqueado {
+    opacity: 0.45;
+    filter: grayscale(0.7);
+    cursor: not-allowed;
+}
+
+.cond-circulo-bloqueado:hover {
+    transform: none;
+    box-shadow: var(--sombra-md);
 }
 
 .cond-circulo {

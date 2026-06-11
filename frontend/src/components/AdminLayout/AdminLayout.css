@@ -102,6 +102,23 @@
     cursor: pointer;
     transition: all var(--velocidad-rapida) var(--suavizado);
     font-family: inherit;
+    /* Al entrar, el cuadro "respira" en verde 2 veces (mismo look del hover,
+       apareciendo y desvaneciendose suave) y luego queda quieto. Asi el rol se
+       nota solo, sin depender de pasar el mouse. */
+    animation: perfil-pulso 1.7s ease-in-out 2;
+}
+
+@keyframes perfil-pulso {
+    0%, 100% {
+        background: var(--color-blanco);
+        border-color: transparent;
+        box-shadow: none;
+    }
+    50% {
+        background: var(--color-verde-claro);
+        border-color: var(--color-verde-oscuro);
+        box-shadow: var(--sombra-sm);
+    }
 }
 
 .admin-layout-perfil:hover {
@@ -121,10 +138,25 @@
     line-height: 1.2;
 }
 
+/* Badge del nivel del admin: visible de un vistazo en todas las paginas
+   (antes era texto gris chiquito y se perdia). */
 .admin-layout-perfil-rol {
-    font-size: var(--tamano-xs);
-    color: var(--color-gris-700);
-    text-transform: capitalize;
+    display: inline-block;
+    margin-top: 3px;
+    padding: 2px 10px;
+    border-radius: var(--radio-xl);
+    background: var(--color-verde-sena);
+    color: var(--color-blanco);
+    font-size: var(--tamano-sm);
+    font-weight: var(--peso-bold);
+    line-height: 1.4;
+}
+
+/* Accesibilidad: si el usuario tiene "reducir movimiento" activado, sin pulso */
+@media (prefers-reduced-motion: reduce) {
+    .admin-layout-perfil {
+        animation: none;
+    }
 }
 
 /* ===== Contenido principal de la pagina ===== */

@@ -1,5 +1,7 @@
 import { supabase} from '../config/supabase.js'
 import { generarPasswordTemporal, contarAdminsActivos, registrarAuditoria, } from '../services/usuarios.service.js';
+import { obtenerScope, usuarioEnScope } from '../services/scope.service.js';
+import { puedeCrearRol, puedeGestionarRol, ETIQUETA_ROL } from '../services/jerarquia.service.js';
 
 
 // Helper: indexa los emails de auth.users por id para hacer merge con la tabla usuarios.
@@ -15,30 +17,110 @@ const obtenerMapaDeEmails = async () => {
     return mapa;
 };
 
+// Helper multinivel (#102): verifica que el admin pueda actuar sobre el usuario
+// objetivo. Comprueba dos cosas:
+//   1) scope territorial: el objetivo esta dentro del area del admin.
+//   2) jerarquia (opcional): el objetivo es de rango inferior (para acciones que
+//      modifican; en acciones de solo-lectura basta el scope -> exigirRango:false).
+// Devuelve { ok:true, usuario } o { ok:false, status, error }. Sobre uno mismo
+// siempre permite (el frontend tiene endpoints propios para el perfil propio).
+const verificarAccesoUsuarioObjetivo = async (req, idObjetivo, { exigirRango = true } = {}) => {
+    if (idObjetivo === req.usuario.id) return { ok: true, usuario: null };
+
+    const { data: objetivo } = await supabase
+        .from('usuarios')
+        .select('rol, centro_id, ciudad_id, departamento_id, region_id')
+        .eq('id', idObjetivo)
+        .maybeSingle();
+
+    if (!objetivo) {
+        return { ok: false, status: 404, error: 'Usuario no encontrado' };
+    }
+
+    const scope = await obtenerScope(req.usuario);
+    if (!usuarioEnScope(scope, objetivo)) {
+        return { ok: false, status: 403, error: 'Ese usuario no pertenece a tu area.' };
+    }
+    if (exigirRango && !puedeGestionarRol(req.usuario.rol, objetivo.rol)) {
+        return {
+            ok: false,
+            status: 403,
+            error: `No puedes gestionar a un "${ETIQUETA_ROL[objetivo.rol] || objetivo.rol}". Solo puedes gestionar usuarios de rango inferior al tuyo.`,
+        };
+    }
+    return { ok: true, usuario: objetivo };
+};
+
+// Construye un "ambito" legible para mostrar en la tabla (#102 mejora): de donde
+// es / que administra cada usuario, segun su rol. Usa los nombres ya unidos por
+// el JOIN (centro/ciudad/departamento/region).
+//   - conductor / admin_centro / admin con centro -> su centro (+ ciudad)
+//   - admin_ciudad        -> su ciudad
+//   - admin_departamental -> su departamento
+//   - admin_regional      -> su region
+//   - superadmin          -> nacional
+// Devuelve { nivel, etiqueta, ciudad } — ciudad sirve tambien para el filtro.
+const construirAmbito = (u) => {
+    const rol = u.rol;
+    if (rol === 'superadmin') return { nivel: 'nacional', etiqueta: 'Nacional', ciudad: null };
+    if (rol === 'admin_regional') return { nivel: 'region', etiqueta: u.region?.nombre || '—', ciudad: null };
+    if (rol === 'admin_departamental') return { nivel: 'departamento', etiqueta: u.departamento?.nombre || '—', ciudad: null };
+    if (rol === 'admin_ciudad') return { nivel: 'ciudad', etiqueta: u.ciudad?.nombre || '—', ciudad: u.ciudad?.nombre || null };
+    // conductor / admin_centro / alias 'admin' con centro
+    if (u.centro) return { nivel: 'centro', etiqueta: u.centro.nombre, ciudad: u.centro.ciudad?.nombre || null };
+    // alias 'admin' sin centro (admin general previo al multinivel)
+    if (rol === 'admin') return { nivel: 'nacional', etiqueta: 'General', ciudad: null };
+    return { nivel: null, etiqueta: '—', ciudad: null };
+};
+
 export const listarUsuarios = async (req, res) => {
     try {
         const { rol, activo } = req.query;
 
         let query = supabase
             .from('usuarios')
-            .select('*')
+            .select(`
+                *,
+                centro:centro_id ( nombre, ciudad:ciudad_id ( nombre ) ),
+                ciudad:ciudad_id ( nombre ),
+                departamento:departamento_id ( nombre ),
+                region:region_id ( nombre )
+            `)
             .order('created_at', { ascending: false });
 
         if (rol) query = query.eq('rol', rol);
         if (activo !== undefined) query = query.eq('activo', activo === 'true');
 
-        const [{ data, error }, mapaEmails] = await Promise.all([
+        const [{ data, error }, mapaEmails, scope] = await Promise.all([
             query,
             obtenerMapaDeEmails(),
+            obtenerScope(req.usuario),
         ]);
 
         if (error) throw error;
 
-        // Mergeamos el email de auth.users en cada usuario
-        const usuariosConEmail = (data || []).map((u) => ({
-            ...u,
-            email: mapaEmails[u.id] || null,
-        }));
+        // Filtro multinivel (#102): un admin solo ve a los usuarios dentro de su
+        // scope territorial. Lo hacemos en JS porque un usuario puede ser otro
+        // administrador cuyo territorio es mas amplio que un centro (ciudad,
+        // departamento, region), y un simple .in('centro_id', ...) los dejaria
+        // fuera. El superadmin (scope global) ve a todos. El admin siempre se ve
+        // a si mismo. (A esta escala — decenas de usuarios — filtrar en memoria
+        // es simple y suficiente.)
+        const visibles = (data || []).filter(
+            (u) => u.id === req.usuario.id || usuarioEnScope(scope, u)
+        );
+
+        // Mergeamos el email de auth.users y el ambito legible. Quitamos los
+        // objetos crudos del JOIN (centro/ciudad/...) para no inflar la respuesta;
+        // el frontend usa `ambito` para mostrar y filtrar.
+        const usuariosConEmail = visibles.map((u) => {
+            const { centro, ciudad, departamento, region, ...resto } = u;
+            return {
+                ...resto,
+                email: mapaEmails[u.id] || null,
+                ambito: construirAmbito(u),
+            };
+        });
 
         res.json({ usuarios: usuariosConEmail });
     } catch (err) {
@@ -51,6 +133,13 @@ export const listarUsuarios = async (req, res) => {
 export const obtenerUsuario = async (req, res) => {
     try {
         const { id } = req.params;
+
+        // Multinivel (#102): solo se puede ver a usuarios dentro del area propia.
+        const acceso = await verificarAccesoUsuarioObjetivo(req, id, { exigirRango: false });
+        if (!acceso.ok) {
+            return res.status(acceso.status).json({ error: acceso.error });
+        }
+
         const { data, error } = await supabase
             .from('usuarios')
             .select('*')
@@ -113,6 +202,9 @@ export const crearUsuario = async (req, res) => {
             telefono,
             rol = 'conductor',
             centro_id,
+            ciudad_id,
+            departamento_id,
+            region_id,
             licencia_numero,
             licencia_categoria,
             licencia_vencimiento,
@@ -124,6 +216,33 @@ export const crearUsuario = async (req, res) => {
             return res
                 .status(400)
                 .json({ error: 'cedula, nombre_completo y email son obligatorios' });
+        }
+
+        // Jerarquia (#111): solo se pueden crear usuarios de rango ESTRICTAMENTE
+        // inferior al propio. Un admin_centro crea conductores; un superadmin
+        // crea cualquier admin pero no otro superadmin.
+        if (!puedeCrearRol(req.usuario.rol, rol)) {
+            return res.status(403).json({
+                error: `No tienes permiso para crear usuarios con el rol "${ETIQUETA_ROL[rol] || rol}". Solo puedes crear roles inferiores al tuyo.`,
+            });
+        }
+
+        // Scope territorial: el area asignada (centro/ciudad/departamento/region
+        // segun el rol) debe estar dentro del area del admin. El superadmin no
+        // tiene limite. El frontend ya ofrece solo opciones validas; esto es la
+        // verificacion de seguridad en el servidor.
+        const scopeActor = await obtenerScope(req.usuario);
+        if (scopeActor.tipo !== 'global') {
+            const fueraDeArea =
+                (centro_id && !scopeActor.centroIds.includes(centro_id)) ||
+                (ciudad_id && !scopeActor.ciudadIds.includes(ciudad_id)) ||
+                (departamento_id && !scopeActor.departamentoIds.includes(departamento_id)) ||
+                (region_id && !scopeActor.regionIds.includes(region_id));
+            if (fueraDeArea) {
+                return res.status(403).json({
+                    error: 'No puedes asignar un área (territorio) fuera de la tuya.',
+                });
+            }
         }
 
         // Para conductor y admin_centro, el centro de formacion es obligatorio
@@ -181,6 +300,9 @@ export const crearUsuario = async (req, res) => {
                 telefono,
                 rol,
                 centro_id: centro_id || null,
+                ciudad_id: ciudad_id || null,
+                departamento_id: departamento_id || null,
+                region_id: region_id || null,
                 debe_cambiar_password: true,
                 licencia_numero,
                 licencia_categoria,
@@ -221,7 +343,11 @@ export const actualizarUsuario = async (req, res) => {
             nombre_completo,
             telefono,
             foto_url,
+            rol,
             centro_id,
+            ciudad_id,
+            departamento_id,
+            region_id,
             licencia_numero,
             licencia_categoria,
             licencia_vencimiento,
@@ -232,21 +358,79 @@ export const actualizarUsuario = async (req, res) => {
         // Traemos los datos actuales del usuario para validar contra el rol real
         const { data: usuarioActual } = await supabase
             .from('usuarios')
-            .select('rol, licencia_numero, licencia_categoria, licencia_vencimiento, eps, arl')
+            .select('rol, licencia_numero, licencia_categoria, licencia_vencimiento, eps, arl, centro_id, ciudad_id, departamento_id, region_id')
             .eq('id', id)
             .maybeSingle();
 
-        // Validar que no se le quite el centro a un conductor/admin_centro
-        if ((centro_id === null || centro_id === '') &&
-            usuarioActual && ROLES_REQUIEREN_CENTRO.includes(usuarioActual.rol)) {
-            return res.status(400).json({
-                error: `El centro de formacion es obligatorio para el rol '${usuarioActual.rol}'`,
+        if (!usuarioActual) {
+            return res.status(404).json({ error: 'Usuario no encontrado' });
+        }
+
+        const scopeActor = await obtenerScope(req.usuario);
+
+        // Multinivel (#102 / #112): solo puedes editar a alguien de tu area y de
+        // rango inferior. (Editar el propio perfil va por otro endpoint: /mi-perfil.)
+        if (id !== req.usuario.id) {
+            if (!usuarioEnScope(scopeActor, usuarioActual)) {
+                return res
+                    .status(403)
+                    .json({ error: 'Ese usuario no pertenece a tu area.' });
+            }
+            if (!puedeGestionarRol(req.usuario.rol, usuarioActual.rol)) {
+                return res.status(403).json({
+                    error: `No puedes editar a un "${ETIQUETA_ROL[usuarioActual.rol] || usuarioActual.rol}". Solo puedes gestionar usuarios de rango inferior al tuyo.`,
+                });
+            }
+        }
+
+        // CAMBIO DE ROL (#102/#111 aplicado a edicion): se permite reasignar el rol,
+        // pero solo a rangos ESTRICTAMENTE inferiores al del admin que edita (igual
+        // que al crear). Nadie se asciende a si mismo ni asciende a otro a su nivel.
+        const rolNuevo = rol && rol !== usuarioActual.rol ? rol : null;
+        if (rolNuevo && id === req.usuario.id) {
+            // Anti-accidente: nadie se cambia su propio rol (evita p.ej. que el
+            // unico superadmin se degrade a si mismo y el sistema quede sin nadie
+            // por encima).
+            return res.status(400).json({ error: 'No puedes cambiar tu propio rol.' });
+        }
+        if (rolNuevo && !puedeCrearRol(req.usuario.rol, rolNuevo)) {
+            return res.status(403).json({
+                error: `No puedes asignar el rol "${ETIQUETA_ROL[rolNuevo] || rolNuevo}". Solo puedes asignar roles inferiores al tuyo.`,
             });
+        }
+        // Rol con el que el usuario QUEDARA tras este update (para las validaciones)
+        const rolEfectivo = rolNuevo || usuarioActual.rol;
+
+        // El centro es obligatorio para los roles que operan a nivel de centro
+        // (validado contra el rol con el que queda, no el que tenia).
+        if (ROLES_REQUIEREN_CENTRO.includes(rolEfectivo)) {
+            const centroFinal = centro_id !== undefined ? centro_id : usuarioActual.centro_id;
+            if (!centroFinal) {
+                return res.status(400).json({
+                    error: `El centro de formacion es obligatorio para el rol '${rolEfectivo}'`,
+                });
+            }
+        }
+
+        // Scope territorial: el area asignada debe estar dentro del area del admin
+        // que edita (mismo control que al crear).
+        if (scopeActor.tipo !== 'global') {
+            const fueraDeArea =
+                (centro_id && !scopeActor.centroIds.includes(centro_id)) ||
+                (ciudad_id && !scopeActor.ciudadIds.includes(ciudad_id)) ||
+                (departamento_id && !scopeActor.departamentoIds.includes(departamento_id)) ||
+                (region_id && !scopeActor.regionIds.includes(region_id));
+            if (fueraDeArea) {
+                return res.status(403).json({
+                    error: 'No puedes asignar un área (territorio) fuera de la tuya.',
+                });
+            }
         }
 
         // Validar requisitos del conductor: tomamos los valores que vienen en el body,
         // o si no vienen, los actuales del usuario en BD. Asi cubrimos updates parciales.
-        if (usuarioActual?.rol === 'conductor') {
+        // (Contra el rol con el que queda: si lo degradan a conductor, debe traer licencia.)
+        if (rolEfectivo === 'conductor') {
             const errorConductor = validarRequisitosConductor({
                 rol: 'conductor',
                 licencia_numero: licencia_numero ?? usuarioActual.licencia_numero,
@@ -260,8 +444,8 @@ export const actualizarUsuario = async (req, res) => {
             }
         }
 
-        // Solo incluir centro_id en el update si vino en el body (puede ser null si
-        // explicitamente se quiere quitar para un admin_regional, etc.)
+        // Solo incluir cada campo de territorio si vino en el body (puede ser null
+        // si explicitamente se quiere quitar, p.ej. al cambiar de nivel).
         const cambios = {
             nombre_completo,
             telefono,
@@ -272,7 +456,11 @@ export const actualizarUsuario = async (req, res) => {
             eps,
             arl,
         };
+        if (rolNuevo) cambios.rol = rolNuevo;
         if (centro_id !== undefined) cambios.centro_id = centro_id || null;
+        if (ciudad_id !== undefined) cambios.ciudad_id = ciudad_id || null;
+        if (departamento_id !== undefined) cambios.departamento_id = departamento_id || null;
+        if (region_id !== undefined) cambios.region_id = region_id || null;
 
         const { data, error } = await supabase
             .from('usuarios')
@@ -310,11 +498,31 @@ export const desactivarUsuario = async (req, res) => {
 
         const { data: usuario } = await supabase
             .from('usuarios')
-            .select('rol')
+            .select('rol, centro_id, ciudad_id, departamento_id, region_id')
             .eq('id', id)
             .single();
 
-        if (usuario?.rol === 'admin') {
+        if (!usuario) {
+            return res.status(404).json({ error: 'Usuario no encontrado' });
+        }
+
+        // Multinivel (#102): solo puedes desactivar a alguien dentro de tu area...
+        const scope = await obtenerScope(req.usuario);
+        if (!usuarioEnScope(scope, usuario)) {
+            return res
+                .status(403)
+                .json({ error: 'Ese usuario no pertenece a tu area.' });
+        }
+
+        // ...y de rango ESTRICTAMENTE inferior al tuyo (#112): nunca a un admin
+        // de tu mismo rango ni superior.
+        if (!puedeGestionarRol(req.usuario.rol, usuario.rol)) {
+            return res.status(403).json({
+                error: `No puedes desactivar a un "${ETIQUETA_ROL[usuario.rol] || usuario.rol}". Solo puedes gestionar usuarios de rango inferior al tuyo.`,
+            });
+        }
+
+        if (usuario.rol === 'admin') {
             const adminsActivos = await contarAdminsActivos();
             if (adminsActivos <= 1) {
                 return res.status(400).json({
@@ -346,6 +554,29 @@ export const desactivarUsuario = async (req, res) => {
 export const reactivarUsuario = async (req, res) => {
     try {
         const { id } = req.params;
+
+        const { data: usuario } = await supabase
+            .from('usuarios')
+            .select('rol, centro_id, ciudad_id, departamento_id, region_id')
+            .eq('id', id)
+            .single();
+
+        if (!usuario) {
+            return res.status(404).json({ error: 'Usuario no encontrado' });
+        }
+
+        // Multinivel (#102 / #112): solo sobre usuarios de tu area y de rango inferior.
+        const scope = await obtenerScope(req.usuario);
+        if (!usuarioEnScope(scope, usuario)) {
+            return res
+                .status(403)
+                .json({ error: 'Ese usuario no pertenece a tu area.' });
+        }
+        if (!puedeGestionarRol(req.usuario.rol, usuario.rol)) {
+            return res.status(403).json({
+                error: `No puedes reactivar a un "${ETIQUETA_ROL[usuario.rol] || usuario.rol}". Solo puedes gestionar usuarios de rango inferior al tuyo.`,
+            });
+        }
 
         const { error } = await supabase
             .from('usuarios')
@@ -379,12 +610,28 @@ export const eliminarUsuario = async (req, res) => {
 
         const { data: usuario } = await supabase
             .from('usuarios')
-            .select('rol, nombre_completo')
+            .select('rol, nombre_completo, centro_id, ciudad_id, departamento_id, region_id')
             .eq('id', id)
             .single();
 
         if (!usuario) {
             return res.status(404).json({ error: 'Usuario no encontrado' });
+        }
+
+        // Multinivel (#102): solo puedes eliminar a alguien dentro de tu area...
+        const scope = await obtenerScope(req.usuario);
+        if (!usuarioEnScope(scope, usuario)) {
+            return res
+                .status(403)
+                .json({ error: 'Ese usuario no pertenece a tu area.' });
+        }
+
+        // ...y de rango ESTRICTAMENTE inferior (#112): por seguridad, nadie puede
+        // eliminar a un admin de su mismo rango ni superior.
+        if (!puedeGestionarRol(req.usuario.rol, usuario.rol)) {
+            return res.status(403).json({
+                error: `No puedes eliminar a un "${ETIQUETA_ROL[usuario.rol] || usuario.rol}". Solo puedes gestionar usuarios de rango inferior al tuyo.`,
+            });
         }
 
         if (usuario.rol === 'admin') {
@@ -418,6 +665,12 @@ export const eliminarUsuario = async (req, res) => {
 export const resetearPassword = async (req, res) => {
     try {
         const { id } = req.params;
+
+        // Multinivel (#102 / #112): solo sobre usuarios de tu area y rango inferior.
+        const acceso = await verificarAccesoUsuarioObjetivo(req, id);
+        if (!acceso.ok) {
+            return res.status(acceso.status).json({ error: acceso.error });
+        }
 
         const passwordTemporal = generarPasswordTemporal();
 
@@ -497,6 +750,12 @@ export const cambiarCorreo = async (req, res) => {
             return res.status(400).json({ error: 'El correo no tiene un formato valido' });
         }
 
+        // Multinivel (#102 / #112): solo sobre usuarios de tu area y rango inferior.
+        const acceso = await verificarAccesoUsuarioObjetivo(req, id);
+        if (!acceso.ok) {
+            return res.status(acceso.status).json({ error: acceso.error });
+        }
+
         const verif = await verificarPasswordAdmin(req, password_admin);
         if (!verif.ok) {
             return res.status(403).json({ error: verif.mensaje });
@@ -543,6 +802,12 @@ export const cambiarCedula = async (req, res) => {
         const cedulaLimpia = String(nueva_cedula).replace(/\D/g, '');
         if (cedulaLimpia.length < 5) {
             return res.status(400).json({ error: 'La cedula debe tener al menos 5 digitos' });
+        }
+
+        // Multinivel (#102 / #112): solo sobre usuarios de tu area y rango inferior.
+        const acceso = await verificarAccesoUsuarioObjetivo(req, id);
+        if (!acceso.ok) {
+            return res.status(acceso.status).json({ error: acceso.error });
         }
 
         const verif = await verificarPasswordAdmin(req, password_admin);
@@ -610,6 +875,12 @@ export const cambiarCedula = async (req, res) => {
 export const obtenerPerfilDetalle = async (req, res) => {
     try {
         const { id } = req.params;
+
+        // Multinivel (#102): solo se puede ver la ficha de usuarios del area propia.
+        const acceso = await verificarAccesoUsuarioObjetivo(req, id, { exigirRango: false });
+        if (!acceso.ok) {
+            return res.status(acceso.status).json({ error: acceso.error });
+        }
 
         // 1) Datos del usuario + centro (join). Si el centro es null no rompe.
         const { data: usuario, error: errUsuario } = await supabase

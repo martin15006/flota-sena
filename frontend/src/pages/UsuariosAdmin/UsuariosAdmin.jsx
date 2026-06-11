@@ -2,12 +2,31 @@ import { useEffect, useState } from "react";
 import { useNavigate } from "react-router-dom";
 import { useAuth } from "../../hooks/useAuth.js";
 import { api } from "../../lib/api.js";
+import { esAdmin, ETIQUETA_ROL_CORTA } from "../../lib/roles.js";
 import "./UsuariosAdmin.css";
 import ModalPasswordTemporal from "./components/ModalPasswordTemporal.jsx";
 import AdminLayout from '../../components/AdminLayout/AdminLayout.jsx';
 import Toast from '../../components/Toast/Toast.jsx';
 import ModalCrearUsuario from "./components/ModalCrearUsuario.jsx";
 import ModalEditarUsuario from "./components/ModalEditarUsuario.jsx";
+
+// Texto secundario (gris) que describe el NIVEL del ámbito en la tabla.
+const descriptorAmbito = (ambito) => {
+  switch (ambito.nivel) {
+    case "centro":
+      return ambito.ciudad ? `Centro · ${ambito.ciudad}` : "Centro de formación";
+    case "ciudad":
+      return "Ciudad";
+    case "departamento":
+      return "Departamento";
+    case "region":
+      return "Región";
+    case "nacional":
+      return "Todo el país";
+    default:
+      return "";
+  }
+};
 
 function UsuariosAdmin() {
   const { usuario } = useAuth();
@@ -18,6 +37,7 @@ function UsuariosAdmin() {
   const [busqueda, setBusqueda] = useState("");
   const [filtroRol, setFiltroRol] = useState("todos");
   const [filtroEstado, setFiltroEstado] = useState("todos");
+  const [filtroCiudad, setFiltroCiudad] = useState("todos");
   const [modalPassword, setModalPassword] = useState(null);
   const [modalCrearAbierto, setModalCrearAbierto] = useState(false);
   const [usuarioAEditar, setUsuarioAeditar] = useState(null);
@@ -40,15 +60,27 @@ function UsuariosAdmin() {
   };
 
   useEffect(() => {
-    if (usuario && usuario.rol === "admin") cargarUsuarios();
+    // Cargar para CUALQUIER rol admin (los 5 niveles + el alias 'admin'), no
+    // solo "admin" a secas — si no, superadmin y los demas niveles nunca cargan.
+    if (usuario && esAdmin(usuario.rol)) cargarUsuarios();
   }, [usuario]);
 
 
+  // Ciudades presentes en la lista visible (para el filtro auto-llenado). Solo
+  // mostramos el filtro si hay mas de una ciudad — para un admin de un solo centro
+  // no tiene sentido. (#102 mejora)
+  const ciudadesDisponibles = [
+    ...new Set(usuarios.map((u) => u.ambito?.ciudad).filter(Boolean)),
+  ].sort((a, b) => a.localeCompare(b));
+
   // Filtros aplicados sobre la lista cruda
   const usuariosFiltrados = usuarios.filter((u) => {
-    if (filtroRol !== "todos" && u.rol !== filtroRol) return false;
+    // "admin" agrupa a TODOS los niveles administrativos (no solo el rol literal)
+    if (filtroRol === "admin" && !esAdmin(u.rol)) return false;
+    if (filtroRol === "conductor" && u.rol !== "conductor") return false;
     if (filtroEstado === "activos" && !u.activo) return false;
     if (filtroEstado === "inactivos" && u.activo) return false;
+    if (filtroCiudad !== "todos" && u.ambito?.ciudad !== filtroCiudad) return false;
     if (busqueda) {
       const q = busqueda.toLowerCase();
       const match =
@@ -166,6 +198,20 @@ function UsuariosAdmin() {
             <option value="activos">Solo activos</option>
             <option value="inactivos">Solo inactivos</option>
           </select>
+          {ciudadesDisponibles.length > 1 && (
+            <select
+              className="usuarios-admin-select"
+              value={filtroCiudad}
+              onChange={(e) => setFiltroCiudad(e.target.value)}
+            >
+              <option value="todos">Todas las ciudades</option>
+              {ciudadesDisponibles.map((c) => (
+                <option key={c} value={c}>
+                  {c}
+                </option>
+              ))}
+            </select>
+          )}
         </div>
 
         {cargando && (
@@ -196,6 +242,7 @@ function UsuariosAdmin() {
                   <th>Nombre</th>
                   <th>Cédula</th>
                   <th>Rol</th>
+                  <th>Ámbito</th>
                   <th>Estado</th>
                   <th>Acciones</th>
                 </tr>
@@ -225,10 +272,25 @@ function UsuariosAdmin() {
                     <td>{u.cedula}</td>
                     <td>
                       <span
-                        className={`usuarios-admin-rol usuarios-admin-rol-${u.rol}`}
+                        className={`usuarios-admin-rol usuarios-admin-rol-${esAdmin(u.rol) ? "admin" : "conductor"
+                          }`}
                       >
-                        {u.rol}
+                        {ETIQUETA_ROL_CORTA[u.rol] || u.rol}
                       </span>
+                    </td>
+                    <td>
+                      {u.ambito && u.ambito.nivel ? (
+                        <div className="usuarios-admin-ambito">
+                          <span className="usuarios-admin-ambito-nombre">
+                            {u.ambito.etiqueta}
+                          </span>
+                          <span className="usuarios-admin-ambito-nivel">
+                            {descriptorAmbito(u.ambito)}
+                          </span>
+                        </div>
+                      ) : (
+                        <span className="usuarios-admin-ambito-nivel">—</span>
+                      )}
                     </td>
                     <td>
                       <span

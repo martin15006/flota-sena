@@ -14,6 +14,7 @@
 import { useEffect, useState } from "react";
 import { useAuth } from "../../hooks/useAuth.js";
 import { useNavigate } from "react-router-dom";
+import { ETIQUETA_ROL } from "../../lib/roles.js";
 import Sidebar from "./Sidebar.jsx";
 import Campanita from "./Campanita.jsx";
 import Footer from "../Footer/Footer.jsx";
@@ -136,7 +137,10 @@ function AdminLayout({ titulo, children }) {
                             <div className="admin-layout-perfil-nombre">
                                 {usuario.nombre_completo}
                             </div>
-                            <div className="admin-layout-perfil-rol">{usuario.rol}</div>
+                            {/* Badge visible del nivel del admin (no el enum crudo) */}
+                            <span className="admin-layout-perfil-rol">
+                                {ETIQUETA_ROL[usuario.rol] || usuario.rol}
+                            </span>
                         </button>
                     </div>
                 </header>

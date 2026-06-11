@@ -2,10 +2,13 @@ import { useState, useEffect, useRef } from "react";
 import Modal from "../../../components/Modal/Modal.jsx";
 import { api } from "../../../lib/api.js";
 import ModalVerificacionAdmin from "./ModalVerificacionAdmin.jsx";
+import { useAuth } from "../../../hooks/useAuth.js";
+import {
+    ETIQUETA_ROL,
+    NIVEL_TERRITORIO,
+    rolesQuePuedeCrear,
+} from "../../../lib/roles.js";
 import './ModalCrearUsuario.css';
-
-// Roles que requieren centro de formacion obligatorio (debe coincidir con el backend)
-const ROLES_REQUIEREN_CENTRO = ["conductor", "admin_centro"];
 
 // Filtros de input (los mismos que ModalCrearUsuario)
 const soloLetrasYEspacios = (texto) =>
@@ -16,13 +19,19 @@ const categoriaLicencia = (texto) =>
     (texto || "").toUpperCase().replace(/[^A-Z0-9]/g, "").slice(0, 2);
 
 function ModalEditarUsuario({ abierto, onCerrar, usuario, onEditado }) {
+    // Admin en sesion (quien edita): define que roles puede asignar.
+    const { usuario: usuarioSesion } = useAuth();
     const [form, setForm] = useState({});
     const [foto, setFoto] = useState(null);
     const [fotoPreview, setFotoPreview] = useState(null);
     const [subiendoFoto, setSubiendoFoto] = useState(false);
     const [error, setError] = useState(null);
     const [cargando, setCargando] = useState(false);
+    // Listas geograficas (ya scopeadas por el backend) para el selector de territorio
     const [centros, setCentros] = useState([]);
+    const [ciudades, setCiudades] = useState([]);
+    const [departamentos, setDepartamentos] = useState([]);
+    const [regiones, setRegiones] = useState([]);
     // Avisos contextuales debajo de cada campo (mismo patron que ModalCrearUsuario)
     const [avisos, setAvisos] = useState({});
     const timersAvisos = useRef({});
@@ -59,16 +68,20 @@ function ModalEditarUsuario({ abierto, onCerrar, usuario, onEditado }) {
         return filtrado;
     };
 
-    // Cargar la lista de centros activos al abrir el modal
+    // Cargar las listas geograficas (ya scopeadas) al abrir el modal. Pedimos los
+    // 4 niveles; el selector solo muestra el que corresponde al rol elegido.
     useEffect(() => {
         if (!abierto) return;
-        api("/geo/centros")
-            .then((data) => setCentros(data.centros || []))
-            .catch((err) => {
-                if (!err.sesionExpirada) {
-                    console.error("Error cargando centros:", err.message);
-                }
-            });
+        const cargar = (ruta, set) =>
+            api(ruta)
+                .then((data) => set(data[Object.keys(data)[0]] || []))
+                .catch((err) => {
+                    if (!err.sesionExpirada) console.error(`Error cargando ${ruta}:`, err.message);
+                });
+        cargar("/geo/centros", setCentros);
+        cargar("/geo/ciudades", setCiudades);
+        cargar("/geo/departamentos", setDepartamentos);
+        cargar("/geo/regiones", setRegiones);
     }, [abierto]);
 
     // rellena el formulario con los datos del usuario
@@ -79,6 +92,9 @@ function ModalEditarUsuario({ abierto, onCerrar, usuario, onEditado }) {
                 telefono: usuario.telefono || '',
                 rol: usuario.rol || 'conductor',
                 centro_id: usuario.centro_id || '',
+                ciudad_id: usuario.ciudad_id || '',
+                departamento_id: usuario.departamento_id || '',
+                region_id: usuario.region_id || '',
                 licencia_numero: usuario.licencia_numero || '',
                 licencia_categoria: usuario.licencia_categoria || '',
                 licencia_vencimiento: usuario.licencia_vencimiento || '',
@@ -93,10 +109,51 @@ function ModalEditarUsuario({ abierto, onCerrar, usuario, onEditado }) {
         }
     }, [usuario, abierto]);
 
-    const centroEsObligatorio = ROLES_REQUIEREN_CENTRO.includes(form.rol);
     const esConductor = form.rol === "conductor";
+    // Nadie cambia su PROPIO rol (anti-accidente; el backend tambien lo bloquea).
+    const editandoseASiMismo = usuario?.id === usuarioSesion?.id;
+    // Roles asignables: los de rango inferior al admin en sesion (#111). Se incluye
+    // el rol ACTUAL del editado de primero para que el select siempre diga la verdad.
+    const rolesAsignables = (() => {
+        const inferiores = rolesQuePuedeCrear(usuarioSesion?.rol);
+        if (!form.rol || inferiores.includes(form.rol)) return inferiores;
+        return [form.rol, ...inferiores];
+    })();
+    // Nivel de territorio del rol elegido: centro | ciudad | departamento | region
+    const nivelTerritorio = NIVEL_TERRITORIO[form.rol] || null;
+    const territorio = {
+        centro: {
+            label: "Centro de formación",
+            campo: "centro_id",
+            opciones: centros,
+            formato: (c) =>
+                `${c.nombre}${c.ciudad ? ` · ${c.ciudad}` : ""}${c.departamento ? ` (${c.departamento})` : ""}`,
+        },
+        ciudad: { label: "Ciudad", campo: "ciudad_id", opciones: ciudades, formato: (c) => c.nombre },
+        departamento: {
+            label: "Departamento",
+            campo: "departamento_id",
+            opciones: departamentos,
+            formato: (d) => d.nombre,
+        },
+        region: { label: "Región", campo: "region_id", opciones: regiones, formato: (r) => r.nombre },
+    }[nivelTerritorio] || null;
 
     const cambiarCampo = (campo, valor) => setForm({ ...form, [campo]: valor });
+
+    // Al cambiar el rol se resetea el territorio: si vuelve al rol original se
+    // restaura el area original; si es un rol nuevo, queda vacio para elegirla.
+    const cambiarRol = (nuevoRol) => {
+        const esOriginal = nuevoRol === usuario.rol;
+        setForm((prev) => ({
+            ...prev,
+            rol: nuevoRol,
+            centro_id: esOriginal ? usuario.centro_id || "" : "",
+            ciudad_id: esOriginal ? usuario.ciudad_id || "" : "",
+            departamento_id: esOriginal ? usuario.departamento_id || "" : "",
+            region_id: esOriginal ? usuario.region_id || "" : "",
+        }));
+    };
 
     const cambiarFoto = (e) => {
         const archivo = e.target.files?.[0];
@@ -125,9 +182,16 @@ function ModalEditarUsuario({ abierto, onCerrar, usuario, onEditado }) {
         e.preventDefault();
         setError(null);
 
-        // Validacion frontend: si el rol lo requiere, centro obligatorio
-        if (centroEsObligatorio && !form.centro_id) {
-            setError(`El centro de formación es obligatorio para el rol '${form.rol}'`);
+        // Validacion frontend: el territorio del nivel del rol es obligatorio
+        // (centro para conductor/admin de centro, ciudad para admin de ciudad, etc.)
+        const campoTerritorio = {
+            centro: "centro_id",
+            ciudad: "ciudad_id",
+            departamento: "departamento_id",
+            region: "region_id",
+        }[nivelTerritorio];
+        if (campoTerritorio && !form[campoTerritorio]) {
+            setError("Debes asignar el área (territorio) del usuario.");
             return;
         }
 
@@ -159,6 +223,9 @@ function ModalEditarUsuario({ abierto, onCerrar, usuario, onEditado }) {
                 foto_url = null;
             }
 
+            // Se envia el form completo, incluidos rol y los 4 niveles de territorio:
+            // los que no aplican al rol elegido van vacios -> null, asi la BD queda
+            // limpia al cambiar de nivel (p.ej. de admin de ciudad a conductor).
             const datos = { ...form, foto_url };
             Object.keys(datos).forEach((k) => {
                 if (datos[k] === '') datos[k] = null;
@@ -313,44 +380,48 @@ function ModalEditarUsuario({ abierto, onCerrar, usuario, onEditado }) {
                             <label className="form-usuario-label">Rol *</label>
                             <select
                                 className="form-usuario-input"
-                                value={form.rol || "conductor"}
-                                onChange={(e) => cambiarCampo("rol", e.target.value)}
-                                disabled={cargando}
+                                value={form.rol || ""}
+                                onChange={(e) => cambiarRol(e.target.value)}
+                                disabled={cargando || editandoseASiMismo}
                             >
-                                <option value="conductor">Conductor</option>
-                                <option value="admin">Administrador</option>
-                            </select>
-                        </div>
-                        <div className="form-usuario-campo">
-                            <label className="form-usuario-label">
-                                Centro de formación {centroEsObligatorio && "*"}
-                            </label>
-                            <select
-                                className="form-usuario-input"
-                                value={form.centro_id || ""}
-                                onChange={(e) => cambiarCampo("centro_id", e.target.value)}
-                                required={centroEsObligatorio}
-                                disabled={cargando || centros.length === 0}
-                            >
-                                <option value="">
-                                    {centroEsObligatorio
-                                        ? "— Selecciona un centro —"
-                                        : "— Sin centro asignado —"}
-                                </option>
-                                {centros.map((c) => (
-                                    <option key={c.id} value={c.id}>
-                                        {c.nombre}
-                                        {c.ciudad ? ` · ${c.ciudad}` : ""}
-                                        {c.departamento ? ` (${c.departamento})` : ""}
+                                {rolesAsignables.map((r) => (
+                                    <option key={r} value={r}>
+                                        {ETIQUETA_ROL[r] || r}
                                     </option>
                                 ))}
                             </select>
-                            {centroEsObligatorio && (
-                                <small className="form-usuario-ayuda">
-                                    Obligatorio para conductores y administradores de centro.
-                                </small>
-                            )}
+                            <small className="form-usuario-ayuda">
+                                {editandoseASiMismo
+                                    ? "No puedes cambiar tu propio rol."
+                                    : "Solo puedes asignar roles de rango inferior al tuyo."}
+                            </small>
                         </div>
+                        {territorio && (
+                            <div className="form-usuario-campo">
+                                <label className="form-usuario-label">{territorio.label} *</label>
+                                <select
+                                    className="form-usuario-input"
+                                    value={form[territorio.campo] || ""}
+                                    onChange={(e) => cambiarCampo(territorio.campo, e.target.value)}
+                                    required
+                                    disabled={cargando || editandoseASiMismo || territorio.opciones.length === 0}
+                                >
+                                    <option value="">
+                                        — Selecciona {territorio.label.toLowerCase()} —
+                                    </option>
+                                    {territorio.opciones.map((o) => (
+                                        <option key={o.id} value={o.id}>
+                                            {territorio.formato(o)}
+                                        </option>
+                                    ))}
+                                </select>
+                                <small className="form-usuario-ayuda">
+                                    {territorio.opciones.length === 0
+                                        ? "No hay opciones disponibles en tu área para este nivel."
+                                        : "Define el área que tendrá a su cargo este usuario."}
+                                </small>
+                            </div>
+                        )}
                     </div>
                 </div>
 

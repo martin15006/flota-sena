@@ -1,20 +1,16 @@
 // Controlador del dashboard administrativo.
 // Devuelve KPIs del dia + alertas que necesitan atencion del admin.
 //
-// Diferenciacion por rol (multinivel ya pensada para Tarea #102):
-//   - admin / admin_centro       -> solo datos de SU centro (centro_id del JWT)
-//   - admin_ciudad y superiores  -> ven todo por ahora (Tarea #102 implementara
-//                                   el filtro por su scope: ciudad, departamento,
-//                                   region, o pais completo).
+// Diferenciacion por rol (multinivel, Tarea #102): el filtro de scope lo resuelve
+// el helper scope.service.js segun el nivel del admin (centro / ciudad / departamento
+// / region / nacional). Todas las consultas se filtran por los centros de su scope.
 //
 // IMPORTANTE: para "del dia" usamos la medianoche local del servidor. En produccion,
 // si el servidor estuviera en otra zona horaria distinta a Colombia, habria que
 // normalizar a America/Bogota explicitamente.
 
 import { supabase } from '../config/supabase.js';
-
-// Roles que SOLO ven datos de su propio centro
-const ROLES_LIMITADOS_A_CENTRO = ['admin', 'admin_centro'];
+import { obtenerScope, aplicarScope } from '../services/scope.service.js';
 
 // Helper: devuelve el ISO string de la medianoche de hoy en hora local
 const inicioDelDiaISO = () => {
@@ -40,23 +36,11 @@ const enDiasISO = (dias) => {
     return objetivo.toISOString();
 };
 
-// Helper: si el rol del admin lo restringe a su centro, aplica el filtro
-// y devuelve la query modificada. Si no, devuelve la query original.
-const filtrarPorCentroSiAplica = (query, usuario) => {
-    if (ROLES_LIMITADOS_A_CENTRO.includes(usuario.rol)) {
-        if (!usuario.centro_id) {
-            // El admin no tiene centro asignado: devolvera vacio en todo.
-            // Forzamos un filtro imposible para evitar leak.
-            return query.eq('centro_id', '00000000-0000-0000-0000-000000000000');
-        }
-        return query.eq('centro_id', usuario.centro_id);
-    }
-    return query;
-};
-
 export const obtenerStatsDashboard = async (req, res) => {
     try {
         const usuario = req.usuario; // viene del middleware verificarToken
+        // Resolver una sola vez el scope territorial del admin (qué centros ve)
+        const scope = await obtenerScope(usuario);
         const desdeHoy = inicioDelDiaISO();
         const enUnMes = enDiasISO(30);
 
@@ -106,11 +90,11 @@ export const obtenerStatsDashboard = async (req, res) => {
             { count: conductoresActivos },
             { count: chequeosAbandonadosDelDia },
         ] = await Promise.all([
-            filtrarPorCentroSiAplica(chequeosHoyQuery, usuario),
-            filtrarPorCentroSiAplica(noOperativosHoyQuery, usuario),
-            filtrarPorCentroSiAplica(intentosHoyQuery, usuario),
-            filtrarPorCentroSiAplica(conductoresActivosQuery, usuario),
-            filtrarPorCentroSiAplica(abandonadosHoyQuery, usuario),
+            aplicarScope(chequeosHoyQuery, scope),
+            aplicarScope(noOperativosHoyQuery, scope),
+            aplicarScope(intentosHoyQuery, scope),
+            aplicarScope(conductoresActivosQuery, scope),
+            aplicarScope(abandonadosHoyQuery, scope),
         ]);
 
         // ====================================================================
@@ -126,7 +110,7 @@ export const obtenerStatsDashboard = async (req, res) => {
             .not('licencia_vencimiento', 'is', null)
             .lte('licencia_vencimiento', enUnMes.split('T')[0])
             .order('licencia_vencimiento', { ascending: true });
-        licenciasQuery = filtrarPorCentroSiAplica(licenciasQuery, usuario);
+        licenciasQuery = aplicarScope(licenciasQuery, scope);
         const { data: licenciasPorVencerRaw } = await licenciasQuery;
 
         // Calcular dias_restantes para cada licencia (negativo si ya vencio)
@@ -151,7 +135,7 @@ export const obtenerStatsDashboard = async (req, res) => {
             .select('id, placa, marca, linea')
             .is('runt_url', null)
             .eq('activo', true);
-        sinRuntQuery = filtrarPorCentroSiAplica(sinRuntQuery, usuario);
+        sinRuntQuery = aplicarScope(sinRuntQuery, scope);
         const { data: vehiculosSinRunt } = await sinRuntQuery;
 
         // c) Vehiculos no operativos (estado='no_operativo' o inactivos)
@@ -159,7 +143,7 @@ export const obtenerStatsDashboard = async (req, res) => {
             .from('vehiculos')
             .select('id, placa, marca, linea, estado, activo')
             .or('estado.eq.no_operativo,activo.eq.false');
-        noOperativosQuery = filtrarPorCentroSiAplica(noOperativosQuery, usuario);
+        noOperativosQuery = aplicarScope(noOperativosQuery, scope);
         const { data: vehiculosNoOperativos } = await noOperativosQuery;
 
         // d) Chequeos abandonados hoy (con datos del conductor y vehiculo).
@@ -178,7 +162,7 @@ export const obtenerStatsDashboard = async (req, res) => {
             .gte('abandonado_en', desdeHoy)
             .order('abandonado_en', { ascending: false })
             .limit(10);
-        abandonadosListaQuery = filtrarPorCentroSiAplica(abandonadosListaQuery, usuario);
+        abandonadosListaQuery = aplicarScope(abandonadosListaQuery, scope);
         const { data: abandonadosRaw } = await abandonadosListaQuery;
         const chequeosAbandonados = (abandonadosRaw || []).map((c) => ({
             id: c.id,
@@ -194,9 +178,12 @@ export const obtenerStatsDashboard = async (req, res) => {
         // ====================================================================
 
         res.json({
-            scope: ROLES_LIMITADOS_A_CENTRO.includes(usuario.rol)
-                ? { tipo: 'centro', centro_id: usuario.centro_id }
-                : { tipo: 'global' },
+            // scope.tipo: 'global' (superadmin) | 'centros' (resto, con la lista
+            // de centros que cubre su nivel). El frontend lo usa para el texto
+            // contextual del dashboard.
+            scope: scope.tipo === 'global'
+                ? { tipo: 'global' }
+                : { tipo: 'centros', cantidad_centros: scope.centroIds.length },
             generado_en: new Date().toISOString(),
             kpis: {
                 chequeos_del_dia: chequeosDelDia || 0,

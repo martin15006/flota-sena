@@ -1,6 +1,12 @@
 import { useEffect, useRef, useState } from "react";
 import Modal from "../../../components/Modal/Modal.jsx";
 import { api } from "../../../lib/api.js";
+import { useAuth } from "../../../hooks/useAuth.js";
+import {
+  ETIQUETA_ROL,
+  NIVEL_TERRITORIO,
+  rolesQuePuedeCrear,
+} from "../../../lib/roles.js";
 import "./ModalCrearUsuario.css";
 
 const ESTADO_INICIAL = {
@@ -10,15 +16,15 @@ const ESTADO_INICIAL = {
   telefono: "",
   rol: "conductor",
   centro_id: "",
+  ciudad_id: "",
+  departamento_id: "",
+  region_id: "",
   licencia_numero: "",
   licencia_categoria: "",
   licencia_vencimiento: "",
   eps: "",
   arl: "",
 };
-
-// Roles que requieren centro de formacion obligatorio (debe coincidir con el backend)
-const ROLES_REQUIEREN_CENTRO = ["conductor", "admin_centro"];
 
 // Filtros de input por tipo de dato. Se aplican en el onChange para que el usuario
 // no pueda introducir caracteres invalidos (en vez de mostrar error despues).
@@ -31,13 +37,19 @@ const categoriaLicencia = (texto) =>
     (texto || "").toUpperCase().replace(/[^A-Z0-9]/g, "").slice(0, 2);
 
 function ModalCrearUsuario({ abierto, onCerrar, onCreado }) {
+  const { usuario } = useAuth();
   const [form, setForm] = useState(ESTADO_INICIAL);
   const [foto, setFoto] = useState(null);
   const [fotoPreview, setFotoPreview] = useState(null);
   const [subiendoFoto, setSubiendoFoto] = useState(false);
   const [error, setError] = useState(null);
   const [cargando, setCargando] = useState(false);
+  // Listas geograficas para los selectores de territorio (ya vienen filtradas
+  // por el scope del admin desde el backend, ver geo.routes.js).
   const [centros, setCentros] = useState([]);
+  const [ciudades, setCiudades] = useState([]);
+  const [departamentos, setDepartamentos] = useState([]);
+  const [regiones, setRegiones] = useState([]);
   // Avisos contextuales debajo de cada campo cuando se intenta escribir un caracter invalido.
   // Cada aviso se borra solo despues de 2.5 segundos.
   const [avisos, setAvisos] = useState({});
@@ -68,20 +80,50 @@ function ModalCrearUsuario({ abierto, onCerrar, onCreado }) {
     return filtrado;
   };
 
-  // Cargar la lista de centros activos al abrir el modal
+  // Cargar las listas geograficas (ya scopeadas) al abrir el modal. Pedimos los
+  // 4 niveles; el selector solo muestra el que corresponde al rol elegido.
   useEffect(() => {
     if (!abierto) return;
-    api("/geo/centros")
-      .then((data) => setCentros(data.centros || []))
-      .catch((err) => {
-        if (!err.sesionExpirada) {
-          console.error("Error cargando centros:", err.message);
-        }
-      });
+    const cargar = (ruta, set) =>
+      api(ruta)
+        .then((data) => set(data[Object.keys(data)[0]] || []))
+        .catch((err) => {
+          if (!err.sesionExpirada) console.error(`Error cargando ${ruta}:`, err.message);
+        });
+    cargar("/geo/centros", setCentros);
+    cargar("/geo/ciudades", setCiudades);
+    cargar("/geo/departamentos", setDepartamentos);
+    cargar("/geo/regiones", setRegiones);
   }, [abierto]);
 
-  const centroEsObligatorio = ROLES_REQUIEREN_CENTRO.includes(form.rol);
   const esConductor = form.rol === "conductor";
+  // Nivel de territorio a asignar segun el rol elegido: region|departamento|ciudad|centro
+  const nivelTerritorio = NIVEL_TERRITORIO[form.rol] || null;
+  // Roles que el admin actual puede crear (solo rangos inferiores). Si por algun
+  // motivo no hay ninguno, dejamos al menos 'conductor' como fallback seguro.
+  const rolesCreables = (() => {
+    const lista = rolesQuePuedeCrear(usuario?.rol);
+    return lista.length > 0 ? lista : ["conductor"];
+  })();
+
+  // Descriptor del selector de territorio segun el nivel del rol elegido.
+  const territorio = {
+    centro: {
+      label: "Centro de formación",
+      campo: "centro_id",
+      opciones: centros,
+      formato: (c) =>
+        `${c.nombre}${c.ciudad ? ` · ${c.ciudad}` : ""}${c.departamento ? ` (${c.departamento})` : ""}`,
+    },
+    ciudad: { label: "Ciudad", campo: "ciudad_id", opciones: ciudades, formato: (c) => c.nombre },
+    departamento: {
+      label: "Departamento",
+      campo: "departamento_id",
+      opciones: departamentos,
+      formato: (d) => d.nombre,
+    },
+    region: { label: "Región", campo: "region_id", opciones: regiones, formato: (r) => r.nombre },
+  }[nivelTerritorio] || null;
 
   const cerrar = () => {
     setForm(ESTADO_INICIAL);
@@ -93,6 +135,20 @@ function ModalCrearUsuario({ abierto, onCerrar, onCreado }) {
 
   const cambiarCampo = (campo, valor) => {
     setForm({ ...form, [campo]: valor });
+  };
+
+  // Al cambiar el rol limpiamos los campos de territorio, para no arrastrar (ni
+  // enviar) uno que no corresponde al nuevo nivel (p.ej. un centro_id al pasar a
+  // admin de ciudad).
+  const cambiarRol = (nuevoRol) => {
+    setForm((prev) => ({
+      ...prev,
+      rol: nuevoRol,
+      centro_id: "",
+      ciudad_id: "",
+      departamento_id: "",
+      region_id: "",
+    }));
   };
 
   const cambiarFoto = (e) => {
@@ -124,9 +180,15 @@ function ModalCrearUsuario({ abierto, onCerrar, onCreado }) {
     e.preventDefault();
     setError(null);
 
-    // Validacion frontend: si el rol lo requiere, centro obligatorio
-    if (centroEsObligatorio && !form.centro_id) {
-      setError(`El centro de formación es obligatorio para el rol '${form.rol}'`);
+    // Validacion frontend: el territorio (segun el rol) es obligatorio.
+    const campoTerritorio = {
+      centro: "centro_id",
+      ciudad: "ciudad_id",
+      departamento: "departamento_id",
+      region: "region_id",
+    }[nivelTerritorio];
+    if (campoTerritorio && !form[campoTerritorio]) {
+      setError("Debes asignar el área (territorio) del usuario.");
       return;
     }
 
@@ -304,43 +366,40 @@ function ModalCrearUsuario({ abierto, onCerrar, onCreado }) {
               <select
                 className="form-usuario-input"
                 value={form.rol}
-                onChange={(e) => cambiarCampo("rol", e.target.value)}
+                onChange={(e) => cambiarRol(e.target.value)}
                 disabled={cargando}
               >
-                <option value="conductor">Conductor</option>
-                <option value="admin">Administrador</option>
-              </select>
-            </div>
-            <div className="form-usuario-campo">
-              <label className="form-usuario-label">
-                Centro de formación {centroEsObligatorio && "*"}
-              </label>
-              <select
-                className="form-usuario-input"
-                value={form.centro_id}
-                onChange={(e) => cambiarCampo("centro_id", e.target.value)}
-                required={centroEsObligatorio}
-                disabled={cargando || centros.length === 0}
-              >
-                <option value="">
-                  {centroEsObligatorio
-                    ? "— Selecciona un centro —"
-                    : "— Sin centro asignado —"}
-                </option>
-                {centros.map((c) => (
-                  <option key={c.id} value={c.id}>
-                    {c.nombre}
-                    {c.ciudad ? ` · ${c.ciudad}` : ""}
-                    {c.departamento ? ` (${c.departamento})` : ""}
+                {rolesCreables.map((r) => (
+                  <option key={r} value={r}>
+                    {ETIQUETA_ROL[r] || r}
                   </option>
                 ))}
               </select>
-              {centroEsObligatorio && (
-                <small className="form-usuario-ayuda">
-                  Obligatorio para conductores y administradores de centro.
-                </small>
-              )}
             </div>
+            {territorio && (
+              <div className="form-usuario-campo">
+                <label className="form-usuario-label">{territorio.label} *</label>
+                <select
+                  className="form-usuario-input"
+                  value={form[territorio.campo]}
+                  onChange={(e) => cambiarCampo(territorio.campo, e.target.value)}
+                  required
+                  disabled={cargando || territorio.opciones.length === 0}
+                >
+                  <option value="">— Selecciona {territorio.label.toLowerCase()} —</option>
+                  {territorio.opciones.map((o) => (
+                    <option key={o.id} value={o.id}>
+                      {territorio.formato(o)}
+                    </option>
+                  ))}
+                </select>
+                <small className="form-usuario-ayuda">
+                  {territorio.opciones.length === 0
+                    ? "No hay opciones disponibles en tu área para este nivel."
+                    : "Define el área que tendrá a su cargo este usuario."}
+                </small>
+              </div>
+            )}
           </div>
         </div>
 

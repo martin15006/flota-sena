@@ -6,8 +6,11 @@ import {
     eliminarDeCloudinary,
     extraerPublicId,
 } from "../services/vehiculos.service.js";
+import { obtenerScope, aplicarScope, puedeAccederCentro } from "../services/scope.service.js";
 
-const verificarAccesoVehiculo = async (vehiculoId, centroDelUsuario) => {
+// Verifica que el vehiculo exista Y que el admin tenga el centro del vehiculo
+// dentro de su scope territorial (Tarea #102). Recibe el usuario completo.
+const verificarAccesoVehiculo = async (vehiculoId, usuario) => {
     const { data: existente } = await supabase
         .from("vehiculos")
         .select("centro_id, runt_url, placa")
@@ -16,7 +19,8 @@ const verificarAccesoVehiculo = async (vehiculoId, centroDelUsuario) => {
 
     if (!existente) return { error: "Vehiculo no encontrado", status: 404 };
 
-    if (centroDelUsuario && existente.centro_id !== centroDelUsuario) {
+    const permitido = await puedeAccederCentro(usuario, existente.centro_id);
+    if (!permitido) {
         return { error: "No tienes acceso a este vehiculo", status: 403 };
     }
 
@@ -36,9 +40,9 @@ export const listarVehiculos = async (req, res) => {
             .order("nivel_criticidad", { ascending: false })
             .order("placa", { ascending: true });
 
-        if (req.usuario.centro_id) {
-            query = query.eq("centro_id", req.usuario.centro_id);
-        }
+        // Filtrar por el scope territorial del admin (centro/ciudad/depto/region/nacional)
+        const scope = await obtenerScope(req.usuario);
+        query = aplicarScope(query, scope);
 
         if (estado) query = query.eq("estado", estado);
         if (tipo) query = query.eq("tipo", tipo);
@@ -69,10 +73,7 @@ export const obtenerVehiculo = async (req, res) => {
             return res.status(404).json({ error: "Vehiculo no encontrado" });
         }
 
-        if (
-            req.usuario.centro_id &&
-            vehiculo.centro_id !== req.usuario.centro_id
-        ) {
+        if (!(await puedeAccederCentro(req.usuario, vehiculo.centro_id))) {
             return res.status(403).json({
                 error: "No tienes acceso a este vehiculo",
             });
@@ -178,10 +179,7 @@ export const actualizarVehiculo = async (req, res) => {
             return res.status(404).json({ error: "Vehiculo no encontrado" });
         }
 
-        if (
-            req.usuario.centro_id &&
-            existente.centro_id !== req.usuario.centro_id
-        ) {
+        if (!(await puedeAccederCentro(req.usuario, existente.centro_id))) {
             return res.status(403).json({
                 error: "No tienes acceso a este vehiculo",
             });
@@ -226,10 +224,7 @@ export const desactivarVehiculo = async (req, res) => {
             return res.status(404).json({ error: "Vehiculo no encontrado" });
         }
 
-        if (
-            req.usuario.centro_id &&
-            existente.centro_id !== req.usuario.centro_id
-        ) {
+        if (!(await puedeAccederCentro(req.usuario, existente.centro_id))) {
             return res.status(403).json({
                 error: "No tienes acceso a este vehiculo",
             });
@@ -293,10 +288,7 @@ export const eliminarVehiculo = async (req, res) => {
             return res.status(404).json({ error: "Vehiculo no encontrado" });
         }
 
-        if (
-            req.usuario.centro_id &&
-            existente.centro_id !== req.usuario.centro_id
-        ) {
+        if (!(await puedeAccederCentro(req.usuario, existente.centro_id))) {
             return res.status(403).json({
                 error: "No tienes acceso a este vehiculo",
             });
@@ -351,7 +343,7 @@ export const subirFotos = async (req, res) => {
     try {
         const { id } = req.params;
 
-        const acceso = await verificarAccesoVehiculo(id, req.usuario.centro_id);
+        const acceso = await verificarAccesoVehiculo(id, req.usuario);
         if (acceso.error) {
             return res.status(acceso.status).json({ error: acceso.error });
         }
@@ -414,7 +406,7 @@ export const eliminarFoto = async (req, res) => {
     try {
         const { id, foto_id } = req.params;
 
-        const acceso = await verificarAccesoVehiculo(id, req.usuario.centro_id);
+        const acceso = await verificarAccesoVehiculo(id, req.usuario);
         if (acceso.error) {
             return res.status(acceso.status).json({ error: acceso.error });
         }
@@ -473,7 +465,7 @@ export const marcarFotoPrincipal = async (req, res) => {
     try {
         const { id, foto_id } = req.params;
 
-        const acceso = await verificarAccesoVehiculo(id, req.usuario.centro_id);
+        const acceso = await verificarAccesoVehiculo(id, req.usuario);
         if (acceso.error) {
             return res.status(acceso.status).json({ error: acceso.error });
         }
@@ -502,7 +494,7 @@ export const subirRunt = async (req, res) => {
     try {
         const { id } = req.params;
 
-        const acceso = await verificarAccesoVehiculo(id, req.usuario.centro_id);
+        const acceso = await verificarAccesoVehiculo(id, req.usuario);
         if (acceso.error) {
             return res.status(acceso.status).json({ error: acceso.error });
         }
@@ -553,7 +545,7 @@ export const eliminarRunt = async (req, res) => {
     try {
         const { id } = req.params;
 
-        const acceso = await verificarAccesoVehiculo(id, req.usuario.centro_id);
+        const acceso = await verificarAccesoVehiculo(id, req.usuario);
         if (acceso.error) {
             return res.status(acceso.status).json({ error: acceso.error });
         }

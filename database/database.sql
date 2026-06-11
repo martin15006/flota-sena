@@ -96,12 +96,26 @@ CREATE TABLE IF NOT EXISTS usuarios (
                                 'admin',         -- alias histórico = admin_centro
                                 'conductor'
                             )),
+    -- Scope territorial del administrador (Fase 4 multinivel). Cada admin llena
+    -- SOLO la columna de su nivel; el superadmin no llena ninguna (alcance nacional):
+    --   admin_centro       -> centro_id
+    --   admin_ciudad       -> ciudad_id
+    --   admin_departamental-> departamento_id
+    --   admin_regional     -> region_id
+    -- El conductor usa centro_id (su centro de trabajo).
     centro_id               UUID REFERENCES centros_formacion(id) ON DELETE SET NULL,
+    ciudad_id               UUID REFERENCES ciudades(id) ON DELETE SET NULL,
+    departamento_id         UUID REFERENCES departamentos(id) ON DELETE SET NULL,
+    region_id               UUID REFERENCES regiones(id) ON DELETE SET NULL,
 
     -- Datos del conductor (solo si rol = 'conductor')
     licencia_numero         TEXT,
     licencia_categoria      TEXT,
     licencia_vencimiento    DATE,
+
+    -- Seguridad social (obligatoria para conductores, tarea #90)
+    eps                     TEXT,
+    arl                     TEXT,
 
     -- Flujo de cambio obligatorio de password
     debe_cambiar_password   BOOLEAN NOT NULL DEFAULT false,
@@ -360,7 +374,8 @@ CREATE TABLE IF NOT EXISTS intentos_chequeo_bloqueado (
                             'conductor_no_apto',
                             'vehiculo_desactivado',
                             'vehiculo_no_existe',
-                            'sesion_invalida'
+                            'sesion_invalida',
+                            'licencia_vencida'
                         )),
     detalle             TEXT,
 
@@ -498,6 +513,9 @@ CREATE INDEX IF NOT EXISTS idx_auditoria_vehiculos_fecha     ON auditoria_vehicu
 
 -- Usuarios
 CREATE INDEX IF NOT EXISTS idx_usuarios_centro               ON usuarios(centro_id);
+CREATE INDEX IF NOT EXISTS idx_usuarios_ciudad               ON usuarios(ciudad_id);
+CREATE INDEX IF NOT EXISTS idx_usuarios_departamento         ON usuarios(departamento_id);
+CREATE INDEX IF NOT EXISTS idx_usuarios_region               ON usuarios(region_id);
 CREATE INDEX IF NOT EXISTS idx_usuarios_rol_activo           ON usuarios(rol, activo);
 CREATE INDEX IF NOT EXISTS idx_auditoria_usuarios_fecha      ON auditoria_usuarios(usuario_afectado_id, created_at DESC);
 

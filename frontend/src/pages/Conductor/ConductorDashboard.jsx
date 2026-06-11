@@ -6,9 +6,11 @@
 //
 // Cualquier cambio en el layout general (header/footer) vive en ConductorLayout.
 
+import { useState } from "react";
 import { useNavigate } from "react-router-dom";
 import { useAuth } from "../../hooks/useAuth.js";
 import ConductorLayout from "../../components/ConductorLayout/ConductorLayout.jsx";
+import Toast from "../../components/Toast/Toast.jsx";
 import "./ConductorDashboard.css";
 
 // Helper: fecha tipo "viernes 5 de junio de 2026"
@@ -46,6 +48,7 @@ const tiempoHasta = (iso) => {
 function ConductorDashboard() {
     const { usuario } = useAuth();
     const navigate = useNavigate();
+    const [toast, setToast] = useState(null);
 
     if (!usuario) return null;
 
@@ -53,6 +56,36 @@ function ConductorDashboard() {
     const vencimiento = tiempoHasta(usuario.licencia_vencimiento);
     // Inicial del nombre para el placeholder cuando no hay foto
     const inicial = usuario.nombre_completo?.charAt(0).toUpperCase() || "C";
+
+    // ¿La licencia esta vencida? (Tarea #106). Comparamos solo fechas.
+    const licenciaVencida = (() => {
+        if (!usuario.licencia_vencimiento) return false;
+        const hoy = new Date();
+        hoy.setHours(0, 0, 0, 0);
+        const v = new Date(usuario.licencia_vencimiento);
+        v.setHours(0, 0, 0, 0);
+        return v < hoy;
+    })();
+
+    // Maneja el clic en un circulo: si la licencia esta vencida, bloquea con un
+    // aviso claro ANTES de que el conductor pierda tiempo en la aptitud.
+    // (El backend igual valida; esto es solo para mejor experiencia de usuario.)
+    const iniciarChequeo = (tipo) => {
+        if (licenciaVencida) {
+            const v = new Date(usuario.licencia_vencimiento);
+            const fecha = v.toLocaleDateString("es-CO", {
+                day: "2-digit",
+                month: "long",
+                year: "numeric",
+            });
+            setToast({
+                mensaje: `Tu licencia de conducción está vencida desde el ${fecha}. Debes renovarla antes de operar un vehículo. Contacta al administrador del SENA.`,
+                tipo: "error",
+            });
+            return;
+        }
+        navigate(`/conductor/chequeo/aptitud?tipo=${tipo}`);
+    };
 
     return (
         <ConductorLayout>
@@ -102,12 +135,20 @@ function ConductorDashboard() {
                 <div className="cond-hero-fecha">{formatearFechaHoy()}</div>
             </section>
 
+            {/* Aviso fijo si la licencia esta vencida */}
+            {licenciaVencida && (
+                <div className="cond-licencia-bloqueo">
+                    ⚠ Tu licencia de conducción está vencida. No puedes iniciar
+                    chequeos hasta renovarla. Contacta al administrador del SENA.
+                </div>
+            )}
+
             {/* ===== Los 2 circulos al centro ===== */}
             <section className="cond-circulos">
                 <button
-                    className="cond-circulo cond-circulo-pre"
-                    onClick={() => navigate("/conductor/chequeo/aptitud?tipo=preoperacional")}
-                    title="Iniciar chequeo preoperacional"
+                    className={`cond-circulo cond-circulo-pre ${licenciaVencida ? "cond-circulo-bloqueado" : ""}`}
+                    onClick={() => iniciarChequeo("preoperacional")}
+                    title={licenciaVencida ? "Licencia vencida — no disponible" : "Iniciar chequeo preoperacional"}
                 >
                     <div className="cond-circulo-icono">🚛</div>
                     <div className="cond-circulo-titulo">Preoperacional</div>
@@ -115,9 +156,9 @@ function ConductorDashboard() {
                 </button>
 
                 <button
-                    className="cond-circulo cond-circulo-post"
-                    onClick={() => navigate("/conductor/chequeo/aptitud?tipo=postoperacional")}
-                    title="Iniciar chequeo postoperacional"
+                    className={`cond-circulo cond-circulo-post ${licenciaVencida ? "cond-circulo-bloqueado" : ""}`}
+                    onClick={() => iniciarChequeo("postoperacional")}
+                    title={licenciaVencida ? "Licencia vencida — no disponible" : "Iniciar chequeo postoperacional"}
                 >
                     <div className="cond-circulo-icono">🏁</div>
                     <div className="cond-circulo-titulo">Post-operacional</div>
@@ -163,6 +204,16 @@ function ConductorDashboard() {
             )}
 
             </div>
+
+            {toast && (
+                <Toast
+                    mensaje={toast.mensaje}
+                    tipo={toast.tipo}
+                    duracion={6000}
+                    posicion="arriba-centro"
+                    onCerrar={() => setToast(null)}
+                />
+            )}
         </ConductorLayout>
     );
 }
