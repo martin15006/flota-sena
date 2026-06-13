@@ -74,7 +74,7 @@ CREATE TABLE IF NOT EXISTS centros_formacion (
 -- FASE 1 · AUTENTICACIÓN Y USUARIOS
 -- ==
 
--- Usuarios del sistema (admins en sus 5 niveles + conductores)
+-- Usuarios del sistema (admins en sus niveles + conductores)
 -- La columna id referencia a auth.users de Supabase Auth (gestión de password,
 -- email, tokens, etc.) Las demás columnas son metadata específica del proyecto.
 CREATE TABLE IF NOT EXISTS usuarios (

@@ -18,11 +18,15 @@
 -- WHERE rol IN ('admin_regional', 'admin_ciudad');
 
 -- ==
--- 2. Las cuentas de esos roles se eliminan desde la app (la funcion de eliminar
---    usuario limpia usuarios Y auth.users). Este DELETE es una red de seguridad
---    que borra cualquier resto en la tabla usuarios si quedara alguno.
+-- 2. Eliminar las cuentas de esos roles. Como usuarios.id referencia a
+--    auth.users(id) ON DELETE CASCADE, basta con borrar de auth.users: la fila
+--    de la tabla usuarios se borra sola en cascada. (Hacerlo desde la app con el
+--    boton "eliminar usuario" tiene el mismo efecto.)
 -- ==
-DELETE FROM usuarios WHERE rol IN ('admin_regional', 'admin_ciudad');
+DELETE FROM auth.users
+WHERE id IN (
+    SELECT id FROM usuarios WHERE rol IN ('admin_regional', 'admin_ciudad')
+);
 
 -- ==
 -- 3. Columnas que quedan SIN USO (solo las usaban los roles eliminados):
