@@ -86,23 +86,26 @@ CREATE TABLE IF NOT EXISTS usuarios (
     telefono                TEXT,
     foto_url                TEXT,
 
-    -- Rol y multi-tenant
+    -- Rol y multi-tenant. Roles vigentes tras aplanar la jerarquia (12 jun 2026):
+    -- el SENA no usa macro-region ni ciudad; una "Regional" del SENA equivale a un
+    -- departamento (Director Regional). Etiquetas visibles: superadmin = Director
+    -- Nacional, admin_departamental = Director Regional, admin_centro = Coordinador
+    -- de Flota. (En la BD viva quedaron dormidos admin_regional/admin_ciudad porque
+    -- Postgres no permite quitar valores de un enum en caliente; aqui ya no van.)
     rol                     TEXT NOT NULL CHECK (rol IN (
                                 'superadmin',
-                                'admin_regional',
                                 'admin_departamental',
-                                'admin_ciudad',
                                 'admin_centro',
                                 'admin',         -- alias histórico = admin_centro
                                 'conductor'
                             )),
     -- Scope territorial del administrador (Fase 4 multinivel). Cada admin llena
     -- SOLO la columna de su nivel; el superadmin no llena ninguna (alcance nacional):
-    --   admin_centro       -> centro_id
-    --   admin_ciudad       -> ciudad_id
-    --   admin_departamental-> departamento_id
-    --   admin_regional     -> region_id
+    --   admin_centro        -> centro_id
+    --   admin_departamental -> departamento_id (Director Regional)
     -- El conductor usa centro_id (su centro de trabajo).
+    -- ciudad_id y region_id quedan OBSOLETAS desde el aplanamiento del 12 jun 2026
+    -- (solo las usaban los roles eliminados); se conservan por compatibilidad.
     centro_id               UUID REFERENCES centros_formacion(id) ON DELETE SET NULL,
     ciudad_id               UUID REFERENCES ciudades(id) ON DELETE SET NULL,
     departamento_id         UUID REFERENCES departamentos(id) ON DELETE SET NULL,
