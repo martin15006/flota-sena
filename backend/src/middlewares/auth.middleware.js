@@ -63,13 +63,11 @@ export const verificarToken = async (req, res, next) => {
     }
 };
 
-// Roles considerados "admin" en cualquiera de los 5 niveles de la jerarquía
+// Roles considerados "admin" en cualquiera de los niveles de la jerarquía
 const ROLES_ADMIN = [
     'admin',
     'admin_centro',
-    'admin_ciudad',
     'admin_departamental',
-    'admin_regional',
     'superadmin',
 ];
 

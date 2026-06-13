@@ -9,30 +9,28 @@
 // sea estrictamente inferior.
 //
 // Escalera de rangos (de mayor a menor poder):
-//   superadmin (5) > admin_regional (4) > admin_departamental (3)
-//   > admin_ciudad (2) > admin_centro (1) > conductor (0)
+//   superadmin (3) > admin_departamental (2) > admin_centro (1) > conductor (0)
 //
 // 'admin' es el alias historico de 'admin_centro' (antes de Fase 4 solo existian
 // 'admin' y 'conductor'), por eso comparte rango 1.
+//
+// NOTA (12 jun 2026): se eliminaron admin_regional y admin_ciudad. El SENA no los
+// usa: una "Regional" del SENA equivale a un departamento (Director Regional).
 
 export const RANGO_ROL = {
-    superadmin: 5,
-    admin_regional: 4,
-    admin_departamental: 3,
-    admin_ciudad: 2,
+    superadmin: 3,
+    admin_departamental: 2,
     admin_centro: 1,
     admin: 1, // alias historico de admin_centro
     conductor: 0,
 };
 
-// Etiqueta legible de cada rol (para mensajes de error claros).
+// Etiqueta legible de cada rol (jerga del SENA).
 export const ETIQUETA_ROL = {
-    superadmin: 'Super administrador',
-    admin_regional: 'Administrador regional',
-    admin_departamental: 'Administrador departamental',
-    admin_ciudad: 'Administrador de ciudad',
-    admin_centro: 'Administrador de centro',
-    admin: 'Administrador de centro',
+    superadmin: 'Director Nacional',
+    admin_departamental: 'Director Regional',
+    admin_centro: 'Coordinador de Flota',
+    admin: 'Coordinador de Flota',
     conductor: 'Conductor',
 };
 
@@ -70,9 +68,7 @@ export const rolesQuePuedeCrear = (rolActor) => {
     const nivel = rangoDe(rolActor);
     // Roles "canonicos" (sin el alias 'admin') ordenados de mayor a menor.
     const canonicos = [
-        'admin_regional',
         'admin_departamental',
-        'admin_ciudad',
         'admin_centro',
         'conductor',
     ];

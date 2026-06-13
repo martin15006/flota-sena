@@ -10,15 +10,11 @@
 
 import { supabase } from '../config/supabase.js';
 
-// Roles que pueden recibir notificaciones administrativas.
-// Por ahora todos los admins; cuando implementemos multinivel (Tarea #102)
-// podemos filtrar por jerarquia.
+// Roles que pueden recibir notificaciones administrativas (todos los niveles).
 const ROLES_DESTINATARIOS = [
     'admin',
     'admin_centro',
-    'admin_ciudad',
     'admin_departamental',
-    'admin_regional',
     'superadmin',
 ];
 
@@ -80,11 +76,9 @@ export const crearNotificacion = async ({
     // recibir notificaciones, pero un admin_centro solo ve las de su centro.
     //
     // IMPORTANTE: usamos .neq('rol', 'conductor') en vez de .in(lista de roles admin)
-    // porque la columna rol es un ENUM en la BD (rol_usuario) que por ahora solo
-    // contiene 'admin' y 'conductor'. Si listaramos roles que aun no existen en el
-    // enum (admin_centro, admin_ciudad, etc., previstos para el multinivel futuro)
-    // Postgres lanza error 22P02. "Todos los que no son conductor" = todos los admins,
-    // y es robusto sin importar que roles existan en el enum.
+    // porque la columna rol es un ENUM en la BD (rol_usuario). "Todos los que no son
+    // conductor" = todos los admins, y es robusto sin importar que valores tenga el
+    // enum (incluidos los dormidos tras aplanar roles el 12 jun 2026).
     const { data: todosAdmins, error: errDest } = await supabase
         .from('usuarios')
         .select('id, rol, centro_id')

@@ -4,9 +4,7 @@
 // que consulta (scope.service.js). Asi, al crear un usuario, los selectores de
 // territorio solo muestran lo que ese admin puede asignar:
 //   - superadmin            -> todo el pais
-//   - admin_regional        -> su region (sus departamentos / ciudades / centros)
 //   - admin_departamental   -> su departamento (sus ciudades / centros)
-//   - admin_ciudad          -> su ciudad (sus centros)
 //   - admin_centro / admin  -> su centro
 //
 // Los filtros opcionales (?region_id=, ?departamento_id=, ?ciudad_id=) permiten

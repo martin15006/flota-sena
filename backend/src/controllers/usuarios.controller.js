@@ -55,17 +55,13 @@ const verificarAccesoUsuarioObjetivo = async (req, idObjetivo, { exigirRango = t
 // es / que administra cada usuario, segun su rol. Usa los nombres ya unidos por
 // el JOIN (centro/ciudad/departamento/region).
 //   - conductor / admin_centro / admin con centro -> su centro (+ ciudad)
-//   - admin_ciudad        -> su ciudad
-//   - admin_departamental -> su departamento
-//   - admin_regional      -> su region
+//   - admin_departamental -> su departamento (Director Regional)
 //   - superadmin          -> nacional
 // Devuelve { nivel, etiqueta, ciudad } — ciudad sirve tambien para el filtro.
 const construirAmbito = (u) => {
     const rol = u.rol;
     if (rol === 'superadmin') return { nivel: 'nacional', etiqueta: 'Nacional', ciudad: null };
-    if (rol === 'admin_regional') return { nivel: 'region', etiqueta: u.region?.nombre || '—', ciudad: null };
     if (rol === 'admin_departamental') return { nivel: 'departamento', etiqueta: u.departamento?.nombre || '—', ciudad: null };
-    if (rol === 'admin_ciudad') return { nivel: 'ciudad', etiqueta: u.ciudad?.nombre || '—', ciudad: u.ciudad?.nombre || null };
     // conductor / admin_centro / alias 'admin' con centro
     if (u.centro) return { nivel: 'centro', etiqueta: u.centro.nombre, ciudad: u.centro.ciudad?.nombre || null };
     // alias 'admin' sin centro (admin general previo al multinivel)

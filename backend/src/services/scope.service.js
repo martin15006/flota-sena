@@ -9,11 +9,14 @@
 //
 // Reglas por rol:
 //   superadmin            -> TODOS los centros (sin filtro)
-//   admin_regional        -> centros de su region (via departamentos -> ciudades)
 //   admin_departamental   -> centros de su departamento (via ciudades)
-//   admin_ciudad          -> centros de su ciudad
 //   admin_centro / admin  -> solo su centro
+//   conductor             -> solo su centro
 //   (cualquier admin sin su scope asignado -> no ve nada, por seguridad)
+//
+// NOTA (12 jun 2026): se eliminaron los niveles admin_regional y admin_ciudad.
+// El "Director Regional" es el antiguo admin_departamental (Regional SENA =
+// departamento). Las columnas usuarios.region_id / ciudad_id quedan sin uso.
 
 import { supabase } from '../config/supabase.js';
 
@@ -65,20 +68,6 @@ export const obtenerScope = async (usuario) => {
         return { tipo: 'global' };
     }
 
-    // Admin de ciudad: los centros de su ciudad
-    if (rol === 'admin_ciudad') {
-        if (!usuario.ciudad_id) return vacio;
-        const { data } = await supabase
-            .from('centros_formacion')
-            .select('id')
-            .eq('ciudad_id', usuario.ciudad_id);
-        return {
-            ...vacio,
-            ciudadIds: [usuario.ciudad_id],
-            centroIds: (data || []).map((c) => c.id),
-        };
-    }
-
     // Admin departamental: ciudades del departamento -> centros de esas ciudades
     if (rol === 'admin_departamental') {
         if (!usuario.departamento_id) return vacio;
@@ -98,39 +87,6 @@ export const obtenerScope = async (usuario) => {
         return {
             ...vacio,
             departamentoIds: [usuario.departamento_id],
-            ciudadIds,
-            centroIds,
-        };
-    }
-
-    // Admin regional: departamentos de la region -> ciudades -> centros
-    if (rol === 'admin_regional') {
-        if (!usuario.region_id) return vacio;
-        const { data: deptos } = await supabase
-            .from('departamentos')
-            .select('id')
-            .eq('region_id', usuario.region_id);
-        const deptoIds = (deptos || []).map((d) => d.id);
-        let ciudadIds = [];
-        let centroIds = [];
-        if (deptoIds.length > 0) {
-            const { data: ciudades } = await supabase
-                .from('ciudades')
-                .select('id')
-                .in('departamento_id', deptoIds);
-            ciudadIds = (ciudades || []).map((c) => c.id);
-            if (ciudadIds.length > 0) {
-                const { data: centros } = await supabase
-                    .from('centros_formacion')
-                    .select('id')
-                    .in('ciudad_id', ciudadIds);
-                centroIds = (centros || []).map((c) => c.id);
-            }
-        }
-        return {
-            ...vacio,
-            regionIds: [usuario.region_id],
-            departamentoIds: deptoIds,
             ciudadIds,
             centroIds,
         };
@@ -170,8 +126,8 @@ export const puedeAccederCentro = async (usuario, centroId) => {
 //
 // Ejemplos:
 //   - admin_centro (scope: 1 centro) ve los conductores de su centro.
-//   - admin_ciudad (scope: su ciudad + sus centros) ve conductores y
-//     admin_centro de esos centros, y a si mismo (match por ciudad).
+//   - admin_departamental (scope: su depto + sus ciudades/centros) ve a los
+//     coordinadores y conductores de esos centros, y a si mismo.
 //   - superadmin ve a todos (scope global).
 export const usuarioEnScope = (scope, objetivo) => {
     if (!scope || scope.tipo === 'global') return true;
