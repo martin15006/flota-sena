@@ -16,9 +16,7 @@ const ESTADO_INICIAL = {
   telefono: "",
   rol: "conductor",
   centro_id: "",
-  ciudad_id: "",
   departamento_id: "",
-  region_id: "",
   licencia_numero: "",
   licencia_categoria: "",
   licencia_vencimiento: "",
@@ -47,9 +45,7 @@ function ModalCrearUsuario({ abierto, onCerrar, onCreado }) {
   // Listas geograficas para los selectores de territorio (ya vienen filtradas
   // por el scope del admin desde el backend, ver geo.routes.js).
   const [centros, setCentros] = useState([]);
-  const [ciudades, setCiudades] = useState([]);
   const [departamentos, setDepartamentos] = useState([]);
-  const [regiones, setRegiones] = useState([]);
   // Avisos contextuales debajo de cada campo cuando se intenta escribir un caracter invalido.
   // Cada aviso se borra solo despues de 2.5 segundos.
   const [avisos, setAvisos] = useState({});
@@ -80,8 +76,9 @@ function ModalCrearUsuario({ abierto, onCerrar, onCreado }) {
     return filtrado;
   };
 
-  // Cargar las listas geograficas (ya scopeadas) al abrir el modal. Pedimos los
-  // 4 niveles; el selector solo muestra el que corresponde al rol elegido.
+  // Cargar las listas geograficas (ya scopeadas) al abrir el modal. Solo se usan
+  // centro y departamento como niveles de territorio; el selector muestra el que
+  // corresponde al rol elegido.
   useEffect(() => {
     if (!abierto) return;
     const cargar = (ruta, set) =>
@@ -91,13 +88,11 @@ function ModalCrearUsuario({ abierto, onCerrar, onCreado }) {
           if (!err.sesionExpirada) console.error(`Error cargando ${ruta}:`, err.message);
         });
     cargar("/geo/centros", setCentros);
-    cargar("/geo/ciudades", setCiudades);
     cargar("/geo/departamentos", setDepartamentos);
-    cargar("/geo/regiones", setRegiones);
   }, [abierto]);
 
   const esConductor = form.rol === "conductor";
-  // Nivel de territorio a asignar segun el rol elegido: region|departamento|ciudad|centro
+  // Nivel de territorio a asignar segun el rol elegido: departamento|centro
   const nivelTerritorio = NIVEL_TERRITORIO[form.rol] || null;
   // Roles que el admin actual puede crear (solo rangos inferiores). Si por algun
   // motivo no hay ninguno, dejamos al menos 'conductor' como fallback seguro.
@@ -115,14 +110,12 @@ function ModalCrearUsuario({ abierto, onCerrar, onCreado }) {
       formato: (c) =>
         `${c.nombre}${c.ciudad ? ` · ${c.ciudad}` : ""}${c.departamento ? ` (${c.departamento})` : ""}`,
     },
-    ciudad: { label: "Ciudad", campo: "ciudad_id", opciones: ciudades, formato: (c) => c.nombre },
     departamento: {
       label: "Departamento",
       campo: "departamento_id",
       opciones: departamentos,
       formato: (d) => d.nombre,
     },
-    region: { label: "Región", campo: "region_id", opciones: regiones, formato: (r) => r.nombre },
   }[nivelTerritorio] || null;
 
   const cerrar = () => {
@@ -139,15 +132,13 @@ function ModalCrearUsuario({ abierto, onCerrar, onCreado }) {
 
   // Al cambiar el rol limpiamos los campos de territorio, para no arrastrar (ni
   // enviar) uno que no corresponde al nuevo nivel (p.ej. un centro_id al pasar a
-  // admin de ciudad).
+  // Director Regional, que usa departamento).
   const cambiarRol = (nuevoRol) => {
     setForm((prev) => ({
       ...prev,
       rol: nuevoRol,
       centro_id: "",
-      ciudad_id: "",
       departamento_id: "",
-      region_id: "",
     }));
   };
 
@@ -183,9 +174,7 @@ function ModalCrearUsuario({ abierto, onCerrar, onCreado }) {
     // Validacion frontend: el territorio (segun el rol) es obligatorio.
     const campoTerritorio = {
       centro: "centro_id",
-      ciudad: "ciudad_id",
       departamento: "departamento_id",
-      region: "region_id",
     }[nivelTerritorio];
     if (campoTerritorio && !form[campoTerritorio]) {
       setError("Debes asignar el área (territorio) del usuario.");

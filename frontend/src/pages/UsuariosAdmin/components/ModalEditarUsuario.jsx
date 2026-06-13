@@ -29,9 +29,7 @@ function ModalEditarUsuario({ abierto, onCerrar, usuario, onEditado }) {
     const [cargando, setCargando] = useState(false);
     // Listas geograficas (ya scopeadas por el backend) para el selector de territorio
     const [centros, setCentros] = useState([]);
-    const [ciudades, setCiudades] = useState([]);
     const [departamentos, setDepartamentos] = useState([]);
-    const [regiones, setRegiones] = useState([]);
     // Avisos contextuales debajo de cada campo (mismo patron que ModalCrearUsuario)
     const [avisos, setAvisos] = useState({});
     const timersAvisos = useRef({});
@@ -68,8 +66,9 @@ function ModalEditarUsuario({ abierto, onCerrar, usuario, onEditado }) {
         return filtrado;
     };
 
-    // Cargar las listas geograficas (ya scopeadas) al abrir el modal. Pedimos los
-    // 4 niveles; el selector solo muestra el que corresponde al rol elegido.
+    // Cargar las listas geograficas (ya scopeadas) al abrir el modal. Solo se usan
+    // centro y departamento como niveles de territorio; el selector muestra el que
+    // corresponde al rol elegido.
     useEffect(() => {
         if (!abierto) return;
         const cargar = (ruta, set) =>
@@ -79,9 +78,7 @@ function ModalEditarUsuario({ abierto, onCerrar, usuario, onEditado }) {
                     if (!err.sesionExpirada) console.error(`Error cargando ${ruta}:`, err.message);
                 });
         cargar("/geo/centros", setCentros);
-        cargar("/geo/ciudades", setCiudades);
         cargar("/geo/departamentos", setDepartamentos);
-        cargar("/geo/regiones", setRegiones);
     }, [abierto]);
 
     // rellena el formulario con los datos del usuario
@@ -92,9 +89,7 @@ function ModalEditarUsuario({ abierto, onCerrar, usuario, onEditado }) {
                 telefono: usuario.telefono || '',
                 rol: usuario.rol || 'conductor',
                 centro_id: usuario.centro_id || '',
-                ciudad_id: usuario.ciudad_id || '',
                 departamento_id: usuario.departamento_id || '',
-                region_id: usuario.region_id || '',
                 licencia_numero: usuario.licencia_numero || '',
                 licencia_categoria: usuario.licencia_categoria || '',
                 licencia_vencimiento: usuario.licencia_vencimiento || '',
@@ -119,7 +114,7 @@ function ModalEditarUsuario({ abierto, onCerrar, usuario, onEditado }) {
         if (!form.rol || inferiores.includes(form.rol)) return inferiores;
         return [form.rol, ...inferiores];
     })();
-    // Nivel de territorio del rol elegido: centro | ciudad | departamento | region
+    // Nivel de territorio del rol elegido: departamento | centro
     const nivelTerritorio = NIVEL_TERRITORIO[form.rol] || null;
     const territorio = {
         centro: {
@@ -129,14 +124,12 @@ function ModalEditarUsuario({ abierto, onCerrar, usuario, onEditado }) {
             formato: (c) =>
                 `${c.nombre}${c.ciudad ? ` · ${c.ciudad}` : ""}${c.departamento ? ` (${c.departamento})` : ""}`,
         },
-        ciudad: { label: "Ciudad", campo: "ciudad_id", opciones: ciudades, formato: (c) => c.nombre },
         departamento: {
             label: "Departamento",
             campo: "departamento_id",
             opciones: departamentos,
             formato: (d) => d.nombre,
         },
-        region: { label: "Región", campo: "region_id", opciones: regiones, formato: (r) => r.nombre },
     }[nivelTerritorio] || null;
 
     const cambiarCampo = (campo, valor) => setForm({ ...form, [campo]: valor });
@@ -149,9 +142,7 @@ function ModalEditarUsuario({ abierto, onCerrar, usuario, onEditado }) {
             ...prev,
             rol: nuevoRol,
             centro_id: esOriginal ? usuario.centro_id || "" : "",
-            ciudad_id: esOriginal ? usuario.ciudad_id || "" : "",
             departamento_id: esOriginal ? usuario.departamento_id || "" : "",
-            region_id: esOriginal ? usuario.region_id || "" : "",
         }));
     };
 
@@ -183,12 +174,10 @@ function ModalEditarUsuario({ abierto, onCerrar, usuario, onEditado }) {
         setError(null);
 
         // Validacion frontend: el territorio del nivel del rol es obligatorio
-        // (centro para conductor/admin de centro, ciudad para admin de ciudad, etc.)
+        // (centro para conductor/Coordinador de Flota, departamento para Director Regional).
         const campoTerritorio = {
             centro: "centro_id",
-            ciudad: "ciudad_id",
             departamento: "departamento_id",
-            region: "region_id",
         }[nivelTerritorio];
         if (campoTerritorio && !form[campoTerritorio]) {
             setError("Debes asignar el área (territorio) del usuario.");
@@ -223,9 +212,9 @@ function ModalEditarUsuario({ abierto, onCerrar, usuario, onEditado }) {
                 foto_url = null;
             }
 
-            // Se envia el form completo, incluidos rol y los 4 niveles de territorio:
-            // los que no aplican al rol elegido van vacios -> null, asi la BD queda
-            // limpia al cambiar de nivel (p.ej. de admin de ciudad a conductor).
+            // Se envia el form completo, incluidos rol y el territorio (centro o
+            // departamento): los campos vacios van como null, asi la BD queda limpia
+            // al cambiar de nivel (p.ej. de Director Regional a conductor).
             const datos = { ...form, foto_url };
             Object.keys(datos).forEach((k) => {
                 if (datos[k] === '') datos[k] = null;

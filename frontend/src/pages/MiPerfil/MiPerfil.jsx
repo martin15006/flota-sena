@@ -17,6 +17,7 @@ import { useAuth } from "../../hooks/useAuth.js";
 import { api } from "../../lib/api.js";
 import AdminLayout from "../../components/AdminLayout/AdminLayout.jsx";
 import Toast from "../../components/Toast/Toast.jsx";
+import { ETIQUETA_ROL } from "../../lib/roles.js";
 import "./MiPerfil.css";
 
 function MiPerfil() {
@@ -176,7 +177,7 @@ function MiPerfil() {
                         <div className="mi-perfil-foto-placeholder">{inicial}</div>
                     )}
                     <h2 className="mi-perfil-nombre">{usuario.nombre_completo}</h2>
-                    <div className="mi-perfil-rol">{usuario.rol}</div>
+                    <div className="mi-perfil-rol">{ETIQUETA_ROL[usuario.rol] || usuario.rol}</div>
                     {usuario.centro_nombre && (
                         <div className="mi-perfil-centro">{usuario.centro_nombre}</div>
                     )}

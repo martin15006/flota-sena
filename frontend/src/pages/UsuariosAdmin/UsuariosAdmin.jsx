@@ -15,12 +15,8 @@ const descriptorAmbito = (ambito) => {
   switch (ambito.nivel) {
     case "centro":
       return ambito.ciudad ? `Centro · ${ambito.ciudad}` : "Centro de formación";
-    case "ciudad":
-      return "Ciudad";
     case "departamento":
       return "Departamento";
-    case "region":
-      return "Región";
     case "nacional":
       return "Todo el país";
     default:
@@ -60,7 +56,7 @@ function UsuariosAdmin() {
   };
 
   useEffect(() => {
-    // Cargar para CUALQUIER rol admin (los 5 niveles + el alias 'admin'), no
+    // Cargar para CUALQUIER rol admin (todos los niveles + el alias 'admin'), no
     // solo "admin" a secas — si no, superadmin y los demas niveles nunca cargan.
     if (usuario && esAdmin(usuario.rol)) cargarUsuarios();
   }, [usuario]);

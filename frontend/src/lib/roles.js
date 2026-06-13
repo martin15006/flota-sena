@@ -4,56 +4,50 @@
 // Sirve para que la UI muestre solo lo que el admin actual puede hacer (que roles
 // puede crear, que nivel de territorio asignar). La seguridad REAL la impone el
 // backend; esto es solo para no ofrecer opciones que igual serian rechazadas.
+//
+// NOTA (12 jun 2026): se eliminaron admin_regional y admin_ciudad. El SENA no los
+// usa: una "Regional" del SENA equivale a un departamento (Director Regional).
+// Quedan 4 roles + el alias historico 'admin'.
 
 export const RANGO_ROL = {
-    superadmin: 5,
-    admin_regional: 4,
-    admin_departamental: 3,
-    admin_ciudad: 2,
+    superadmin: 3,
+    admin_departamental: 2,
     admin_centro: 1,
     admin: 1, // alias historico de admin_centro
     conductor: 0,
 };
 
 export const ETIQUETA_ROL = {
-    superadmin: "Super administrador",
-    admin_regional: "Administrador regional",
-    admin_departamental: "Administrador departamental",
-    admin_ciudad: "Administrador de ciudad",
-    admin_centro: "Administrador de centro",
-    admin: "Administrador de centro",
+    superadmin: "Director Nacional",
+    admin_departamental: "Director Regional",
+    admin_centro: "Coordinador de Flota",
+    admin: "Coordinador de Flota",
     conductor: "Conductor",
 };
 
 // Etiqueta compacta para badges/pills de tabla (espacio reducido).
 export const ETIQUETA_ROL_CORTA = {
-    superadmin: "Superadmin",
-    admin_regional: "Adm. regional",
-    admin_departamental: "Adm. deptal.",
-    admin_ciudad: "Adm. ciudad",
-    admin_centro: "Adm. centro",
-    admin: "Admin",
+    superadmin: "Dir. Nacional",
+    admin_departamental: "Dir. Regional",
+    admin_centro: "Coord. Flota",
+    admin: "Coord. Flota",
     conductor: "Conductor",
 };
 
 // Que NIVEL geografico se le asigna a cada rol.
-//   region / departamento / ciudad / centro  (superadmin no tiene territorio)
+//   departamento / centro  (superadmin no tiene territorio)
 export const NIVEL_TERRITORIO = {
-    admin_regional: "region",
     admin_departamental: "departamento",
-    admin_ciudad: "ciudad",
     admin_centro: "centro",
     conductor: "centro",
 };
 
-// Todos los roles con acceso al panel administrativo (los 5 niveles + el alias
-// historico 'admin'). Lo unico que NO es admin es 'conductor'.
+// Todos los roles con acceso al panel administrativo + el alias historico 'admin'.
+// Lo unico que NO es admin es 'conductor'.
 export const ROLES_ADMIN = [
     "admin",
     "admin_centro",
-    "admin_ciudad",
     "admin_departamental",
-    "admin_regional",
     "superadmin",
 ];
 
@@ -72,9 +66,7 @@ export const rangoDe = (rol) => {
 export const rolesQuePuedeCrear = (rolActor) => {
     const nivel = rangoDe(rolActor);
     const canonicos = [
-        "admin_regional",
         "admin_departamental",
-        "admin_ciudad",
         "admin_centro",
         "conductor",
     ];
