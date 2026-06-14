@@ -19,6 +19,7 @@
 // departamento). Las columnas usuarios.region_id / ciudad_id quedan sin uso.
 
 import { supabase } from '../config/supabase.js';
+import { rolEfectivo } from './jerarquia.service.js';
 
 // UUID imposible: se usa para forzar "0 resultados" cuando un admin no tiene
 // scope valido, en vez de devolver todo por error.
@@ -33,7 +34,9 @@ const UUID_IMPOSIBLE = '00000000-0000-0000-0000-000000000000';
 // sirven para ubicar a OTROS administradores que no tienen centro_id sino un
 // territorio mas amplio (ver usuarioEnScope).
 export const obtenerScope = async (usuario) => {
-    const rol = usuario?.rol;
+    // Rol EFECTIVO: un pool con suplencia vigente se trata como admin_centro de su
+    // centro (ver jerarquia.service rolEfectivo). El resto usa su rol real.
+    const rol = rolEfectivo(usuario);
 
     // Superadmin ve todo el pais
     if (rol === 'superadmin') {

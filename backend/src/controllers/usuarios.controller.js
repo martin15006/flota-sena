@@ -1,7 +1,7 @@
 import { supabase} from '../config/supabase.js'
 import { generarPasswordTemporal, contarAdminsActivos, registrarAuditoria, } from '../services/usuarios.service.js';
 import { obtenerScope, usuarioEnScope } from '../services/scope.service.js';
-import { puedeCrearRol, puedeGestionarRol, ETIQUETA_ROL } from '../services/jerarquia.service.js';
+import { puedeCrearRol, puedeGestionarRol, ETIQUETA_ROL, rolEfectivo as rolEfectivoActor } from '../services/jerarquia.service.js';
 
 
 // Helper: indexa los emails de auth.users por id para hacer merge con la tabla usuarios.
@@ -41,7 +41,7 @@ const verificarAccesoUsuarioObjetivo = async (req, idObjetivo, { exigirRango = t
     if (!usuarioEnScope(scope, objetivo)) {
         return { ok: false, status: 403, error: 'Ese usuario no pertenece a tu area.' };
     }
-    if (exigirRango && !puedeGestionarRol(req.usuario.rol, objetivo.rol)) {
+    if (exigirRango && !puedeGestionarRol(rolEfectivoActor(req.usuario), objetivo.rol)) {
         return {
             ok: false,
             status: 403,
@@ -217,7 +217,7 @@ export const crearUsuario = async (req, res) => {
         // Jerarquia (#111): solo se pueden crear usuarios de rango ESTRICTAMENTE
         // inferior al propio. Un admin_centro crea conductores; un superadmin
         // crea cualquier admin pero no otro superadmin.
-        if (!puedeCrearRol(req.usuario.rol, rol)) {
+        if (!puedeCrearRol(rolEfectivoActor(req.usuario), rol)) {
             return res.status(403).json({
                 error: `No tienes permiso para crear usuarios con el rol "${ETIQUETA_ROL[rol] || rol}". Solo puedes crear roles inferiores al tuyo.`,
             });
@@ -379,7 +379,7 @@ export const actualizarUsuario = async (req, res) => {
                     .status(403)
                     .json({ error: 'Ese usuario no pertenece a tu area.' });
             }
-            if (!puedeGestionarRol(req.usuario.rol, usuarioActual.rol)) {
+            if (!puedeGestionarRol(rolEfectivoActor(req.usuario), usuarioActual.rol)) {
                 return res.status(403).json({
                     error: `No puedes editar a un "${ETIQUETA_ROL[usuarioActual.rol] || usuarioActual.rol}". Solo puedes gestionar usuarios de rango inferior al tuyo.`,
                 });
@@ -396,7 +396,7 @@ export const actualizarUsuario = async (req, res) => {
             // por encima).
             return res.status(400).json({ error: 'No puedes cambiar tu propio rol.' });
         }
-        if (rolNuevo && !puedeCrearRol(req.usuario.rol, rolNuevo)) {
+        if (rolNuevo && !puedeCrearRol(rolEfectivoActor(req.usuario), rolNuevo)) {
             return res.status(403).json({
                 error: `No puedes asignar el rol "${ETIQUETA_ROL[rolNuevo] || rolNuevo}". Solo puedes asignar roles inferiores al tuyo.`,
             });
@@ -474,6 +474,19 @@ export const actualizarUsuario = async (req, res) => {
             cambios.es_pool = req.body.es_pool === true;
         }
 
+        // Si deja de ser pool, cerrar sus suplencias activas (ya no puede suplir).
+        if (cambios.es_pool === false) {
+            await supabase
+                .from('suplencias')
+                .update({
+                    activa: false,
+                    desactivada_at: new Date().toISOString(),
+                    desactivada_por_id: req.usuario.id,
+                })
+                .eq('pool_id', id)
+                .eq('activa', true);
+        }
+
         const { data, error } = await supabase
             .from('usuarios')
             .update(cambios)
@@ -528,7 +541,7 @@ export const desactivarUsuario = async (req, res) => {
 
         // ...y de rango ESTRICTAMENTE inferior al tuyo (#112): nunca a un admin
         // de tu mismo rango ni superior.
-        if (!puedeGestionarRol(req.usuario.rol, usuario.rol)) {
+        if (!puedeGestionarRol(rolEfectivoActor(req.usuario), usuario.rol)) {
             return res.status(403).json({
                 error: `No puedes desactivar a un "${ETIQUETA_ROL[usuario.rol] || usuario.rol}". Solo puedes gestionar usuarios de rango inferior al tuyo.`,
             });
@@ -584,7 +597,7 @@ export const reactivarUsuario = async (req, res) => {
                 .status(403)
                 .json({ error: 'Ese usuario no pertenece a tu area.' });
         }
-        if (!puedeGestionarRol(req.usuario.rol, usuario.rol)) {
+        if (!puedeGestionarRol(rolEfectivoActor(req.usuario), usuario.rol)) {
             return res.status(403).json({
                 error: `No puedes reactivar a un "${ETIQUETA_ROL[usuario.rol] || usuario.rol}". Solo puedes gestionar usuarios de rango inferior al tuyo.`,
             });
@@ -640,7 +653,7 @@ export const eliminarUsuario = async (req, res) => {
 
         // ...y de rango ESTRICTAMENTE inferior (#112): por seguridad, nadie puede
         // eliminar a un admin de su mismo rango ni superior.
-        if (!puedeGestionarRol(req.usuario.rol, usuario.rol)) {
+        if (!puedeGestionarRol(rolEfectivoActor(req.usuario), usuario.rol)) {
             return res.status(403).json({
                 error: `No puedes eliminar a un "${ETIQUETA_ROL[usuario.rol] || usuario.rol}". Solo puedes gestionar usuarios de rango inferior al tuyo.`,
             });
