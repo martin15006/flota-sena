@@ -12,6 +12,7 @@ import fotosChequeoRoutes from './routes/fotosChequeo.routes.js';
 import geoRoutes from './routes/geo.routes.js';
 import dashboardRoutes from './routes/dashboard.routes.js';
 import notificacionesRoutes from './routes/notificaciones.routes.js';
+import suplenciasRoutes from './routes/suplencias.routes.js';
 import { iniciarKeepAlive, detenerKeepAlive } from './utils/keepAlive.js';
 
 dotenv.config();
@@ -66,6 +67,7 @@ app.use('/api/respuestas', fotosChequeoRoutes);
 app.use('/api/geo', geoRoutes);
 app.use('/api/dashboard', dashboardRoutes);
 app.use('/api/notificaciones', notificacionesRoutes);
+app.use('/api/suplencias', suplenciasRoutes);
 
 app.use((req, res) => {
     res.status(404).json({ error: 'Ruta no encontrada' });
