@@ -1,4 +1,5 @@
 import { supabase } from "../config/supabase.js";
+import { rolEfectivo } from "../services/jerarquia.service.js";
 
 export const verificarToken = async (req, res, next) => {
     try {
@@ -54,6 +55,26 @@ export const verificarToken = async (req, res, next) => {
         perfil.centro_nombre = perfil.centros_formacion?.nombre || null;
         delete perfil.centros_formacion;
 
+        // Pool · Paso 2: si es un conductor del pool, adjuntar su suplencia VIGENTE
+        // (si la tiene) para que rolEfectivo() lo trate como admin_centro de su centro.
+        // "Vigente" = activa AND ahora dentro de [desde, hasta] (hasta NULL = abierta).
+        perfil.suplencia = null;
+        if (perfil.rol === 'conductor' && perfil.es_pool === true && perfil.centro_id) {
+            const ahora = new Date().toISOString();
+            const { data: sup } = await supabase
+                .from('suplencias')
+                .select('*')
+                .eq('pool_id', perfil.id)
+                .eq('centro_id', perfil.centro_id)
+                .eq('activa', true)
+                .lte('desde', ahora)
+                .or(`hasta.is.null,hasta.gte.${ahora}`)
+                .order('desde', { ascending: false })
+                .limit(1)
+                .maybeSingle();
+            perfil.suplencia = sup || null;
+        }
+
         req.usuario = perfil;
         req.token = token;
         next();
@@ -73,7 +94,7 @@ const ROLES_ADMIN = [
 
 // Guard genérico: pasa si el rol del usuario está en la lista permitida
 export const requiereRol = (...rolesPermitidos) => (req, res, next) => {
-    if (!req.usuario || !rolesPermitidos.includes(req.usuario.rol)) {
+    if (!req.usuario || !rolesPermitidos.includes(rolEfectivo(req.usuario))) {
         return res
             .status(403)
             .json({ error: 'No tienes permisos para realizar esta accion' });
@@ -82,7 +103,7 @@ export const requiereRol = (...rolesPermitidos) => (req, res, next) => {
 };
 
 export const soloAdmin = (req, res, next) => {
-    if (!req.usuario || !ROLES_ADMIN.includes(req.usuario.rol)) {
+    if (!req.usuario || !ROLES_ADMIN.includes(rolEfectivo(req.usuario))) {
         return res
             .status(403)
             .json({ error: 'Solo administradores pueden hacer esta accion' });
@@ -100,7 +121,7 @@ export const soloConductor = (req, res, next) => {
 };
 
 export const adminOConductor = (req, res, next) => {
-    const rol = req.usuario?.rol;
+    const rol = rolEfectivo(req.usuario);
     if (!rol || (rol !== 'conductor' && !ROLES_ADMIN.includes(rol))) {
         return res
             .status(403)

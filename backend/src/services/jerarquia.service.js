@@ -76,3 +76,20 @@ export const rolesQuePuedeCrear = (rolActor) => {
     if (rolActor === 'superadmin') return ['superadmin', ...inferiores];
     return inferiores;
 };
+
+// ROL EFECTIVO (Pool · Paso 2 — suplencia).
+// Un conductor del pool con una suplencia VIGENTE adjuntada (req.usuario.suplencia,
+// la pone el middleware verificarToken) actua como 'admin_centro' de su centro.
+// En cualquier otro caso devuelve su rol real. Esto centraliza la "elevacion":
+// los guards, el scope y la jerarquia leen esto en vez del rol crudo, mientras que
+// la faceta conductor (chequeos, VIP) sigue leyendo usuario.rol.
+export const rolEfectivo = (usuario) => {
+    if (
+        usuario?.rol === 'conductor' &&
+        usuario?.es_pool === true &&
+        usuario?.suplencia
+    ) {
+        return 'admin_centro';
+    }
+    return usuario?.rol;
+};
