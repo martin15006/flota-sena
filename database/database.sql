@@ -627,6 +627,7 @@ ALTER TABLE fotos_chequeo               DISABLE ROW LEVEL SECURITY;
 ALTER TABLE intentos_chequeo_bloqueado  DISABLE ROW LEVEL SECURITY;
 ALTER TABLE auditoria_chequeos          DISABLE ROW LEVEL SECURITY;
 ALTER TABLE notificaciones              DISABLE ROW LEVEL SECURITY;
+ALTER TABLE suplencias                  DISABLE ROW LEVEL SECURITY;
 
 
 -- ==

@@ -28,3 +28,10 @@ CREATE TABLE IF NOT EXISTS suplencias (
 
 CREATE INDEX IF NOT EXISTS idx_suplencias_pool_activa   ON suplencias(pool_id, activa);
 CREATE INDEX IF NOT EXISTS idx_suplencias_centro_activa ON suplencias(centro_id, activa);
+
+-- Supabase activa RLS por defecto en tablas nuevas creadas desde el SQL Editor.
+-- En este proyecto el frontend SOLO habla con el backend (que usa la service_role
+-- key y aplica toda la autorizacion), asi que RLS se deja DESHABILITADO como en el
+-- resto de las tablas (ver el bloque de RLS en database.sql). Sin esto, el insert
+-- falla con "new row violates row-level security policy for table suplencias".
+ALTER TABLE suplencias DISABLE ROW LEVEL SECURITY;
