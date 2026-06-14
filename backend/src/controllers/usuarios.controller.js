@@ -2,7 +2,7 @@ import { supabase} from '../config/supabase.js'
 import { generarPasswordTemporal, contarAdminsActivos, registrarAuditoria, } from '../services/usuarios.service.js';
 import { obtenerScope, usuarioEnScope } from '../services/scope.service.js';
 import { puedeCrearRol, puedeGestionarRol, ETIQUETA_ROL, rolEfectivo as rolEfectivoActor } from '../services/jerarquia.service.js';
-import { mapaSuplenciasVigentes } from '../services/suplencias.service.js';
+import { mapaSuplenciasVigentes, suplenciaVigenteDePool } from '../services/suplencias.service.js';
 
 
 // Helper: indexa los emails de auth.users por id para hacer merge con la tabla usuarios.
@@ -707,6 +707,15 @@ export const resetearPassword = async (req, res) => {
     try {
         const { id } = req.params;
 
+        // Seguridad (suplencia): un suplente (pool actuando como Coordinador) NO puede
+        // resetear contrasenas — ni la propia ni la de nadie. Es una accion sensible
+        // reservada al Coordinador titular y a los niveles superiores.
+        if (req.usuario.suplencia) {
+            return res.status(403).json({
+                error: 'Como suplente no puedes resetear contrasenas. Eso lo hace el Coordinador titular.',
+            });
+        }
+
         // Multinivel (#102 / #112): solo sobre usuarios de tu area y rango inferior.
         const acceso = await verificarAccesoUsuarioObjetivo(req, id);
         if (!acceso.ok) {
@@ -1033,6 +1042,12 @@ export const obtenerPerfilDetalle = async (req, res) => {
             actor_nombre: mapaAdmins[a.accion_por_id] || 'Sistema',
         }));
 
+        // Pool · suplencia: marcar si este usuario (pool) esta supliendo ahora mismo.
+        let supliendo = false;
+        if (usuario.rol === 'conductor' && usuario.es_pool && usuario.centro_id) {
+            supliendo = !!(await suplenciaVigenteDePool(usuario.id, usuario.centro_id));
+        }
+
         // 5) Respuesta unica con todo lo anterior
         const { centros_formacion, ...usuarioSinJoin } = usuario;
         res.json({
@@ -1040,6 +1055,7 @@ export const obtenerPerfilDetalle = async (req, res) => {
                 ...usuarioSinJoin,
                 email,
                 centro_nombre: centros_formacion?.nombre || null,
+                supliendo,
             },
             chequeos: chequeosResumen,
             actividad_reciente: actividadReciente,

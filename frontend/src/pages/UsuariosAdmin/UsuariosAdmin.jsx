@@ -2,7 +2,7 @@ import { useEffect, useState } from "react";
 import { useNavigate } from "react-router-dom";
 import { useAuth } from "../../hooks/useAuth.js";
 import { api } from "../../lib/api.js";
-import { esAdmin, esAdminEfectivo, etiquetaCargoCorta } from "../../lib/roles.js";
+import { esAdmin, esAdminEfectivo, enSuplencia, etiquetaCargoCorta } from "../../lib/roles.js";
 import "./UsuariosAdmin.css";
 import ModalPasswordTemporal from "./components/ModalPasswordTemporal.jsx";
 import AdminLayout from '../../components/AdminLayout/AdminLayout.jsx';
@@ -43,6 +43,15 @@ function UsuariosAdmin() {
 
   // Helper para mostrar toast con tipo determinado (exito | error | advertencia | info)
   const mostrarToast = (mensaje, tipo = "exito") => setToast({ mensaje, tipo });
+
+  // Seguridad del SUPLENTE (pool actuando como Coordinador): tiene poderes acotados.
+  //   - No puede resetear contrasenas (de nadie).
+  //   - No puede editar/desactivar/eliminar a otros admins (incluido el Coordinador
+  //     titular): solo gestiona conductores.
+  // El backend tambien lo impone; esto es para no mostrar botones que igual fallarian.
+  const soySuplente = enSuplencia(usuario);
+  const suplenteNoTocaAdmin = (u) => soySuplente && esAdmin(u.rol);
+  const esMiFila = (u) => u.id === usuario?.id; // nadie se desactiva/elimina a si mismo
 
   const cargarUsuarios = async () => {
     setCargando(true);
@@ -320,46 +329,54 @@ function UsuariosAdmin() {
                         >
                           Ver perfil
                         </button>
-                        <button
-                          className="usuarios-admin-accion"
-                          onClick={() => setUsuarioAeditar(u)}
-                          title="Editar"
-                        >
-                          Editar
-                        </button>
-                        <button
-                          className="usuarios-admin-accion"
-                          onClick={() =>
-                            resetearPassword(u.id, u.nombre_completo)
-                          }
-                          title="Resetear contraseña"
-                        >
-                          Resetear
-                        </button>
-                        {u.activo ? (
+                        {!suplenteNoTocaAdmin(u) && (
                           <button
-                            className="usuarios-admin-accion usuarios-admin-accion-warning"
-                            onClick={() => desactivar(u.id, u.nombre_completo)}
-                            title="Desactivar"
+                            className="usuarios-admin-accion"
+                            onClick={() => setUsuarioAeditar(u)}
+                            title="Editar"
                           >
-                            Desactivar
-                          </button>
-                        ) : (
-                          <button
-                            className="usuarios-admin-accion usuarios-admin-accion-success"
-                            onClick={() => reactivar(u.id, u.nombre_completo)}
-                            title="Reactivar"
-                          >
-                            Reactivar
+                            Editar
                           </button>
                         )}
-                        <button
-                          className="usuarios-admin-accion usuarios-admin-accion-danger"
-                          onClick={() => eliminar(u.id, u.nombre_completo)}
-                          title="Eliminar"
-                        >
-                          Eliminar
-                        </button>
+                        {!soySuplente && (
+                          <button
+                            className="usuarios-admin-accion"
+                            onClick={() =>
+                              resetearPassword(u.id, u.nombre_completo)
+                            }
+                            title="Resetear contraseña"
+                          >
+                            Resetear
+                          </button>
+                        )}
+                        {!esMiFila(u) && !suplenteNoTocaAdmin(u) && (
+                          u.activo ? (
+                            <button
+                              className="usuarios-admin-accion usuarios-admin-accion-warning"
+                              onClick={() => desactivar(u.id, u.nombre_completo)}
+                              title="Desactivar"
+                            >
+                              Desactivar
+                            </button>
+                          ) : (
+                            <button
+                              className="usuarios-admin-accion usuarios-admin-accion-success"
+                              onClick={() => reactivar(u.id, u.nombre_completo)}
+                              title="Reactivar"
+                            >
+                              Reactivar
+                            </button>
+                          )
+                        )}
+                        {!esMiFila(u) && !suplenteNoTocaAdmin(u) && (
+                          <button
+                            className="usuarios-admin-accion usuarios-admin-accion-danger"
+                            onClick={() => eliminar(u.id, u.nombre_completo)}
+                            title="Eliminar"
+                          >
+                            Eliminar
+                          </button>
+                        )}
                       </div>
                       {/* Acciones propias del Pool de transporte, separadas del resto */}
                       {u.rol === "conductor" && u.es_pool && (

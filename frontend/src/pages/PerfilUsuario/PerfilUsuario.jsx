@@ -13,6 +13,7 @@ import { useEffect, useState } from "react";
 import { useNavigate, useParams } from "react-router-dom";
 import { useAuth } from "../../hooks/useAuth.js";
 import { api } from "../../lib/api.js";
+import { etiquetaCargo } from "../../lib/roles.js";
 import Footer from "../../components/Footer/Footer.jsx";
 import Toast from "../../components/Toast/Toast.jsx";
 import BotonVolver from "../../components/BotonVolver/BotonVolver.jsx";
@@ -191,7 +192,8 @@ function PerfilUsuario() {
                         <h1 className="perfil-hero-nombre">{usuario.nombre_completo}</h1>
                         <div className="perfil-hero-meta">
                             <span className={`perfil-rol-badge perfil-rol-${usuario.rol}`}>
-                                {usuario.rol}
+                                {etiquetaCargo(usuario)}
+                                {usuario.supliendo && " · suplencia"}
                             </span>
                             {usuario.centro_nombre && (
                                 <span className="perfil-hero-centro">

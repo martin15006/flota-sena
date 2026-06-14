@@ -163,6 +163,19 @@ function CambiarPassword() {
             >
               {enviando ? "Cambiando..." : "Cambiar contraseña"}
             </button>
+
+            {/* En el cambio FORZADO (primer login) no hay vuelta atras; en el
+                cambio voluntario desde Mi perfil, si: boton para cancelar/volver. */}
+            {!esPrimerLogin && (
+              <button
+                type="button"
+                className="cambiar-pass-boton-cancelar"
+                onClick={() => navigate(-1)}
+                disabled={enviando}
+              >
+                Cancelar
+              </button>
+            )}
           </form>
         )}
       </div>
