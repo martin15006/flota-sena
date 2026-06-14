@@ -10,6 +10,7 @@ import { useState } from "react";
 import { useNavigate } from "react-router-dom";
 import { useAuth } from "../../hooks/useAuth.js";
 import { api } from "../../lib/api.js";
+import { enSuplencia } from "../../lib/roles.js";
 import ConductorLayout from "../../components/ConductorLayout/ConductorLayout.jsx";
 import Toast from "../../components/Toast/Toast.jsx";
 import "./ConductorDashboard.css";
@@ -124,6 +125,13 @@ function ConductorDashboard() {
     // Hay una verificación en curso (cualquiera de los dos círculos).
     const verificando = verificandoTipo !== null;
 
+    // Suplencia (Pool · Paso 2): si está supliendo al Coordinador, mostramos un
+    // aviso con acceso al panel admin (que ya tiene habilitado por rol efectivo).
+    const supliendo = enSuplencia(usuario);
+    const hastaSuplencia = usuario?.suplencia?.hasta
+        ? new Date(usuario.suplencia.hasta).toLocaleDateString("es-CO")
+        : null;
+
     return (
         <ConductorLayout>
             {/* Contenedor principal que agrupa hero + circulos + licencia
@@ -175,6 +183,23 @@ function ConductorDashboard() {
                 )}
                 <div className="cond-hero-fecha">{formatearFechaHoy()}</div>
             </section>
+
+            {/* Aviso de suplencia: el pool está reemplazando al Coordinador */}
+            {supliendo && (
+                <section className="cond-suplencia-banner">
+                    <div className="cond-suplencia-texto">
+                        Estás supliendo al <strong>Coordinador de Flota</strong>
+                        {usuario.centro_nombre ? ` de ${usuario.centro_nombre}` : ""}
+                        {hastaSuplencia ? ` hasta el ${hastaSuplencia}` : " (sin fecha de fin)"}.
+                    </div>
+                    <button
+                        className="cond-suplencia-boton"
+                        onClick={() => navigate("/admin/vehiculos")}
+                    >
+                        Entrar al panel de Coordinador
+                    </button>
+                </section>
+            )}
 
             {/* Aviso fijo si la licencia esta vencida */}
             {licenciaVencida && (

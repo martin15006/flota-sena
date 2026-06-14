@@ -324,3 +324,19 @@
         font-size: var(--tamano-md);
     }
 }
+
+/* Banner de suplencia (Pool · Paso 2): el pool esta reemplazando al Coordinador */
+.cond-suplencia-banner {
+    display: flex; align-items: center; justify-content: space-between; gap: var(--espacio-md);
+    flex-wrap: wrap;
+    background: #EDE7F6; border: 2px solid #5E35B1; color: #4527A0;
+    border-radius: var(--radio-md); padding: var(--espacio-md);
+    margin: var(--espacio-md) 0;
+}
+.cond-suplencia-texto { font-size: var(--tamano-sm); line-height: 1.4; }
+.cond-suplencia-boton {
+    background: #5E35B1; color: #fff; border: none; border-radius: var(--radio-md);
+    padding: 10px 16px; font-weight: var(--peso-bold); font-size: var(--tamano-sm); cursor: pointer;
+    white-space: nowrap;
+}
+.cond-suplencia-boton:hover { background: #4527A0; }
