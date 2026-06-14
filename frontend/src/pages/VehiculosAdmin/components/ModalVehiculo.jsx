@@ -1,9 +1,11 @@
 import { useEffect, useState } from "react";
 import Modal from "../../../components/Modal/Modal.jsx";
 import { api } from "../../../lib/api.js";
+import { useAuth } from "../../../hooks/useAuth.js";
 import "./ModalVehiculo.css";
 
 const ESTADO_INICIAL = {
+    centro_id: "",
     placa: "",
     marca: "",
     linea: "",
@@ -56,6 +58,22 @@ const FORMATOS_FOTO = ["image/jpeg", "image/png", "image/webp"];
 
 function ModalVehiculo({ abierto, onCerrar, onGuardado, vehiculo = null, mostrarToast }) {
     const esEdicion = !!vehiculo;
+    const { usuario } = useAuth();
+
+    // Cascada de centro (multinivel #116): a que centro pertenece el vehiculo.
+    // Solo aplica al CREAR (al editar no se cambia el centro del vehiculo).
+    const [centros, setCentros] = useState([]);
+    const [departamentos, setDepartamentos] = useState([]);
+    const [filtroDepto, setFiltroDepto] = useState("");
+    const rolActor = usuario?.rol;
+    const actorEsNacional = rolActor === "superadmin";
+    const actorEsCoordinador = rolActor === "admin_centro" || rolActor === "admin";
+    // El Coordinador (o alias 'admin' con centro) hereda SU centro, sin elegir.
+    const centroAutoAsignado = actorEsCoordinador && !!usuario?.centro_id;
+    const centrosDisponibles =
+        actorEsNacional && filtroDepto
+            ? centros.filter((c) => c.departamento_id === filtroDepto)
+            : centros;
 
     const [form, setForm] = useState(ESTADO_INICIAL);
     const [fotosExistentes, setFotosExistentes] = useState([]);
@@ -94,12 +112,26 @@ function ModalVehiculo({ abierto, onCerrar, onGuardado, vehiculo = null, mostrar
             setFotosExistentes([]);
             setRuntUrlExistente(null);
         }
+        setFiltroDepto("");
         setFotosNuevas([]);
         setFotosNuevasPreview([]);
         setRuntNuevo(null);
         setError(null);
         setPaso("");
     }, [abierto, vehiculo]);
+
+    // Cargar geografia (scopeada) al abrir en modo CREAR, para el selector de centro.
+    useEffect(() => {
+        if (!abierto || esEdicion) return;
+        const cargar = (ruta, set) =>
+            api(ruta)
+                .then((data) => set(data[Object.keys(data)[0]] || []))
+                .catch((err) => {
+                    if (!err.sesionExpirada) console.error(`Error cargando ${ruta}:`, err.message);
+                });
+        cargar("/geo/centros", setCentros);
+        cargar("/geo/departamentos", setDepartamentos);
+    }, [abierto, esEdicion]);
 
     const cerrar = () => {
         setError(null);
@@ -243,11 +275,24 @@ function ModalVehiculo({ abierto, onCerrar, onGuardado, vehiculo = null, mostrar
     const enviar = async (e) => {
         e.preventDefault();
         setError(null);
+
+        // Al crear, el centro es obligatorio (lo hereda el Coordinador o lo elige
+        // el Director Regional/Nacional). Al editar no se toca.
+        if (!esEdicion) {
+            const centroFinal = centroAutoAsignado ? usuario?.centro_id : form.centro_id;
+            if (!centroFinal) {
+                setError("Debes elegir el centro de formación del vehículo.");
+                return;
+            }
+        }
+
         setCargando(true);
 
         try {
             setPaso(esEdicion ? "Guardando cambios..." : "Creando vehículo...");
             const datos = { ...form };
+            // El Coordinador hereda su centro automaticamente (no eligio nada).
+            if (!esEdicion && centroAutoAsignado) datos.centro_id = usuario.centro_id;
             Object.keys(datos).forEach((k) => {
                 if (datos[k] === "") delete datos[k];
             });
@@ -333,6 +378,66 @@ function ModalVehiculo({ abierto, onCerrar, onGuardado, vehiculo = null, mostrar
                 <div className="form-vehiculo-seccion">
                     <h3 className="form-vehiculo-seccion-titulo">Datos básicos</h3>
                     <div className="form-vehiculo-grid">
+                        {/* Centro al que pertenece el vehiculo (cascada multinivel #116).
+                            Solo al CREAR; al editar el centro no se cambia. */}
+                        {!esEdicion && centroAutoAsignado && (
+                            <div className="form-vehiculo-campo">
+                                <label className="form-vehiculo-label">Centro de formación</label>
+                                <input
+                                    type="text"
+                                    className="form-vehiculo-input"
+                                    value={usuario?.centro_nombre || "Tu centro"}
+                                    disabled
+                                />
+                            </div>
+                        )}
+                        {!esEdicion && !centroAutoAsignado && actorEsNacional && (
+                            <div className="form-vehiculo-campo">
+                                <label className="form-vehiculo-label">Departamento *</label>
+                                <select
+                                    className="form-vehiculo-input"
+                                    value={filtroDepto}
+                                    onChange={(e) => {
+                                        setFiltroDepto(e.target.value);
+                                        cambiarCampo("centro_id", "");
+                                    }}
+                                    required
+                                    disabled={cargando || departamentos.length === 0}
+                                >
+                                    <option value="">— Primero el departamento —</option>
+                                    {departamentos.map((d) => (
+                                        <option key={d.id} value={d.id}>{d.nombre}</option>
+                                    ))}
+                                </select>
+                            </div>
+                        )}
+                        {!esEdicion && !centroAutoAsignado && (
+                            <div className="form-vehiculo-campo">
+                                <label className="form-vehiculo-label">Centro de formación *</label>
+                                <select
+                                    className="form-vehiculo-input"
+                                    value={form.centro_id}
+                                    onChange={(e) => cambiarCampo("centro_id", e.target.value)}
+                                    required
+                                    disabled={
+                                        cargando ||
+                                        (actorEsNacional && !filtroDepto) ||
+                                        centrosDisponibles.length === 0
+                                    }
+                                >
+                                    <option value="">
+                                        {actorEsNacional && !filtroDepto
+                                            ? "— Primero elige el departamento —"
+                                            : "— Selecciona el centro —"}
+                                    </option>
+                                    {centrosDisponibles.map((c) => (
+                                        <option key={c.id} value={c.id}>
+                                            {c.nombre}{c.ciudad ? ` · ${c.ciudad}` : ""}
+                                        </option>
+                                    ))}
+                                </select>
+                            </div>
+                        )}
                         <div className="form-vehiculo-campo">
                             <label className="form-vehiculo-label">Placa *</label>
                             <input

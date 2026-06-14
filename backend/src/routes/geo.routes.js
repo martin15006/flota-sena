@@ -120,6 +120,7 @@ router.get("/centros", async (req, res) => {
             activo: c.activo,
             ciudad_id: c.ciudad?.id || null,
             ciudad: c.ciudad?.nombre || null,
+            departamento_id: c.ciudad?.departamento?.id || null,
             departamento: c.ciudad?.departamento?.nombre || null,
         }));
 
@@ -131,20 +132,31 @@ router.get("/centros", async (req, res) => {
 });
 
 // ============================================================================
-// ESCRITURA (gestion de geografia, #116) — SOLO SUPERADMIN
+// ESCRITURA (gestion de geografia, #116) — Director Nacional y Director Regional
 // ============================================================================
 // Regiones y departamentos son la division fija de Colombia: NO se editan.
 // Lo administrable es: agregar ciudades/municipios y crear/editar/activar
 // centros de formacion. No hay DELETE: los centros se desactivan (preserva
 // historial de vehiculos/chequeos); las ciudades solo se crean.
+//
+// Quien puede escribir:
+//   - superadmin (Director Nacional): en todo el pais.
+//   - admin_departamental (Director Regional): SOLO dentro de su propio
+//     departamento (su Regional). Se valida con el scope en cada endpoint.
 
 // POST /api/geo/ciudades  { nombre, departamento_id }
-router.post("/ciudades", requiereRol("superadmin"), async (req, res) => {
+router.post("/ciudades", requiereRol("superadmin", "admin_departamental"), async (req, res) => {
     try {
         const { nombre, departamento_id } = req.body;
         const nombreLimpio = (nombre || "").trim();
         if (!nombreLimpio || !departamento_id) {
             return res.status(400).json({ error: "El nombre y el departamento son obligatorios" });
+        }
+
+        // Scope: un Director Regional solo crea ciudades en SU departamento.
+        const scope = await obtenerScope(req.usuario);
+        if (scope.tipo !== "global" && !(scope.departamentoIds || []).includes(departamento_id)) {
+            return res.status(403).json({ error: "Solo puedes crear ciudades en tu propia regional." });
         }
 
         const { data, error } = await supabase
@@ -173,12 +185,18 @@ router.post("/ciudades", requiereRol("superadmin"), async (req, res) => {
 });
 
 // POST /api/geo/centros  { nombre, ciudad_id, direccion? }
-router.post("/centros", requiereRol("superadmin"), async (req, res) => {
+router.post("/centros", requiereRol("superadmin", "admin_departamental"), async (req, res) => {
     try {
         const { nombre, ciudad_id, direccion } = req.body;
         const nombreLimpio = (nombre || "").trim();
         if (!nombreLimpio || !ciudad_id) {
             return res.status(400).json({ error: "El nombre y la ciudad son obligatorios" });
+        }
+
+        // Scope: un Director Regional solo crea centros en una ciudad de su depto.
+        const scope = await obtenerScope(req.usuario);
+        if (scope.tipo !== "global" && !(scope.ciudadIds || []).includes(ciudad_id)) {
+            return res.status(403).json({ error: "Solo puedes crear centros en una ciudad de tu regional." });
         }
 
         // La tabla no tiene UNIQUE(nombre, ciudad_id): verificar duplicado a mano
@@ -213,10 +231,16 @@ router.post("/centros", requiereRol("superadmin"), async (req, res) => {
 });
 
 // PATCH /api/geo/centros/:id  { nombre?, direccion?, activo? }
-router.patch("/centros/:id", requiereRol("superadmin"), async (req, res) => {
+router.patch("/centros/:id", requiereRol("superadmin", "admin_departamental"), async (req, res) => {
     try {
         const { id } = req.params;
         const { nombre, direccion, activo } = req.body;
+
+        // Scope: un Director Regional solo edita centros de su regional.
+        const scope = await obtenerScope(req.usuario);
+        if (scope.tipo !== "global" && !(scope.centroIds || []).includes(id)) {
+            return res.status(403).json({ error: "Ese centro no pertenece a tu regional." });
+        }
 
         const cambios = {};
         if (nombre !== undefined) {

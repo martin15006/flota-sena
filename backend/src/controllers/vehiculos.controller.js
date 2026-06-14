@@ -124,6 +124,21 @@ export const crearVehiculo = async (req, res) => {
             });
         }
 
+        // Centro del vehiculo (multinivel #102/#116): el Coordinador de Flota
+        // hereda SU centro; el Director Regional/Nacional lo elige y debe estar
+        // dentro de su scope. (El alias 'admin' con centro tambien hereda el suyo.)
+        const centroFinal = req.usuario.centro_id || req.body.centro_id;
+        if (!centroFinal) {
+            return res.status(400).json({
+                error: "Debes indicar el centro de formación del vehículo.",
+            });
+        }
+        if (!(await puedeAccederCentro(req.usuario, centroFinal))) {
+            return res.status(403).json({
+                error: "No puedes crear vehículos en ese centro (fuera de tu área).",
+            });
+        }
+
         const { data: nuevoVehiculo, error: errInsert } = await supabase
             .from("vehiculos")
             .insert({
@@ -142,7 +157,7 @@ export const crearVehiculo = async (req, res) => {
                 estado,
                 nivel_criticidad,
                 notas,
-                centro_id: req.usuario.centro_id,
+                centro_id: centroFinal,
             })
             .select()
             .single();

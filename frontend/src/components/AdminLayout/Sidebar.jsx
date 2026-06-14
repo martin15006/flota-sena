@@ -98,7 +98,7 @@ const ITEMS = [
     { ruta: "/dashboard", etiqueta: "Dashboard", icono: Icono.dashboard, end: true },
     { ruta: "/admin/vehiculos", etiqueta: "Gestión de vehículos", icono: Icono.vehiculos },
     { ruta: "/admin/usuarios", etiqueta: "Gestión de usuarios", icono: Icono.usuarios },
-    { ruta: "/admin/geografia", etiqueta: "Gestión de geografía", icono: Icono.geografia, roles: ["superadmin"] },
+    { ruta: "/admin/geografia", etiqueta: "Gestión de geografía", icono: Icono.geografia, roles: ["superadmin", "admin_departamental"] },
     { ruta: "/admin/catalogo", etiqueta: "Catálogo del chequeo", icono: Icono.catalogo, roles: SOLO_CENTRO },
     { ruta: "/admin/chequeos", etiqueta: "Chequeos realizados", icono: Icono.chequeos, end: true, roles: SOLO_CENTRO },
     { ruta: "/admin/chequeos/intentos-bloqueados", etiqueta: "Intentos bloqueados", icono: Icono.bloqueados, roles: SOLO_CENTRO },

@@ -14,6 +14,7 @@ import { Navigate } from "react-router-dom";
 import { useAuth } from "../../hooks/useAuth.js";
 import { api } from "../../lib/api.js";
 import AdminLayout from "../../components/AdminLayout/AdminLayout.jsx";
+import Modal from "../../components/Modal/Modal.jsx";
 import Toast from "../../components/Toast/Toast.jsx";
 import "./GeografiaAdmin.css";
 
@@ -142,7 +143,6 @@ function GeografiaAdmin() {
             ciudad_id: centro.ciudad_id || "",
             direccion: centro.direccion || "",
         });
-        window.scrollTo({ top: 0, behavior: "smooth" });
     };
 
     const cambiarActivoCentro = async (centro) => {
@@ -180,8 +180,10 @@ function GeografiaAdmin() {
         }
     };
 
-    // Solo el superadmin gestiona la geografía (el backend tambien lo exige)
-    if (usuario && usuario.rol !== "superadmin") {
+    // Gestionan geografía el Director Nacional (todo el país) y el Director
+    // Regional (solo su departamento). El backend además valida el scope por
+    // endpoint. Los demás cargos no entran.
+    if (usuario && usuario.rol !== "superadmin" && usuario.rol !== "admin_departamental") {
         return <Navigate to="/dashboard" replace />;
     }
 
@@ -196,9 +198,9 @@ function GeografiaAdmin() {
                     <div>
                         <h2 className="geografia-titulo">Gestión de geografía</h2>
                         <p className="geografia-subtitulo">
-                            Regiones ({departamentos.length > 0 ? 5 : "—"}) y departamentos ({departamentos.length})
-                            son la división fija de Colombia. Aquí administras las <strong>ciudades</strong> y los{" "}
-                            <strong>centros de formación</strong> del SENA.
+                            {usuario?.rol === "admin_departamental"
+                                ? "Administras las ciudades y los centros de formación de tu regional."
+                                : "Las regiones y departamentos son la división fija de Colombia. Aquí administras las ciudades y los centros de formación del SENA."}
                         </p>
                     </div>
                 </div>
@@ -263,7 +265,13 @@ function GeografiaAdmin() {
                         <button
                             type="button"
                             className="geografia-boton-crear"
-                            onClick={() => setFormCentro({ ...FORM_CENTRO_VACIO })}
+                            onClick={() =>
+                                setFormCentro({
+                                    ...FORM_CENTRO_VACIO,
+                                    // Si solo hay un departamento en scope (el Regional), pre-seleccionarlo
+                                    departamento_id: departamentos.length === 1 ? departamentos[0].id : "",
+                                })
+                            }
                         >
                             + Añadir centro
                         </button>
@@ -271,19 +279,26 @@ function GeografiaAdmin() {
                         <button
                             type="button"
                             className="geografia-boton-crear"
-                            onClick={() => setFormCiudad({ ...FORM_CIUDAD_VACIO })}
+                            onClick={() =>
+                                setFormCiudad({
+                                    ...FORM_CIUDAD_VACIO,
+                                    departamento_id: departamentos.length === 1 ? departamentos[0].id : "",
+                                })
+                            }
                         >
                             + Añadir ciudad
                         </button>
                     )}
                 </div>
 
-                {/* ===== Formulario de centro (crear / editar) ===== */}
-                {vista === "centros" && formCentro && (
-                    <form className="geografia-form animar-fade-in" onSubmit={guardarCentro}>
-                        <h3 className="geografia-form-titulo">
-                            {formCentro.id ? "Editar centro de formación" : "Nuevo centro de formación"}
-                        </h3>
+                {/* ===== Modal: crear / editar centro ===== */}
+                <Modal
+                    abierto={!!formCentro}
+                    onCerrar={() => setFormCentro(null)}
+                    titulo={formCentro?.id ? "Editar centro de formación" : "Nuevo centro de formación"}
+                >
+                    {formCentro && (
+                    <form className="geografia-form-modal" onSubmit={guardarCentro}>
                         <div className="geografia-form-grid">
                             <div className="geografia-campo">
                                 <label className="geografia-label">Nombre del centro *</label>
@@ -370,12 +385,17 @@ function GeografiaAdmin() {
                             </button>
                         </div>
                     </form>
-                )}
+                    )}
+                </Modal>
 
-                {/* ===== Formulario de ciudad (crear) ===== */}
-                {vista === "ciudades" && formCiudad && (
-                    <form className="geografia-form animar-fade-in" onSubmit={guardarCiudad}>
-                        <h3 className="geografia-form-titulo">Nueva ciudad / municipio</h3>
+                {/* ===== Modal: crear ciudad ===== */}
+                <Modal
+                    abierto={!!formCiudad}
+                    onCerrar={() => setFormCiudad(null)}
+                    titulo="Nueva ciudad / municipio"
+                >
+                    {formCiudad && (
+                    <form className="geografia-form-modal" onSubmit={guardarCiudad}>
                         <div className="geografia-form-grid">
                             <div className="geografia-campo">
                                 <label className="geografia-label">Nombre *</label>
@@ -419,7 +439,8 @@ function GeografiaAdmin() {
                             </button>
                         </div>
                     </form>
-                )}
+                    )}
+                </Modal>
 
                 {/* ===== Contenido ===== */}
                 {cargando ? (

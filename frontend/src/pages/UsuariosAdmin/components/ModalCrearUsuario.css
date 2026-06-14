@@ -204,6 +204,20 @@
   line-height: 1.4;
 }
 
+/* Confirmación de la cadena de mando (#116): ocupa toda la fila del grid */
+.form-usuario-resumen-cadena {
+  grid-column: 1 / -1;
+  margin-top: var(--espacio-xs);
+  padding: var(--espacio-sm) var(--espacio-md);
+  background: var(--color-verde-claro);
+  border: 2px solid var(--color-verde-oscuro);
+  border-radius: var(--radio-md);
+  color: var(--color-gris-900);
+  font-size: var(--tamano-sm);
+  font-weight: var(--peso-semibold);
+  line-height: 1.4;
+}
+
 /* Aviso temporal cuando se intenta escribir un caracter no permitido.
    PROBANDO: fondo naranja + texto y borde negros (combinacion alto contraste
    estilo senales de transito). Tipografia fina semibold sin letter-spacing. */

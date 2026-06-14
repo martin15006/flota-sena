@@ -266,22 +266,26 @@ Después del login exitoso te lleva al panel `/dashboard`.
 - [ ] Pruebas end-to-end del flujo completo
 - [ ] Documentación de despliegue
 
-**Roles administrativos multinivel (✅ completado)**
-- [x] Jerarquía de 5 niveles: superadmin → admin regional → departamental → ciudad → centro (+ conductor)
-- [x] Scope territorial: cada admin solo ve y gestiona lo de su área (servicio `scope.service.js`)
-- [x] Reglas de jerarquía: solo se crean/gestionan roles de rango inferior; nadie elimina a un par (`jerarquia.service.js`)
-- [x] Creación y edición de usuarios con selector de rol limitado y territorio adaptativo (centro/ciudad/departamento/región)
-- [x] Cambio de rol desde edición con validaciones (nadie cambia su propio rol)
-- [x] Superadmin puede nombrar otros superadmins (continuidad), pero no eliminarlos/editarlos
+**Roles administrativos multinivel (✅ completado · aplanado a la jerarquía real del SENA el 12-jun-2026)**
+- [x] **4 cargos**: Director Nacional (`superadmin`) → Director Regional (`admin_departamental`) → Coordinador de Flota (`admin_centro`) → Conductor. *(Se quitaron los niveles región-macro y ciudad: el SENA no los usa.)*
+- [x] Scope territorial: cada cargo solo ve y gestiona lo de su área (servicio `scope.service.js`)
+- [x] Reglas de jerarquía: solo se crean/gestionan cargos de rango inferior; nadie elimina a un par (`jerarquia.service.js`)
+- [x] Creación y edición de usuarios con selector de cargo limitado y territorio adaptativo (departamento para Director Regional, centro para Coordinador/Conductor)
+- [x] Cambio de cargo desde edición con validaciones (nadie cambia su propio cargo)
+- [x] Director Nacional puede nombrar otros Directores Nacionales (continuidad), pero no eliminarlos/editarlos
 - [x] Columna "Ámbito" y filtro por ciudad en Gestión de usuarios
 - [x] Seed de geografía nacional: 33 capitales + Espinal y centros SENA de muestra
+- [ ] **Pool de transporte / conductores VIP** (pendiente de diseño): suplente del Coordinador + chofer de los vehículos exclusivos de los directores
 
 ### Pendientes futuros (ver `docs/bitacora/semana-5-cambios.md`)
 
 - [x] Perfil propio del administrador (con regla: cédula/correo solo cambiable por superior)
-- [ ] Módulo de Ajustes con modo claro/oscuro
-- [ ] Pantallas de gestión de la geografía (añadir ciudades y centros desde la app, sin SQL)
+- [x] Pantallas de gestión de la geografía (añadir ciudades y centros desde la app, sin SQL)
 - [x] Repulir interfaz del conductor con la misma calidad visual del admin
+- [ ] Módulo de Ajustes con modo claro/oscuro
+- [ ] **Pool de transporte / conductores VIP** (pendiente de diseño — ver `CONTEXTO_PROYECTO.md` §7)
+- [ ] **Notificaciones importantes por correo** (además de la campanita) — encaja en Fase 7
+- [ ] **Exportar a PDF / Word** información importante (detalle de chequeo, fichas, reportes) — encaja en Fase 5
 
 ---
 

@@ -284,6 +284,26 @@ function ModalEditarUsuario({ abierto, onCerrar, usuario, onEditado }) {
                     <h3 className="form-usuario-seccion-titulo">Datos básicos</h3>
                     <div className="form-usuario-grid">
                         <div className="form-usuario-campo">
+                            <label className="form-usuario-label">Nombre completo *</label>
+                            <input
+                                type="text"
+                                className="form-usuario-input"
+                                value={form.nombre_completo || ""}
+                                onChange={(e) =>
+                                    cambiarCampo("nombre_completo", filtrarConAviso(
+                                        e.target.value, soloLetrasYEspacios, "nombre_completo",
+                                        "Solo se permiten letras y espacios"
+                                    ))
+                                }
+                                placeholder="Solo letras"
+                                required
+                                disabled={cargando}
+                            />
+                            {avisos.nombre_completo && (
+                                <small className="form-usuario-aviso-validacion">{avisos.nombre_completo}</small>
+                            )}
+                        </div>
+                        <div className="form-usuario-campo">
                             <label className="form-usuario-label">Cédula</label>
                             <div className="form-usuario-campo-sensible">
                                 <input
@@ -326,26 +346,6 @@ function ModalEditarUsuario({ abierto, onCerrar, usuario, onEditado }) {
                                     🔒 Cambiar
                                 </button>
                             </div>
-                        </div>
-                        <div className="form-usuario-campo">
-                            <label className="form-usuario-label">Nombre completo *</label>
-                            <input
-                                type="text"
-                                className="form-usuario-input"
-                                value={form.nombre_completo || ""}
-                                onChange={(e) =>
-                                    cambiarCampo("nombre_completo", filtrarConAviso(
-                                        e.target.value, soloLetrasYEspacios, "nombre_completo",
-                                        "Solo se permiten letras y espacios"
-                                    ))
-                                }
-                                placeholder="Solo letras"
-                                required
-                                disabled={cargando}
-                            />
-                            {avisos.nombre_completo && (
-                                <small className="form-usuario-aviso-validacion">{avisos.nombre_completo}</small>
-                            )}
                         </div>
                         <div className="form-usuario-campo">
                             <label className="form-usuario-label">Teléfono</label>

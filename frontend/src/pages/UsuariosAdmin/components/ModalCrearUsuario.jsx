@@ -46,6 +46,10 @@ function ModalCrearUsuario({ abierto, onCerrar, onCreado }) {
   // por el scope del admin desde el backend, ver geo.routes.js).
   const [centros, setCentros] = useState([]);
   const [departamentos, setDepartamentos] = useState([]);
+  // Filtro TRANSITORIO de la cascada: cuando el Director Nacional crea un
+  // conductor/coordinador, primero elige un departamento para acotar la lista de
+  // centros. NO se guarda en el usuario (un conductor solo almacena centro_id).
+  const [filtroDepto, setFiltroDepto] = useState("");
   // Avisos contextuales debajo de cada campo cuando se intenta escribir un caracter invalido.
   // Cada aviso se borra solo despues de 2.5 segundos.
   const [avisos, setAvisos] = useState({});
@@ -92,8 +96,10 @@ function ModalCrearUsuario({ abierto, onCerrar, onCreado }) {
   }, [abierto]);
 
   const esConductor = form.rol === "conductor";
-  // Nivel de territorio a asignar segun el rol elegido: departamento|centro
+  // Nivel de territorio que necesita el NUEVO usuario: 'departamento' (Director
+  // Regional) o 'centro' (Coordinador / Conductor). null = superadmin (sin territorio).
   const nivelTerritorio = NIVEL_TERRITORIO[form.rol] || null;
+
   // Roles que el admin actual puede crear (solo rangos inferiores). Si por algun
   // motivo no hay ninguno, dejamos al menos 'conductor' como fallback seguro.
   const rolesCreables = (() => {
@@ -101,22 +107,48 @@ function ModalCrearUsuario({ abierto, onCerrar, onCreado }) {
     return lista.length > 0 ? lista : ["conductor"];
   })();
 
-  // Descriptor del selector de territorio segun el nivel del rol elegido.
-  const territorio = {
-    centro: {
-      label: "Centro de formación",
-      campo: "centro_id",
-      opciones: centros,
-      formato: (c) =>
-        `${c.nombre}${c.ciudad ? ` · ${c.ciudad}` : ""}${c.departamento ? ` (${c.departamento})` : ""}`,
-    },
-    departamento: {
-      label: "Departamento",
-      campo: "departamento_id",
-      opciones: departamentos,
-      formato: (d) => d.nombre,
-    },
-  }[nivelTerritorio] || null;
+  // ===== CASCADA DE TERRITORIO (#116 — "que el usuario haga lo minimo") =====
+  // Segun QUIEN crea, solo se piden los niveles que faltan entre el creador y el
+  // nuevo usuario. El territorio se hereda/acota, no se escribe libre.
+  const rolActor = usuario?.rol;
+  const actorEsNacional = rolActor === "superadmin";
+  const actorEsRegional = rolActor === "admin_departamental";
+  const actorEsCoordinador = rolActor === "admin_centro" || rolActor === "admin";
+
+  // Cuando el nivel objetivo es 'centro' y el creador es Nacional, la lista de
+  // centros se filtra por el departamento elegido en el primer paso.
+  const centrosDisponibles =
+    actorEsNacional && filtroDepto
+      ? centros.filter((c) => c.departamento_id === filtroDepto)
+      : centros;
+
+  // El Coordinador siempre asigna SU propio centro (cero clics).
+  const centroAutoAsignado = actorEsCoordinador && nivelTerritorio === "centro";
+
+  // Texto de la cadena de mando, para mostrar a quien queda conectado el usuario.
+  const nombreDeptoSel = departamentos.find(
+    (d) => d.id === (nivelTerritorio === "departamento" ? form.departamento_id : filtroDepto)
+  )?.nombre;
+  const centroSel = centros.find((c) => c.id === form.centro_id);
+  const resumenCadena = (() => {
+    if (form.rol === "admin_departamental" && form.departamento_id) {
+      return `Será Director Regional de ${nombreDeptoSel}. Reportará al Director Nacional.`;
+    }
+    if (nivelTerritorio === "centro") {
+      const centro = centroAutoAsignado ? usuario?.centro_nombre : centroSel?.nombre;
+      const ciudadDepto = centroSel
+        ? `${centroSel.ciudad ? centroSel.ciudad + " · " : ""}${centroSel.departamento || ""}`
+        : "";
+      if (!centro) return null;
+      const cargo = form.rol === "conductor" ? "Conductor" : "Coordinador de Flota";
+      const superior =
+        form.rol === "conductor"
+          ? "Reportará al Coordinador de Flota de ese centro."
+          : "Reportará al Director Regional de ese departamento.";
+      return `Será ${cargo} en ${centro}${ciudadDepto ? ` (${ciudadDepto})` : ""}. ${superior}`;
+    }
+    return null;
+  })();
 
   const cerrar = () => {
     setForm(ESTADO_INICIAL);
@@ -134,6 +166,7 @@ function ModalCrearUsuario({ abierto, onCerrar, onCreado }) {
   // enviar) uno que no corresponde al nuevo nivel (p.ej. un centro_id al pasar a
   // Director Regional, que usa departamento).
   const cambiarRol = (nuevoRol) => {
+    setFiltroDepto("");
     setForm((prev) => ({
       ...prev,
       rol: nuevoRol,
@@ -171,14 +204,18 @@ function ModalCrearUsuario({ abierto, onCerrar, onCreado }) {
     e.preventDefault();
     setError(null);
 
-    // Validacion frontend: el territorio (segun el rol) es obligatorio.
-    const campoTerritorio = {
-      centro: "centro_id",
-      departamento: "departamento_id",
-    }[nivelTerritorio];
-    if (campoTerritorio && !form[campoTerritorio]) {
-      setError("Debes asignar el área (territorio) del usuario.");
+    // Validacion frontend del territorio segun el nivel del nuevo usuario.
+    if (nivelTerritorio === "departamento" && !form.departamento_id) {
+      setError("Debes elegir el departamento (la Regional) del Director Regional.");
       return;
+    }
+    if (nivelTerritorio === "centro") {
+      // El Coordinador asigna su propio centro automaticamente; los demas eligen.
+      const centroFinal = centroAutoAsignado ? usuario?.centro_id : form.centro_id;
+      if (!centroFinal) {
+        setError("Debes elegir el centro de formación.");
+        return;
+      }
     }
 
     setCargando(true);
@@ -208,6 +245,8 @@ function ModalCrearUsuario({ abierto, onCerrar, onCreado }) {
 
       // Preparar datos: quitar campos vacios opcionales
       const datos = { ...form };
+      // El Coordinador hereda SU centro automaticamente (no eligio nada).
+      if (centroAutoAsignado) datos.centro_id = usuario.centro_id;
       Object.keys(datos).forEach((k) => {
         if (datos[k] === "") delete datos[k];
       });
@@ -283,25 +322,6 @@ function ModalCrearUsuario({ abierto, onCerrar, onCreado }) {
           <h3 className="form-usuario-seccion-titulo">Datos básicos</h3>
           <div className="form-usuario-grid">
             <div className="form-usuario-campo">
-              <label className="form-usuario-label">Cédula *</label>
-              <input
-                type="text"
-                inputMode="numeric"
-                className="form-usuario-input"
-                value={form.cedula}
-                onChange={(e) => cambiarCampo("cedula", filtrarConAviso(
-                  e.target.value, soloDigitos, "cedula",
-                  "Solo se permiten números"
-                ))}
-                placeholder="Solo números"
-                required
-                disabled={cargando}
-              />
-              {avisos.cedula && (
-                <small className="form-usuario-aviso-validacion">{avisos.cedula}</small>
-              )}
-            </div>
-            <div className="form-usuario-campo">
               <label className="form-usuario-label">Nombre completo *</label>
               <input
                 type="text"
@@ -319,6 +339,25 @@ function ModalCrearUsuario({ abierto, onCerrar, onCreado }) {
               />
               {avisos.nombre_completo && (
                 <small className="form-usuario-aviso-validacion">{avisos.nombre_completo}</small>
+              )}
+            </div>
+            <div className="form-usuario-campo">
+              <label className="form-usuario-label">Cédula *</label>
+              <input
+                type="text"
+                inputMode="numeric"
+                className="form-usuario-input"
+                value={form.cedula}
+                onChange={(e) => cambiarCampo("cedula", filtrarConAviso(
+                  e.target.value, soloDigitos, "cedula",
+                  "Solo se permiten números"
+                ))}
+                placeholder="Solo números"
+                required
+                disabled={cargando}
+              />
+              {avisos.cedula && (
+                <small className="form-usuario-aviso-validacion">{avisos.cedula}</small>
               )}
             </div>
             <div className="form-usuario-campo">
@@ -351,7 +390,7 @@ function ModalCrearUsuario({ abierto, onCerrar, onCreado }) {
               )}
             </div>
             <div className="form-usuario-campo">
-              <label className="form-usuario-label">Rol *</label>
+              <label className="form-usuario-label">Cargo *</label>
               <select
                 className="form-usuario-input"
                 value={form.rol}
@@ -365,28 +404,109 @@ function ModalCrearUsuario({ abierto, onCerrar, onCreado }) {
                 ))}
               </select>
             </div>
-            {territorio && (
+            {/* ===== Territorio en CASCADA: solo los pasos que faltan entre el
+                creador y el nuevo usuario (ver comentario y lib/roles.js). ===== */}
+
+            {/* Director Regional → elige su Regional (departamento) */}
+            {nivelTerritorio === "departamento" && (
               <div className="form-usuario-campo">
-                <label className="form-usuario-label">{territorio.label} *</label>
+                <label className="form-usuario-label">Regional (departamento) *</label>
                 <select
                   className="form-usuario-input"
-                  value={form[territorio.campo]}
-                  onChange={(e) => cambiarCampo(territorio.campo, e.target.value)}
+                  value={form.departamento_id}
+                  onChange={(e) => cambiarCampo("departamento_id", e.target.value)}
                   required
-                  disabled={cargando || territorio.opciones.length === 0}
+                  disabled={cargando || departamentos.length === 0}
                 >
-                  <option value="">— Selecciona {territorio.label.toLowerCase()} —</option>
-                  {territorio.opciones.map((o) => (
-                    <option key={o.id} value={o.id}>
-                      {territorio.formato(o)}
-                    </option>
+                  <option value="">— Selecciona el departamento —</option>
+                  {departamentos.map((d) => (
+                    <option key={d.id} value={d.id}>{d.nombre}</option>
                   ))}
                 </select>
-                <small className="form-usuario-ayuda">
-                  {territorio.opciones.length === 0
-                    ? "No hay opciones disponibles en tu área para este nivel."
-                    : "Define el área que tendrá a su cargo este usuario."}
-                </small>
+              </div>
+            )}
+
+            {/* Nivel CENTRO (Coordinador / Conductor): 0, 1 o 2 pasos segun quien crea */}
+            {nivelTerritorio === "centro" && (
+              <>
+                {/* Coordinador: hereda SU centro, sin elegir nada */}
+                {centroAutoAsignado && (
+                  <div className="form-usuario-campo">
+                    <label className="form-usuario-label">Centro de formación</label>
+                    <input
+                      type="text"
+                      className="form-usuario-input"
+                      value={usuario?.centro_nombre || "Tu centro"}
+                      disabled
+                    />
+                    <small className="form-usuario-ayuda">
+                      Se asigna automáticamente tu centro.
+                    </small>
+                  </div>
+                )}
+
+                {/* Director Nacional: primer paso = Departamento (acota los centros) */}
+                {actorEsNacional && (
+                  <div className="form-usuario-campo">
+                    <label className="form-usuario-label">Departamento *</label>
+                    <select
+                      className="form-usuario-input"
+                      value={filtroDepto}
+                      onChange={(e) => {
+                        setFiltroDepto(e.target.value);
+                        cambiarCampo("centro_id", "");
+                      }}
+                      required
+                      disabled={cargando || departamentos.length === 0}
+                    >
+                      <option value="">— Primero el departamento —</option>
+                      {departamentos.map((d) => (
+                        <option key={d.id} value={d.id}>{d.nombre}</option>
+                      ))}
+                    </select>
+                  </div>
+                )}
+
+                {/* Director Regional o Nacional (ya con depto): elige el Centro */}
+                {(actorEsRegional || actorEsNacional) && (
+                  <div className="form-usuario-campo">
+                    <label className="form-usuario-label">Centro de formación *</label>
+                    <select
+                      className="form-usuario-input"
+                      value={form.centro_id}
+                      onChange={(e) => cambiarCampo("centro_id", e.target.value)}
+                      required
+                      disabled={
+                        cargando ||
+                        (actorEsNacional && !filtroDepto) ||
+                        centrosDisponibles.length === 0
+                      }
+                    >
+                      <option value="">
+                        {actorEsNacional && !filtroDepto
+                          ? "— Primero elige el departamento —"
+                          : "— Selecciona el centro —"}
+                      </option>
+                      {centrosDisponibles.map((c) => (
+                        <option key={c.id} value={c.id}>
+                          {c.nombre}{c.ciudad ? ` · ${c.ciudad}` : ""}
+                        </option>
+                      ))}
+                    </select>
+                    {centrosDisponibles.length === 0 && (!actorEsNacional || filtroDepto) && (
+                      <small className="form-usuario-ayuda">
+                        No hay centros en esa área.
+                      </small>
+                    )}
+                  </div>
+                )}
+              </>
+            )}
+
+            {/* Confirmación de la cadena de mando (a quién queda conectado) */}
+            {resumenCadena && (
+              <div className="form-usuario-resumen-cadena">
+                ↳ {resumenCadena}
               </div>
             )}
           </div>
