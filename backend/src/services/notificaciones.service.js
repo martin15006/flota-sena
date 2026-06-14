@@ -96,6 +96,27 @@ export const crearNotificacion = async ({
         return u.centro_id === centro_id;  // admin de centro -> solo el suyo
     });
 
+    // Pool · Paso 2: si el evento es de un centro, tambien notificar a los
+    // conductores del pool con suplencia VIGENTE para ese centro (actuan como
+    // Coordinador). Se agregan sin duplicar.
+    if (centro_id) {
+        const ahora = new Date().toISOString();
+        const { data: sups } = await supabase
+            .from('suplencias')
+            .select('pool_id')
+            .eq('centro_id', centro_id)
+            .eq('activa', true)
+            .lte('desde', ahora)
+            .or(`hasta.is.null,hasta.gte.${ahora}`);
+        const yaIncluidos = new Set(destinatarios.map((d) => d.id));
+        for (const s of sups || []) {
+            if (s.pool_id && !yaIncluidos.has(s.pool_id)) {
+                destinatarios.push({ id: s.pool_id });
+                yaIncluidos.add(s.pool_id);
+            }
+        }
+    }
+
     if (destinatarios.length === 0) {
         // No hay a quien notificar — no es un error, solo no se crea nada
         return { cantidadCreada: 0 };
