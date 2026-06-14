@@ -1,0 +1,22 @@
+.modal-suplencia { display: flex; flex-direction: column; gap: var(--espacio-sm); }
+.modal-suplencia-cargando { color: var(--color-gris-700); }
+.modal-suplencia-info { color: var(--color-gris-900); font-size: var(--tamano-sm); line-height: 1.5; }
+.modal-suplencia-label { font-size: var(--tamano-sm); font-weight: var(--peso-semibold); margin-top: var(--espacio-sm); }
+.modal-suplencia-input {
+    padding: 10px 12px; border: 2px solid var(--color-gris-300);
+    border-radius: var(--radio-md); font-size: var(--tamano-sm);
+}
+.modal-suplencia-ayuda { color: var(--color-gris-700); font-size: var(--tamano-xs); }
+.modal-suplencia-error {
+    background: #FDECEA; color: #B71C1C; padding: 8px 12px;
+    border-radius: var(--radio-md); font-size: var(--tamano-sm);
+}
+.modal-suplencia-acciones { display: flex; gap: var(--espacio-sm); justify-content: flex-end; margin-top: var(--espacio-md); }
+.modal-suplencia-acciones button {
+    padding: 10px 16px; border-radius: var(--radio-md); font-weight: var(--peso-semibold);
+    font-size: var(--tamano-sm); cursor: pointer; border: none;
+}
+.modal-suplencia-boton-cancelar { background: var(--color-gris-100); color: var(--color-gris-900); }
+.modal-suplencia-boton-activar { background: #5E35B1; color: #fff; }
+.modal-suplencia-boton-fin { background: #B71C1C; color: #fff; }
+.modal-suplencia-acciones button:disabled { opacity: 0.6; cursor: progress; }

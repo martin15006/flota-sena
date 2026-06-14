@@ -9,6 +9,7 @@ import AdminLayout from '../../components/AdminLayout/AdminLayout.jsx';
 import Toast from '../../components/Toast/Toast.jsx';
 import ModalCrearUsuario from "./components/ModalCrearUsuario.jsx";
 import ModalEditarUsuario from "./components/ModalEditarUsuario.jsx";
+import ModalSuplencia from "./components/ModalSuplencia.jsx";
 
 // Texto secundario (gris) que describe el NIVEL del ámbito en la tabla.
 const descriptorAmbito = (ambito) => {
@@ -37,6 +38,7 @@ function UsuariosAdmin() {
   const [modalPassword, setModalPassword] = useState(null);
   const [modalCrearAbierto, setModalCrearAbierto] = useState(false);
   const [usuarioAEditar, setUsuarioAeditar] = useState(null);
+  const [suplenciaDe, setSuplenciaDe] = useState(null); // conductor del pool o null
   const [toast, setToast] = useState(null);
 
   // Helper para mostrar toast con tipo determinado (exito | error | advertencia | info)
@@ -312,6 +314,24 @@ function UsuariosAdmin() {
                         >
                           Editar
                         </button>
+                        {u.rol === "conductor" && u.es_pool && (
+                          <>
+                            <button
+                              className="usuarios-admin-accion"
+                              onClick={() => setSuplenciaDe(u)}
+                              title="Activar o finalizar la suplencia del Coordinador"
+                            >
+                              Suplencia
+                            </button>
+                            <button
+                              className="usuarios-admin-accion"
+                              onClick={() => navigate(`/admin/actividad-pool/${u.id}`)}
+                              title="Ver lo que hizo este pool"
+                            >
+                              Actividad
+                            </button>
+                          </>
+                        )}
                         <button
                           className="usuarios-admin-accion"
                           onClick={() =>
@@ -380,6 +400,15 @@ function UsuariosAdmin() {
           const mensaje = mensajePersonalizado
             ? mensajePersonalizado
             : `Cambios guardados${nombre ? ` para ${nombre}` : ""}`;
+          mostrarToast(mensaje, "exito");
+          cargarUsuarios();
+        }}
+      />
+      <ModalSuplencia
+        abierto={suplenciaDe !== null}
+        onCerrar={() => setSuplenciaDe(null)}
+        usuario={suplenciaDe}
+        onHecho={(mensaje) => {
           mostrarToast(mensaje, "exito");
           cargarUsuarios();
         }}
