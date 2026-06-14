@@ -2,6 +2,7 @@ import { supabase} from '../config/supabase.js'
 import { generarPasswordTemporal, contarAdminsActivos, registrarAuditoria, } from '../services/usuarios.service.js';
 import { obtenerScope, usuarioEnScope } from '../services/scope.service.js';
 import { puedeCrearRol, puedeGestionarRol, ETIQUETA_ROL, rolEfectivo as rolEfectivoActor } from '../services/jerarquia.service.js';
+import { mapaSuplenciasVigentes } from '../services/suplencias.service.js';
 
 
 // Helper: indexa los emails de auth.users por id para hacer merge con la tabla usuarios.
@@ -118,7 +119,22 @@ export const listarUsuarios = async (req, res) => {
             };
         });
 
-        res.json({ usuarios: usuariosConEmail });
+        // Pool · Paso 2: marcar quien tiene una suplencia VIGENTE ahora mismo, para
+        // mostrar el indicador "Supliendo" en la tabla.
+        const poolIds = usuariosConEmail
+            .filter((u) => u.rol === 'conductor' && u.es_pool)
+            .map((u) => u.id);
+        const mapaSup = await mapaSuplenciasVigentes(poolIds);
+        const usuariosFinal = usuariosConEmail.map((u) => {
+            const sup = mapaSup.get(u.id);
+            return {
+                ...u,
+                supliendo: !!sup,
+                suplencia_hasta: sup ? sup.hasta || null : null,
+            };
+        });
+
+        res.json({ usuarios: usuariosFinal });
     } catch (err) {
         console.error('Error listando usuarios:', err);
         res.status(500).json({ error: 'Error al listar usuarios' });

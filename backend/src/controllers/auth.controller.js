@@ -1,6 +1,7 @@
 import { supabase } from "../config/supabase.js";
 import { resolverIdentificador, obtenerPerfil } from "../services/auth.service.js";
 import { crearNotificacion } from "../services/notificaciones.service.js";
+import { suplenciaVigenteDePool } from "../services/suplencias.service.js";
 
 // Helper: ¿la fecha de vencimiento (YYYY-MM-DD) ya paso? Compara solo fechas.
 const licenciaEstaVencida = (fechaVencimiento) => {
@@ -52,19 +53,7 @@ export const login = async (req, res) => {
         // (sin esperar a /auth/me) que este conductor esta supliendo al Coordinador.
         perfil.suplencia = null;
         if (perfil.rol === 'conductor' && perfil.es_pool === true && perfil.centro_id) {
-            const ahoraSup = new Date().toISOString();
-            const { data: sup } = await supabase
-                .from('suplencias')
-                .select('*')
-                .eq('pool_id', perfil.id)
-                .eq('centro_id', perfil.centro_id)
-                .eq('activa', true)
-                .lte('desde', ahoraSup)
-                .or(`hasta.is.null,hasta.gte.${ahoraSup}`)
-                .order('desde', { ascending: false })
-                .limit(1)
-                .maybeSingle();
-            perfil.suplencia = sup || null;
+            perfil.suplencia = await suplenciaVigenteDePool(perfil.id, perfil.centro_id);
         }
 
         // Si un conductor inicia sesion con la licencia vencida, avisar al admin.

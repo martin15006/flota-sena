@@ -318,6 +318,20 @@
     color: #5E35B1;
 }
 
+/* Marca de suplencia ACTIVA: el pool esta reemplazando al Coordinador ahora mismo */
+.usuarios-admin-supliendo {
+    display: block;
+    width: fit-content;
+    margin-top: 4px;
+    padding: 2px var(--espacio-sm);
+    border-radius: var(--radio-xl);
+    background: #5E35B1;
+    color: var(--color-blanco);
+    font-size: var(--tamano-xs);
+    font-weight: var(--peso-bold);
+    white-space: nowrap;
+}
+
 /* Columna Ámbito: de dónde es (conductor) / qué administra (admin) */
 .usuarios-admin-ambito {
     display: flex;

@@ -1,5 +1,6 @@
 import { supabase } from "../config/supabase.js";
 import { rolEfectivo } from "../services/jerarquia.service.js";
+import { suplenciaVigenteDePool } from "../services/suplencias.service.js";
 
 export const verificarToken = async (req, res, next) => {
     try {
@@ -57,22 +58,9 @@ export const verificarToken = async (req, res, next) => {
 
         // Pool · Paso 2: si es un conductor del pool, adjuntar su suplencia VIGENTE
         // (si la tiene) para que rolEfectivo() lo trate como admin_centro de su centro.
-        // "Vigente" = activa AND ahora dentro de [desde, hasta] (hasta NULL = abierta).
         perfil.suplencia = null;
         if (perfil.rol === 'conductor' && perfil.es_pool === true && perfil.centro_id) {
-            const ahora = new Date().toISOString();
-            const { data: sup } = await supabase
-                .from('suplencias')
-                .select('*')
-                .eq('pool_id', perfil.id)
-                .eq('centro_id', perfil.centro_id)
-                .eq('activa', true)
-                .lte('desde', ahora)
-                .or(`hasta.is.null,hasta.gte.${ahora}`)
-                .order('desde', { ascending: false })
-                .limit(1)
-                .maybeSingle();
-            perfil.suplencia = sup || null;
+            perfil.suplencia = await suplenciaVigenteDePool(perfil.id, perfil.centro_id);
         }
 
         req.usuario = perfil;

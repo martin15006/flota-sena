@@ -9,6 +9,57 @@ const SELECT_SUPLENCIA = `
     activada_por:activada_por_id ( id, nombre_completo )
 `;
 
+// Calcula la vigencia EN JS (desde <= ahora <= hasta), sobre filas ya filtradas por
+// activa=true. Se hace asi para no depender de filtros de fecha de PostgREST en un
+// .or() (con timestamps puede comportarse raro). Mas robusto y predecible.
+const esVigente = (s, ahora = Date.now()) =>
+    new Date(s.desde).getTime() <= ahora &&
+    (s.hasta == null || new Date(s.hasta).getTime() >= ahora);
+
+// Suplencia VIGENTE de un pool en su centro (o null). La usa el middleware/login
+// para adjuntar req.usuario.suplencia.
+export const suplenciaVigenteDePool = async (poolId, centroId) => {
+    if (!poolId || !centroId) return null;
+    const { data, error } = await supabase
+        .from('suplencias')
+        .select('*')
+        .eq('pool_id', poolId)
+        .eq('centro_id', centroId)
+        .eq('activa', true)
+        .order('desde', { ascending: false });
+    if (error) { console.error('suplenciaVigenteDePool:', error); return null; }
+    return (data || []).find((s) => esVigente(s)) || null;
+};
+
+// Mapa poolId -> suplencia vigente, para una lista de pools (lo usa listarUsuarios
+// para marcar quien esta supliendo ahora mismo).
+export const mapaSuplenciasVigentes = async (poolIds = []) => {
+    const mapa = new Map();
+    if (!poolIds.length) return mapa;
+    const { data, error } = await supabase
+        .from('suplencias')
+        .select('*')
+        .in('pool_id', poolIds)
+        .eq('activa', true);
+    if (error) { console.error('mapaSuplenciasVigentes:', error); return mapa; }
+    for (const s of data || []) {
+        if (esVigente(s) && !mapa.has(s.pool_id)) mapa.set(s.pool_id, s);
+    }
+    return mapa;
+};
+
+// pool_ids con suplencia vigente en un centro (para rutear notificaciones).
+export const poolsVigentesEnCentro = async (centroId) => {
+    if (!centroId) return [];
+    const { data, error } = await supabase
+        .from('suplencias')
+        .select('*')
+        .eq('centro_id', centroId)
+        .eq('activa', true);
+    if (error) { console.error('poolsVigentesEnCentro:', error); return []; }
+    return (data || []).filter((s) => esVigente(s)).map((s) => s.pool_id);
+};
+
 // Activa una suplencia. Valida que el pool sea un conductor con es_pool y centro,
 // que no tenga ya una vigente, y que el actor tenga scope sobre el centro del pool.
 // Devuelve la suplencia creada o lanza un Error con .status.

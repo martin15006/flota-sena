@@ -275,6 +275,18 @@ function UsuariosAdmin() {
                       >
                         {etiquetaCargoCorta(u)}
                       </span>
+                      {u.supliendo && (
+                        <span
+                          className="usuarios-admin-supliendo"
+                          title={
+                            u.suplencia_hasta
+                              ? `Supliendo al Coordinador hasta el ${new Date(u.suplencia_hasta).toLocaleDateString("es-CO")}`
+                              : "Supliendo al Coordinador (sin fecha de fin)"
+                          }
+                        >
+                          ⭐ Supliendo
+                        </span>
+                      )}
                     </td>
                     <td>
                       {u.ambito && u.ambito.nivel ? (

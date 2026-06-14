@@ -9,6 +9,7 @@
 // de uno solo. Cuando uno la marca como leida, se marca solo para ese.
 
 import { supabase } from '../config/supabase.js';
+import { poolsVigentesEnCentro } from './suplencias.service.js';
 
 // Roles que pueden recibir notificaciones administrativas (todos los niveles).
 const ROLES_DESTINATARIOS = [
@@ -100,19 +101,12 @@ export const crearNotificacion = async ({
     // conductores del pool con suplencia VIGENTE para ese centro (actuan como
     // Coordinador). Se agregan sin duplicar.
     if (centro_id) {
-        const ahora = new Date().toISOString();
-        const { data: sups } = await supabase
-            .from('suplencias')
-            .select('pool_id')
-            .eq('centro_id', centro_id)
-            .eq('activa', true)
-            .lte('desde', ahora)
-            .or(`hasta.is.null,hasta.gte.${ahora}`);
+        const poolIds = await poolsVigentesEnCentro(centro_id);
         const yaIncluidos = new Set(destinatarios.map((d) => d.id));
-        for (const s of sups || []) {
-            if (s.pool_id && !yaIncluidos.has(s.pool_id)) {
-                destinatarios.push({ id: s.pool_id });
-                yaIncluidos.add(s.pool_id);
+        for (const poolId of poolIds) {
+            if (poolId && !yaIncluidos.has(poolId)) {
+                destinatarios.push({ id: poolId });
+                yaIncluidos.add(poolId);
             }
         }
     }
