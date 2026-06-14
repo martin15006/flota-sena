@@ -435,6 +435,37 @@
     border-color: var(--color-rojo);
 }
 
+/* Acciones propias del Pool de transporte: grupo aparte (fila separada en morado) */
+.usuarios-admin-acciones-pool {
+    display: flex;
+    flex-wrap: wrap;
+    align-items: center;
+    gap: var(--espacio-xs);
+    margin-top: 8px;
+    padding-top: 8px;
+    border-top: 1px dashed #D1C4E9;
+}
+
+.usuarios-admin-acciones-pool-label {
+    font-size: var(--tamano-xs);
+    font-weight: var(--peso-bold);
+    color: #5E35B1;
+    text-transform: uppercase;
+    letter-spacing: 0.3px;
+    margin-right: 4px;
+}
+
+.usuarios-admin-accion-pool {
+    border-color: #5E35B1;
+    color: #5E35B1;
+}
+
+.usuarios-admin-accion-pool:hover {
+    background: #5E35B1;
+    color: var(--color-blanco);
+    border-color: #5E35B1;
+}
+
 /*  ESTADOS  */
 .usuarios-admin-estado-cargando,
 .usuarios-admin-vacio {
