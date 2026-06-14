@@ -26,7 +26,7 @@ const descriptorAmbito = (ambito) => {
 };
 
 function UsuariosAdmin() {
-  const { usuario } = useAuth();
+  const { usuario, actualizarUsuario } = useAuth();
   const navigate = useNavigate();
   const [usuarios, setUsuarios] = useState([]);
   const [cargando, setCargando] = useState(true);
@@ -439,8 +439,19 @@ function UsuariosAdmin() {
         abierto={suplenciaDe !== null}
         onCerrar={() => setSuplenciaDe(null)}
         usuario={suplenciaDe}
-        onHecho={(mensaje) => {
+        onHecho={async (mensaje) => {
           mostrarToast(mensaje, "exito");
+          // Si el suplente finalizó SU PROPIA suplencia, ya dejó de ser admin:
+          // refrescamos la sesión y lo mandamos a su panel de conductor, sin que
+          // tenga que reiniciar ni quede atascado en un panel que ya no le aplica.
+          if (suplenciaDe?.id === usuario?.id) {
+            try {
+              const data = await api("/auth/me");
+              actualizarUsuario(data.usuario);
+            } catch { /* si /me falla, igual lo redirigimos */ }
+            navigate("/conductor");
+            return;
+          }
           cargarUsuarios();
         }}
       />
