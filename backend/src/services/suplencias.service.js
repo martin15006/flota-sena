@@ -46,7 +46,10 @@ export const suplenciaVigenteDePool = async (poolId, centroId) => {
 // para marcar quien esta supliendo ahora mismo).
 export const mapaSuplenciasVigentes = async (poolIds = []) => {
     const mapa = new Map();
-    if (!poolIds.length) return mapa;
+    if (!poolIds.length) {
+        console.log('[DEBUG mapaSup] poolIds vacio (ningun pool en la lista)');
+        return mapa;
+    }
     const { data, error } = await supabase
         .from('suplencias')
         .select('*')
@@ -56,6 +59,13 @@ export const mapaSuplenciasVigentes = async (poolIds = []) => {
     for (const s of data || []) {
         if (esVigente(s) && !mapa.has(s.pool_id)) mapa.set(s.pool_id, s);
     }
+    // DEBUG temporal (Pool · suplencia tabla). Quitar luego.
+    console.log('[DEBUG mapaSup]', {
+        poolIds,
+        filasActivas: (data || []).length,
+        crudo: (data || []).map((s) => ({ pool_id: s.pool_id, activa: s.activa, hasta: s.hasta })),
+        vigentes: [...mapa.keys()],
+    });
     return mapa;
 };
 
