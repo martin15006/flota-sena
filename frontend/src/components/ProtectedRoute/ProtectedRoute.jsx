@@ -1,6 +1,6 @@
 import { Navigate } from "react-router-dom";
 import { useAuth } from "../../hooks/useAuth.js";
-import { esAdmin } from "../../lib/roles.js";
+import { esAdminEfectivo } from "../../lib/roles.js";
 import './ProtectedRoute.css';
 
 function ProtectedRoute({ children, soloAdmin = false }) {
@@ -20,7 +20,7 @@ function ProtectedRoute({ children, soloAdmin = false }) {
         return <Navigate to='/login' replace />;
     }
 
-    if (soloAdmin && !esAdmin(usuario.rol)) {
+    if (soloAdmin && !esAdminEfectivo(usuario)) {
         return <Navigate to='/dashboard' replace />;
     }
 

@@ -6,7 +6,7 @@
 // que tenemos pertenecen al ambito del admin.
 
 import { NavLink } from "react-router-dom";
-import { ETIQUETA_ROL } from "../../lib/roles.js";
+import { ETIQUETA_ROL, enSuplencia } from "../../lib/roles.js";
 import "./Sidebar.css";
 
 // SVGs inline para iconos del menu — todos siguen el mismo estilo "stroke" para
@@ -107,6 +107,10 @@ const ITEMS = [
 ];
 
 function Sidebar({ abierto, onCerrar, usuario, onLogout }) {
+    // El suplente (conductor del pool con suplencia vigente) ve el menú de un
+    // Coordinador de Flota (admin_centro) de su centro.
+    const suplente = enSuplencia(usuario);
+    const rolUI = suplente ? "admin_centro" : usuario.rol;
     return (
         <aside className={`sidebar ${abierto ? "sidebar--abierto" : "sidebar--cerrado"}`}>
             {/* Cabecera con logo y datos del SENA */}
@@ -126,7 +130,7 @@ function Sidebar({ abierto, onCerrar, usuario, onLogout }) {
             <nav className="sidebar-nav">
                 <ul className="sidebar-lista">
                     {ITEMS.filter(
-                        (item) => !item.roles || item.roles.includes(usuario.rol)
+                        (item) => !item.roles || item.roles.includes(rolUI)
                     ).map((item) => (
                         <li key={item.ruta}>
                             <NavLink
@@ -153,7 +157,9 @@ function Sidebar({ abierto, onCerrar, usuario, onLogout }) {
                 <div className="sidebar-usuario">
                     <div className="sidebar-usuario-nombre">{usuario.nombre_completo}</div>
                     <div className="sidebar-usuario-rol">
-                        {ETIQUETA_ROL[usuario.rol] || usuario.rol}
+                        {suplente
+                            ? "Coordinador de Flota · suplencia"
+                            : ETIQUETA_ROL[usuario.rol] || usuario.rol}
                         {/* Area segun el nivel: el superadmin administra todo el pais
                             (no su centro legado); los roles de centro muestran su centro. */}
                         {usuario.rol === "superadmin"
