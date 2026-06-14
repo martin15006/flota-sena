@@ -20,6 +20,7 @@ import ChequeosAdmin from "./pages/ChequeosAdmin/ChequeosAdmin.jsx";
 import ChequeoDetalle from "./pages/ChequeoDetalle/ChequeoDetalle.jsx";
 import IntentosBloqueados from "./pages/IntentosBloqueados/IntentosBloqueados.jsx";
 import GeografiaAdmin from "./pages/GeografiaAdmin/GeografiaAdmin.jsx";
+import ActividadPool from "./pages/ActividadPool/ActividadPool.jsx";
 
 function App() {
     return (
@@ -68,6 +69,12 @@ function App() {
                     <Route path="/admin/usuarios/:id" element={
                         <ProtectedRoutes>
                             <PerfilUsuario />
+                        </ProtectedRoutes>
+                    } />
+
+                    <Route path="/admin/actividad-pool/:poolId" element={
+                        <ProtectedRoutes>
+                            <ActividadPool />
                         </ProtectedRoutes>
                     } />
 
