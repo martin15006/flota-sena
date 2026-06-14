@@ -9,12 +9,14 @@ const SELECT_SUPLENCIA = `
     activada_por:activada_por_id ( id, nombre_completo )
 `;
 
-// Calcula la vigencia EN JS (desde <= ahora <= hasta), sobre filas ya filtradas por
-// activa=true. Se hace asi para no depender de filtros de fecha de PostgREST en un
-// .or() (con timestamps puede comportarse raro). Mas robusto y predecible.
+// Calcula la vigencia EN JS, sobre filas ya filtradas por activa=true.
+// Solo depende de `hasta`: `desde` siempre se setea en NOW() al activar (no hay
+// forma de programar una suplencia a futuro), asi que comparar `desde` no aporta y
+// ademas puede mis-disparar por como se parsea el timestamp (zona horaria). Vigente:
+//   - hasta NULL  -> abierta, siempre vigente
+//   - hasta fecha -> vigente si todavia no paso
 const esVigente = (s, ahora = Date.now()) =>
-    new Date(s.desde).getTime() <= ahora &&
-    (s.hasta == null || new Date(s.hasta).getTime() >= ahora);
+    s.hasta == null || new Date(s.hasta).getTime() >= ahora;
 
 // Suplencia VIGENTE de un pool en su centro (o null). La usa el middleware/login
 // para adjuntar req.usuario.suplencia.
@@ -28,7 +30,16 @@ export const suplenciaVigenteDePool = async (poolId, centroId) => {
         .eq('activa', true)
         .order('desde', { ascending: false });
     if (error) { console.error('suplenciaVigenteDePool:', error); return null; }
-    return (data || []).find((s) => esVigente(s)) || null;
+    const vigente = (data || []).find((s) => esVigente(s)) || null;
+    // DEBUG temporal (Pool · suplencia): ver por que no se detecta. Quitar luego.
+    console.log('[DEBUG suplencia]', {
+        poolId, centroId,
+        filas: (data || []).length,
+        crudo: (data || []).map((s) => ({ id: s.id, activa: s.activa, desde: s.desde, hasta: s.hasta })),
+        vigente: vigente ? vigente.id : null,
+        ahora: new Date().toISOString(),
+    });
+    return vigente;
 };
 
 // Mapa poolId -> suplencia vigente, para una lista de pools (lo usa listarUsuarios
