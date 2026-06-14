@@ -20,19 +20,3 @@
 .modal-suplencia-boton-activar { background: #5E35B1; color: #fff; }
 .modal-suplencia-boton-fin { background: #B71C1C; color: #fff; }
 .modal-suplencia-acciones button:disabled { opacity: 0.6; cursor: progress; }
-
-/* Acceso a "Actividad del pool" dentro del panel Gestionar pool */
-.modal-suplencia-actividad {
-    width: 100%;
-    text-align: left;
-    margin-top: var(--espacio-sm);
-    padding-top: var(--espacio-md);
-    border: none;
-    border-top: 1px dashed var(--color-gris-200);
-    background: none;
-    color: #5E35B1;
-    font-size: var(--tamano-sm);
-    font-weight: var(--peso-semibold);
-    cursor: pointer;
-}
-.modal-suplencia-actividad:hover { color: #4527A0; text-decoration: underline; }

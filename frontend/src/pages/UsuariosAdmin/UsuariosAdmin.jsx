@@ -314,15 +314,6 @@ function UsuariosAdmin() {
                         >
                           Editar
                         </button>
-                        {u.rol === "conductor" && u.es_pool && (
-                          <button
-                            className="usuarios-admin-accion usuarios-admin-accion-pool"
-                            onClick={() => setSuplenciaDe(u)}
-                            title="Gestionar el pool: suplencia y actividad"
-                          >
-                            Gestionar pool
-                          </button>
-                        )}
                         <button
                           className="usuarios-admin-accion"
                           onClick={() =>
@@ -357,6 +348,26 @@ function UsuariosAdmin() {
                           Eliminar
                         </button>
                       </div>
+                      {/* Acciones propias del Pool de transporte, separadas del resto */}
+                      {u.rol === "conductor" && u.es_pool && (
+                        <div className="usuarios-admin-acciones-pool">
+                          <span className="usuarios-admin-acciones-pool-label">⭐ Pool de transporte</span>
+                          <button
+                            className="usuarios-admin-accion usuarios-admin-accion-pool"
+                            onClick={() => setSuplenciaDe(u)}
+                            title="Activar o finalizar la suplencia del Coordinador"
+                          >
+                            Suplencia
+                          </button>
+                          <button
+                            className="usuarios-admin-accion usuarios-admin-accion-pool"
+                            onClick={() => navigate(`/admin/actividad-pool/${u.id}`)}
+                            title="Ver lo que hizo este pool"
+                          >
+                            Actividad
+                          </button>
+                        </div>
+                      )}
                     </td>
                   </tr>
                 ))}
@@ -402,11 +413,6 @@ function UsuariosAdmin() {
         onHecho={(mensaje) => {
           mostrarToast(mensaje, "exito");
           cargarUsuarios();
-        }}
-        onVerActividad={() => {
-          const poolId = suplenciaDe.id;
-          setSuplenciaDe(null);
-          navigate(`/admin/actividad-pool/${poolId}`);
         }}
       />
 
