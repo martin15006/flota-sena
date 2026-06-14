@@ -409,11 +409,15 @@ CREATE TABLE IF NOT EXISTS auditoria_chequeos (
 
 
 -- Suplencias del pool (Paso 2, ver docs/superpowers/specs/2026-06-14-suplencia-pool-design.md):
--- un conductor del pool reemplaza temporalmente al Coordinador de Flota de su centro.
+-- un conductor del pool reemplaza temporalmente al Coordinador de Flota. Puede cubrir un
+-- solo centro (alcance='centro', centro_id) o toda una regional/departamento
+-- (alcance='departamento', departamento_id) — Fase B.
 CREATE TABLE IF NOT EXISTS suplencias (
     id                  UUID PRIMARY KEY DEFAULT gen_random_uuid(),
     pool_id             UUID NOT NULL REFERENCES usuarios(id) ON DELETE CASCADE,
-    centro_id           UUID NOT NULL REFERENCES centros_formacion(id) ON DELETE CASCADE,
+    alcance             TEXT NOT NULL DEFAULT 'centro',   -- 'centro' | 'departamento'
+    centro_id           UUID REFERENCES centros_formacion(id) ON DELETE CASCADE,   -- si alcance='centro'
+    departamento_id     UUID REFERENCES departamentos(id) ON DELETE CASCADE,       -- si alcance='departamento'
     activada_por_id     UUID REFERENCES usuarios(id) ON DELETE SET NULL,
     motivo              TEXT,
     desde               TIMESTAMPTZ NOT NULL DEFAULT NOW(),
@@ -425,6 +429,7 @@ CREATE TABLE IF NOT EXISTS suplencias (
 );
 CREATE INDEX IF NOT EXISTS idx_suplencias_pool_activa   ON suplencias(pool_id, activa);
 CREATE INDEX IF NOT EXISTS idx_suplencias_centro_activa ON suplencias(centro_id, activa);
+CREATE INDEX IF NOT EXISTS idx_suplencias_departamento  ON suplencias(departamento_id);
 
 
 -- ==

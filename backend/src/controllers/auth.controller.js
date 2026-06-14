@@ -1,7 +1,7 @@
 import { supabase } from "../config/supabase.js";
 import { resolverIdentificador, obtenerPerfil } from "../services/auth.service.js";
 import { crearNotificacion } from "../services/notificaciones.service.js";
-import { suplenciaVigenteDePool } from "../services/suplencias.service.js";
+import { suplenciaVigenteDePool, centrosCubiertosDeSuplencia } from "../services/suplencias.service.js";
 
 // Helper: ¿la fecha de vencimiento (YYYY-MM-DD) ya paso? Compara solo fechas.
 const licenciaEstaVencida = (fechaVencimiento) => {
@@ -52,8 +52,18 @@ export const login = async (req, res) => {
         // Pool · Paso 2: adjuntar la suplencia VIGENTE para que el front sepa de una
         // (sin esperar a /auth/me) que este conductor esta supliendo al Coordinador.
         perfil.suplencia = null;
+        perfil.suplenciaCentros = [];
+        perfil.centroActivo = null;
         if (perfil.rol === 'conductor' && perfil.es_pool === true && perfil.centro_id) {
             perfil.suplencia = await suplenciaVigenteDePool(perfil.id);
+            if (perfil.suplencia) {
+                perfil.suplenciaCentros = await centrosCubiertosDeSuplencia(perfil.suplencia);
+                // Si cubre un solo centro, ese es el activo de una; si cubre varios,
+                // queda null hasta que el pool elija uno en el selector.
+                if (perfil.suplenciaCentros.length === 1) {
+                    perfil.centroActivo = perfil.suplenciaCentros[0].id;
+                }
+            }
         }
 
         // Si un conductor inicia sesion con la licencia vencida, avisar al admin.
@@ -91,6 +101,8 @@ export const login = async (req, res) => {
                 centro_nombre: perfil.centro_nombre,
                 es_pool: perfil.es_pool === true,
                 suplencia: perfil.suplencia || null,
+                suplencia_centros: perfil.suplenciaCentros || [],
+                centro_activo: perfil.centroActivo || null,
                 licencia_numero: perfil.licencia_numero,
                 licencia_categoria: perfil.licencia_categoria,
                 licencia_vencimiento: perfil.licencia_vencimiento,
@@ -120,6 +132,8 @@ export const obtenerActual = (req, res) => {
             centro_nombre: req.usuario.centro_nombre,
             es_pool: req.usuario.es_pool === true,
             suplencia: req.usuario.suplencia || null,
+            suplencia_centros: req.usuario.suplenciaCentros || [],
+            centro_activo: req.usuario.centroActivo || null,
         },
     });
 };

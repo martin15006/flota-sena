@@ -1,6 +1,6 @@
 import { supabase } from "../config/supabase.js";
 import { rolEfectivo } from "../services/jerarquia.service.js";
-import { suplenciaVigenteDePool } from "../services/suplencias.service.js";
+import { suplenciaVigenteDePool, centrosCubiertosDeSuplencia } from "../services/suplencias.service.js";
 
 export const verificarToken = async (req, res, next) => {
     try {
@@ -59,8 +59,24 @@ export const verificarToken = async (req, res, next) => {
         // Pool · Paso 2: si es un conductor del pool, adjuntar su suplencia VIGENTE
         // (si la tiene) para que rolEfectivo() lo trate como admin_centro de su centro.
         perfil.suplencia = null;
+        perfil.suplenciaCentros = [];   // centros que CUBRE la suplencia (Fase B)
+        perfil.centroActivo = null;     // cual esta gestionando ahora (selector)
         if (perfil.rol === 'conductor' && perfil.es_pool === true && perfil.centro_id) {
             perfil.suplencia = await suplenciaVigenteDePool(perfil.id);
+            if (perfil.suplencia) {
+                perfil.suplenciaCentros = await centrosCubiertosDeSuplencia(perfil.suplencia);
+                const ids = perfil.suplenciaCentros.map((c) => c.id);
+                // El "centro activo" llega por header (lo manda el selector del frontend).
+                // Si es valido (esta entre los cubiertos), lo usamos. Si la suplencia cubre
+                // un solo centro, ese es el activo por defecto. Si cubre varios y no se
+                // eligio ninguno, queda null (el pool debe elegir uno antes de gestionar).
+                const headerCentro = req.headers['x-centro-activo'];
+                if (headerCentro && ids.includes(headerCentro)) {
+                    perfil.centroActivo = headerCentro;
+                } else if (ids.length === 1) {
+                    perfil.centroActivo = ids[0];
+                }
+            }
         }
 
         req.usuario = perfil;

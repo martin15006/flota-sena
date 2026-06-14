@@ -6,8 +6,33 @@ const SELECT_SUPLENCIA = `
     *,
     pool:pool_id ( id, nombre_completo, cedula ),
     centro:centro_id ( id, nombre ),
+    departamento:departamento_id ( id, nombre ),
     activada_por:activada_por_id ( id, nombre_completo )
 `;
+
+// Resuelve los centros que CUBRE una suplencia (Fase B):
+//   - alcance 'centro'       -> [centro_id]
+//   - alcance 'departamento' -> todos los centros de ese depto (via ciudades)
+// Devuelve [{ id, nombre }]. Si no resuelve nada, [].
+export const centrosCubiertosDeSuplencia = async (suplencia) => {
+    if (!suplencia) return [];
+    if (suplencia.alcance === 'departamento' && suplencia.departamento_id) {
+        const { data: ciudades } = await supabase
+            .from('ciudades').select('id').eq('departamento_id', suplencia.departamento_id);
+        const ciudadIds = (ciudades || []).map((c) => c.id);
+        if (ciudadIds.length === 0) return [];
+        const { data: centros } = await supabase
+            .from('centros_formacion').select('id, nombre').in('ciudad_id', ciudadIds).eq('activo', true);
+        return centros || [];
+    }
+    // alcance 'centro' (o legado sin alcance)
+    if (suplencia.centro_id) {
+        const { data: centro } = await supabase
+            .from('centros_formacion').select('id, nombre').eq('id', suplencia.centro_id).maybeSingle();
+        return centro ? [centro] : [];
+    }
+    return [];
+};
 
 // Calcula la vigencia EN JS, sobre filas ya filtradas por activa=true.
 // Solo depende de `hasta`: `desde` siempre se setea en NOW() al activar (no hay
@@ -26,7 +51,7 @@ export const suplenciaVigenteDePool = async (poolId) => {
     if (!poolId) return null;
     const { data, error } = await supabase
         .from('suplencias')
-        .select('*, centro:centro_id ( id, nombre )')
+        .select('*, centro:centro_id ( id, nombre ), departamento:departamento_id ( id, nombre )')
         .eq('pool_id', poolId)
         .eq('activa', true)
         .order('desde', { ascending: false });
@@ -51,22 +76,41 @@ export const mapaSuplenciasVigentes = async (poolIds = []) => {
     return mapa;
 };
 
-// pool_ids con suplencia vigente en un centro (para rutear notificaciones).
+// pool_ids con suplencia vigente que CUBRE un centro (para rutear notificaciones).
+// Incluye las que lo cubren directo (alcance 'centro') y las que cubren todo su
+// departamento (alcance 'departamento').
 export const poolsVigentesEnCentro = async (centroId) => {
     if (!centroId) return [];
-    const { data, error } = await supabase
-        .from('suplencias')
-        .select('*')
-        .eq('centro_id', centroId)
-        .eq('activa', true);
-    if (error) { console.error('poolsVigentesEnCentro:', error); return []; }
-    return (data || []).filter((s) => esVigente(s)).map((s) => s.pool_id);
+    // Directas (alcance 'centro')
+    const { data: directas } = await supabase
+        .from('suplencias').select('*').eq('centro_id', centroId).eq('activa', true);
+
+    // Por departamento: resolver a que depto pertenece el centro (centro -> ciudad -> depto)
+    const { data: centro } = await supabase
+        .from('centros_formacion')
+        .select('ciudad:ciudad_id ( departamento_id )')
+        .eq('id', centroId)
+        .maybeSingle();
+    const deptoId = centro?.ciudad?.departamento_id;
+    let porDepto = [];
+    if (deptoId) {
+        const { data } = await supabase
+            .from('suplencias').select('*').eq('departamento_id', deptoId).eq('activa', true);
+        porDepto = data || [];
+    }
+
+    const todas = [...(directas || []), ...porDepto];
+    const ids = todas.filter((s) => esVigente(s)).map((s) => s.pool_id);
+    return [...new Set(ids)];
 };
 
 // Activa una suplencia. Valida que el pool sea un conductor con es_pool y centro,
 // que no tenga ya una vigente, y que el actor tenga scope sobre el centro del pool.
 // Devuelve la suplencia creada o lanza un Error con .status.
-export const activarSuplencia = async ({ actor, poolId, centroId = null, hasta = null, motivo = null }) => {
+export const activarSuplencia = async ({
+    actor, poolId, alcance = 'centro', centroId = null, departamentoId = null,
+    hasta = null, motivo = null,
+}) => {
     const { data: pool, error: errPool } = await supabase
         .from('usuarios')
         .select('id, rol, es_pool, centro_id, activo')
@@ -81,16 +125,28 @@ export const activarSuplencia = async ({ actor, poolId, centroId = null, hasta =
         const e = new Error('Solo un conductor del pool con centro asignado puede suplir.'); e.status = 400; throw e;
     }
 
-    // Centro que va a CUBRIR la suplencia: el elegido por quien activa, o por defecto
-    // el centro propio del pool. Puede ser distinto al del pool (Fase A).
-    const centroCubierto = centroId || pool.centro_id;
-
-    // El actor debe tener scope sobre el centro que va a cubrir (titular de ese centro,
-    // Director Regional del depto, o Nacional). Esto tambien acota a un Director a los
-    // centros de SU departamento.
-    const tieneScope = await puedeAccederCentro(actor, centroCubierto);
-    if (!tieneScope) {
-        const e = new Error('Ese centro no esta dentro de tu area.'); e.status = 403; throw e;
+    // Resolver el ALCANCE y validar que esté dentro del área del que activa.
+    let centroCubierto = null;
+    let deptoCubierto = null;
+    if (alcance === 'departamento') {
+        // Cubre TODOS los centros de una regional/departamento (Fase B). Solo lo puede
+        // dar quien tenga ese depto en su scope (Director Regional de ese depto o Nacional).
+        if (!departamentoId) {
+            const e = new Error('Falta el departamento a cubrir.'); e.status = 400; throw e;
+        }
+        const scope = await obtenerScope(actor);
+        const ok = scope.tipo === 'global' || (scope.departamentoIds || []).includes(departamentoId);
+        if (!ok) {
+            const e = new Error('Ese departamento no esta dentro de tu area.'); e.status = 403; throw e;
+        }
+        deptoCubierto = departamentoId;
+    } else {
+        // Un solo centro: el elegido o, por defecto, el propio del pool (Fase A).
+        centroCubierto = centroId || pool.centro_id;
+        const tieneScope = await puedeAccederCentro(actor, centroCubierto);
+        if (!tieneScope) {
+            const e = new Error('Ese centro no esta dentro de tu area.'); e.status = 403; throw e;
+        }
     }
 
     const ahora = new Date().toISOString();
@@ -112,7 +168,9 @@ export const activarSuplencia = async ({ actor, poolId, centroId = null, hasta =
         .from('suplencias')
         .insert({
             pool_id: poolId,
+            alcance,
             centro_id: centroCubierto,
+            departamento_id: deptoCubierto,
             activada_por_id: actor.id,
             motivo: (motivo || '').trim() || null,
             hasta: hasta || null,
