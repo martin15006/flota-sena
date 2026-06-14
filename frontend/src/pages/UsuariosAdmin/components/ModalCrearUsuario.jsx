@@ -6,6 +6,7 @@ import {
   ETIQUETA_ROL,
   NIVEL_TERRITORIO,
   rolesQuePuedeCrear,
+  esDirector,
 } from "../../../lib/roles.js";
 import "./ModalCrearUsuario.css";
 
@@ -17,6 +18,7 @@ const ESTADO_INICIAL = {
   rol: "conductor",
   centro_id: "",
   departamento_id: "",
+  es_pool: false,
   licencia_numero: "",
   licencia_categoria: "",
   licencia_vencimiento: "",
@@ -114,6 +116,9 @@ function ModalCrearUsuario({ abierto, onCerrar, onCreado }) {
   const actorEsNacional = rolActor === "superadmin";
   const actorEsRegional = rolActor === "admin_departamental";
   const actorEsCoordinador = rolActor === "admin_centro" || rolActor === "admin";
+  // Solo los Directores marcan el "Pool de transporte" (conductor que maneja los
+  // vehiculos especiales/VIP). Ver docs/diseno-pool-vip.md.
+  const actorEsDirector = esDirector(rolActor);
 
   // Cuando el nivel objetivo es 'centro' y el creador es Nacional, la lista de
   // centros se filtra por el departamento elegido en el primer paso.
@@ -172,6 +177,7 @@ function ModalCrearUsuario({ abierto, onCerrar, onCreado }) {
       rol: nuevoRol,
       centro_id: "",
       departamento_id: "",
+      es_pool: false, // el pool solo aplica a conductores
     }));
   };
 
@@ -501,6 +507,22 @@ function ModalCrearUsuario({ abierto, onCerrar, onCreado }) {
                   </div>
                 )}
               </>
+            )}
+
+            {/* Pool de transporte: conductor que maneja los vehículos especiales/VIP
+                (de dirección). Solo lo marcan los Directores. Ver docs/diseno-pool-vip.md */}
+            {esConductor && actorEsDirector && (
+              <div className="form-usuario-campo form-usuario-campo-ancho">
+                <label className="form-usuario-checkbox">
+                  <input
+                    type="checkbox"
+                    checked={form.es_pool}
+                    onChange={(e) => cambiarCampo("es_pool", e.target.checked)}
+                    disabled={cargando}
+                  />
+                  <span>Pool de transporte — maneja los vehículos especiales/VIP (de dirección)</span>
+                </label>
+              </div>
             )}
 
             {/* Confirmación de la cadena de mando (a quién queda conectado) */}

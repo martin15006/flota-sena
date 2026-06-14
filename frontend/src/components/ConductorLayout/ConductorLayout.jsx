@@ -14,6 +14,7 @@
 
 import { useNavigate } from "react-router-dom";
 import { useAuth } from "../../hooks/useAuth.js";
+import { etiquetaCargoCorta } from "../../lib/roles.js";
 import Footer from "../Footer/Footer.jsx";
 import "./ConductorLayout.css";
 
@@ -45,7 +46,10 @@ function ConductorLayout({ children }) {
                         <div className="cond-layout-usuario-nombre">
                             {usuario.nombre_completo?.split(" ")[0]}
                         </div>
-                        <div className="cond-layout-usuario-rol">Conductor</div>
+                        {/* Tipo: "Pool" si es del pool de transporte, si no "Conductor". */}
+                        <div className={`cond-layout-usuario-rol${usuario.es_pool ? " cond-layout-usuario-rol-pool" : ""}`}>
+                            {etiquetaCargoCorta(usuario)}
+                        </div>
                     </div>
                     <button
                         className="cond-layout-cerrar"

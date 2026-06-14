@@ -485,3 +485,18 @@
         width: 100%;
     }
 }
+
+/* Badge VIP en la tarjeta: vehiculo especial/de direccion (docs/diseno-pool-vip.md) */
+.vehiculo-card-vip-badge {
+    position: absolute;
+    top: var(--espacio-sm);
+    left: var(--espacio-sm);
+    padding: 4px 10px;
+    border-radius: var(--radio-xl);
+    font-size: var(--tamano-xs);
+    font-weight: var(--peso-bold);
+    letter-spacing: 0.5px;
+    background: #5E35B1;
+    color: #fff;
+    box-shadow: var(--sombra-md);
+}

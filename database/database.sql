@@ -120,6 +120,10 @@ CREATE TABLE IF NOT EXISTS usuarios (
     eps                     TEXT,
     arl                     TEXT,
 
+    -- Pool de transporte (Paso 1, ver docs/diseno-pool-vip.md): el conductor es
+    -- "del pool"; maneja los vehiculos VIP. (Paso 2: podra suplir al Coordinador.)
+    es_pool                 BOOLEAN NOT NULL DEFAULT false,
+
     -- Flujo de cambio obligatorio de password
     debe_cambiar_password   BOOLEAN NOT NULL DEFAULT false,
 
@@ -179,6 +183,11 @@ CREATE TABLE IF NOT EXISTS vehiculos (
 
     -- Multi-tenant
     centro_id               UUID NOT NULL REFERENCES centros_formacion(id) ON DELETE RESTRICT,
+
+    -- Pool de transporte (Paso 1, ver docs/diseno-pool-vip.md): vehiculo "especial"
+    -- / de direccion (personal del Coordinador o exclusivo de un director). Solo lo
+    -- maneja un conductor del pool (usuarios.es_pool).
+    es_vip                  BOOLEAN NOT NULL DEFAULT false,
 
     -- Estado del registro
     activo                  BOOLEAN NOT NULL DEFAULT true,
@@ -511,6 +520,7 @@ CREATE TRIGGER trg_fotos_chequeo_borrado
 -- Vehículos
 CREATE INDEX IF NOT EXISTS idx_vehiculos_centro              ON vehiculos(centro_id);
 CREATE INDEX IF NOT EXISTS idx_vehiculos_estado_activo       ON vehiculos(estado, activo);
+CREATE INDEX IF NOT EXISTS idx_vehiculos_es_vip              ON vehiculos(es_vip);
 CREATE INDEX IF NOT EXISTS idx_fotos_vehiculo_vehiculo       ON fotos_vehiculo(vehiculo_id);
 CREATE INDEX IF NOT EXISTS idx_auditoria_vehiculos_fecha     ON auditoria_vehiculos(vehiculo_id, created_at DESC);
 

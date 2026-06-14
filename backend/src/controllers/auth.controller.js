@@ -81,6 +81,7 @@ export const login = async (req, res) => {
                 foto_url: perfil.foto_url,
                 centro_id: perfil.centro_id,
                 centro_nombre: perfil.centro_nombre,
+                es_pool: perfil.es_pool === true,
                 licencia_numero: perfil.licencia_numero,
                 licencia_categoria: perfil.licencia_categoria,
                 licencia_vencimiento: perfil.licencia_vencimiento,
@@ -108,6 +109,7 @@ export const obtenerActual = (req, res) => {
             licencia_vencimiento: req.usuario.licencia_vencimiento,
             centro_id: req.usuario.centro_id,
             centro_nombre: req.usuario.centro_nombre,
+            es_pool: req.usuario.es_pool === true,
         },
     });
 };

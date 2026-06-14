@@ -2,10 +2,12 @@ import { useEffect, useState } from "react";
 import Modal from "../../../components/Modal/Modal.jsx";
 import { api } from "../../../lib/api.js";
 import { useAuth } from "../../../hooks/useAuth.js";
+import { esDirector } from "../../../lib/roles.js";
 import "./ModalVehiculo.css";
 
 const ESTADO_INICIAL = {
     centro_id: "",
+    es_vip: false,
     placa: "",
     marca: "",
     linea: "",
@@ -104,6 +106,7 @@ function ModalVehiculo({ abierto, onCerrar, onGuardado, vehiculo = null, mostrar
                 estado: vehiculo.estado || "operativo",
                 nivel_criticidad: vehiculo.nivel_criticidad ?? 0,
                 notas: vehiculo.notas || "",
+                es_vip: vehiculo.es_vip ?? false,
             });
             setFotosExistentes(vehiculo.fotos || []);
             setRuntUrlExistente(vehiculo.runt_url || null);
@@ -436,6 +439,21 @@ function ModalVehiculo({ abierto, onCerrar, onGuardado, vehiculo = null, mostrar
                                         </option>
                                     ))}
                                 </select>
+                            </div>
+                        )}
+                        {/* Vehiculo especial / de direccion (VIP). Solo los Directores
+                            lo marcan; lo manejan los conductores del pool. */}
+                        {esDirector(usuario?.rol) && (
+                            <div className="form-vehiculo-campo form-vehiculo-campo-ancho">
+                                <label className="form-vehiculo-checkbox">
+                                    <input
+                                        type="checkbox"
+                                        checked={form.es_vip}
+                                        onChange={(e) => cambiarCampo("es_vip", e.target.checked)}
+                                        disabled={cargando}
+                                    />
+                                    <span>Vehículo especial / de dirección (VIP) — lo manejan solo los conductores del pool</span>
+                                </label>
                             </div>
                         )}
                         <div className="form-vehiculo-campo">

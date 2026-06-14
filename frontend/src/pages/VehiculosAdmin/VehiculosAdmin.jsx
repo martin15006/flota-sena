@@ -282,6 +282,14 @@ function VehiculosAdmin() {
                                             {estadoInfo.texto}
                                             {v.nivel_criticidad > 0 && ` ${v.nivel_criticidad}%`}
                                         </div>
+                                        {v.es_vip && (
+                                            <div
+                                                className="vehiculo-card-vip-badge"
+                                                title="Vehículo especial / de dirección (VIP) — Pool de transporte"
+                                            >
+                                                ⭐ VIP
+                                            </div>
+                                        )}
                                     </div>
 
                                     <div className="vehiculo-card-info">

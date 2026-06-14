@@ -7,6 +7,7 @@ import {
     ETIQUETA_ROL,
     NIVEL_TERRITORIO,
     rolesQuePuedeCrear,
+    esDirector,
 } from "../../../lib/roles.js";
 import './ModalCrearUsuario.css';
 
@@ -90,6 +91,7 @@ function ModalEditarUsuario({ abierto, onCerrar, usuario, onEditado }) {
                 rol: usuario.rol || 'conductor',
                 centro_id: usuario.centro_id || '',
                 departamento_id: usuario.departamento_id || '',
+                es_pool: usuario.es_pool ?? false,
                 licencia_numero: usuario.licencia_numero || '',
                 licencia_categoria: usuario.licencia_categoria || '',
                 licencia_vencimiento: usuario.licencia_vencimiento || '',
@@ -107,6 +109,8 @@ function ModalEditarUsuario({ abierto, onCerrar, usuario, onEditado }) {
     const esConductor = form.rol === "conductor";
     // Nadie cambia su PROPIO rol (anti-accidente; el backend tambien lo bloquea).
     const editandoseASiMismo = usuario?.id === usuarioSesion?.id;
+    // Solo los Directores marcan el "Pool de transporte" (docs/diseno-pool-vip.md).
+    const actorEsDirector = esDirector(usuarioSesion?.rol);
     // Roles asignables: los de rango inferior al admin en sesion (#111). Se incluye
     // el rol ACTUAL del editado de primero para que el select siempre diga la verdad.
     const rolesAsignables = (() => {
@@ -143,6 +147,9 @@ function ModalEditarUsuario({ abierto, onCerrar, usuario, onEditado }) {
             rol: nuevoRol,
             centro_id: esOriginal ? usuario.centro_id || "" : "",
             departamento_id: esOriginal ? usuario.departamento_id || "" : "",
+            // El pool solo aplica a conductores; al volver al rol original se
+            // restaura su valor, en cualquier otro caso queda en false.
+            es_pool: nuevoRol === "conductor" && esOriginal ? (usuario.es_pool ?? false) : false,
         }));
     };
 
@@ -409,6 +416,22 @@ function ModalEditarUsuario({ abierto, onCerrar, usuario, onEditado }) {
                                         ? "No hay opciones disponibles en tu área para este nivel."
                                         : "Define el área que tendrá a su cargo este usuario."}
                                 </small>
+                            </div>
+                        )}
+
+                        {/* Pool de transporte: conductor que maneja los vehículos
+                            especiales/VIP. Solo lo marcan los Directores. */}
+                        {esConductor && actorEsDirector && (
+                            <div className="form-usuario-campo form-usuario-campo-ancho">
+                                <label className="form-usuario-checkbox">
+                                    <input
+                                        type="checkbox"
+                                        checked={!!form.es_pool}
+                                        onChange={(e) => cambiarCampo("es_pool", e.target.checked)}
+                                        disabled={cargando}
+                                    />
+                                    <span>Pool de transporte — maneja los vehículos especiales/VIP (de dirección)</span>
+                                </label>
                             </div>
                         )}
                     </div>

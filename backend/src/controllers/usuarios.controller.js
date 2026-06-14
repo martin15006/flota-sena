@@ -304,7 +304,14 @@ export const crearUsuario = async (req, res) => {
                 licencia_categoria,
                 licencia_vencimiento,
                 eps,
-                arl
+                arl,
+                // Conductor del pool (ver docs/diseno-pool-vip.md): solo lo marcan
+                // los Directores, y solo aplica al rol conductor.
+                es_pool:
+                    rol === 'conductor' &&
+                    ['superadmin', 'admin_departamental'].includes(req.usuario.rol)
+                        ? req.body.es_pool === true
+                        : false,
             })
             .select()
             .single();
@@ -457,6 +464,15 @@ export const actualizarUsuario = async (req, res) => {
         if (ciudad_id !== undefined) cambios.ciudad_id = ciudad_id || null;
         if (departamento_id !== undefined) cambios.departamento_id = departamento_id || null;
         if (region_id !== undefined) cambios.region_id = region_id || null;
+
+        // Conductor del pool: solo lo cambian los Directores. Si el usuario deja de
+        // ser conductor (rolEfectivo distinto), se apaga la marca por coherencia.
+        const actorEsDirector = ['superadmin', 'admin_departamental'].includes(req.usuario.rol);
+        if (rolEfectivo !== 'conductor') {
+            cambios.es_pool = false;
+        } else if (req.body.es_pool !== undefined && actorEsDirector) {
+            cambios.es_pool = req.body.es_pool === true;
+        }
 
         const { data, error } = await supabase
             .from('usuarios')

@@ -74,6 +74,12 @@
     letter-spacing: 0.3px;
 }
 
+/* Conductor del pool de transporte: se resalta en morado (igual que el badge VIP) */
+.cond-layout-usuario-rol-pool {
+    color: #5E35B1;
+    font-weight: var(--peso-bold);
+}
+
 .cond-layout-cerrar {
     display: inline-flex;
     align-items: center;

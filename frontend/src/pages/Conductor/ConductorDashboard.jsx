@@ -9,6 +9,7 @@
 import { useState } from "react";
 import { useNavigate } from "react-router-dom";
 import { useAuth } from "../../hooks/useAuth.js";
+import { api } from "../../lib/api.js";
 import ConductorLayout from "../../components/ConductorLayout/ConductorLayout.jsx";
 import Toast from "../../components/Toast/Toast.jsx";
 import "./ConductorDashboard.css";
@@ -49,6 +50,9 @@ function ConductorDashboard() {
     const { usuario } = useAuth();
     const navigate = useNavigate();
     const [toast, setToast] = useState(null);
+    // Qué círculo está verificando disponibilidad de vehículos (null = ninguno).
+    // Sirve para deshabilitar los botones y mostrar "Verificando…" en el clicado.
+    const [verificandoTipo, setVerificandoTipo] = useState(null);
 
     if (!usuario) return null;
 
@@ -67,10 +71,15 @@ function ConductorDashboard() {
         return v < hoy;
     })();
 
-    // Maneja el clic en un circulo: si la licencia esta vencida, bloquea con un
-    // aviso claro ANTES de que el conductor pierda tiempo en la aptitud.
-    // (El backend igual valida; esto es solo para mejor experiencia de usuario.)
-    const iniciarChequeo = (tipo) => {
+    // Maneja el clic en un circulo. Antes de mandar al conductor a la aptitud
+    // hacemos DOS validaciones tempranas para no hacerle perder tiempo:
+    //   1) Licencia vigente (si esta vencida, avisa y no avanza).
+    //   2) Que HAYA vehiculos disponibles para el en su centro. Asi no completa
+    //      toda la aptitud para descubrir recien en el Paso 2 que no hay vehiculos.
+    //      El endpoint ya respeta la matriz pool/VIP (pool -> solo VIP; normal ->
+    //      solo no-VIP), asi que sirve igual para los conductores del pool.
+    // (El backend igual valida todo; esto es solo para mejor experiencia.)
+    const iniciarChequeo = async (tipo) => {
         if (licenciaVencida) {
             const v = new Date(usuario.licencia_vencimiento);
             const fecha = v.toLocaleDateString("es-CO", {
@@ -84,8 +93,36 @@ function ConductorDashboard() {
             });
             return;
         }
-        navigate(`/conductor/chequeo/aptitud?tipo=${tipo}`);
+
+        setVerificandoTipo(tipo);
+        try {
+            const data = await api("/chequeos/vehiculos-disponibles");
+            const hayVehiculos = (data.vehiculos || []).length > 0;
+            if (!hayVehiculos) {
+                setToast({
+                    mensaje:
+                        "No hay vehículos disponibles para ti en tu centro en este momento. Avísale al Coordinador de Flota antes de iniciar el chequeo.",
+                    tipo: "error",
+                });
+                return;
+            }
+            navigate(`/conductor/chequeo/aptitud?tipo=${tipo}`);
+        } catch (err) {
+            if (!err.sesionExpirada) {
+                setToast({
+                    mensaje:
+                        err.message ||
+                        "No se pudo verificar la disponibilidad de vehículos. Revisa tu conexión e intenta de nuevo.",
+                    tipo: "error",
+                });
+            }
+        } finally {
+            setVerificandoTipo(null);
+        }
     };
+
+    // Hay una verificación en curso (cualquiera de los dos círculos).
+    const verificando = verificandoTipo !== null;
 
     return (
         <ConductorLayout>
@@ -106,7 +143,11 @@ function ConductorDashboard() {
                 )}
                 <div className="cond-hero-saludo">Hola,</div>
                 <h1 className="cond-hero-nombre">{primerNombre}</h1>
-                <div className="cond-hero-rol">Conductor SENA</div>
+                {/* Tipo de conductor: normal (flota general) o pool (vehículos
+                    especiales/VIP). El pool se resalta con una pastilla morada. */}
+                <div className={`cond-hero-rol${usuario.es_pool ? " cond-hero-rol-pool" : ""}`}>
+                    {usuario.es_pool ? "⭐ Pool de transporte · vehículos VIP" : "Conductor SENA"}
+                </div>
                 {usuario.centro_nombre && (
                     <div className="cond-hero-centro">
                         <svg
@@ -148,21 +189,27 @@ function ConductorDashboard() {
                 <button
                     className={`cond-circulo cond-circulo-pre ${licenciaVencida ? "cond-circulo-bloqueado" : ""}`}
                     onClick={() => iniciarChequeo("preoperacional")}
+                    disabled={verificando}
                     title={licenciaVencida ? "Licencia vencida — no disponible" : "Iniciar chequeo preoperacional"}
                 >
                     <div className="cond-circulo-icono">🚛</div>
                     <div className="cond-circulo-titulo">Preoperacional</div>
-                    <div className="cond-circulo-sub">Antes del recorrido</div>
+                    <div className="cond-circulo-sub">
+                        {verificandoTipo === "preoperacional" ? "Verificando…" : "Antes del recorrido"}
+                    </div>
                 </button>
 
                 <button
                     className={`cond-circulo cond-circulo-post ${licenciaVencida ? "cond-circulo-bloqueado" : ""}`}
                     onClick={() => iniciarChequeo("postoperacional")}
+                    disabled={verificando}
                     title={licenciaVencida ? "Licencia vencida — no disponible" : "Iniciar chequeo postoperacional"}
                 >
                     <div className="cond-circulo-icono">🏁</div>
                     <div className="cond-circulo-titulo">Post-operacional</div>
-                    <div className="cond-circulo-sub">Al regresar</div>
+                    <div className="cond-circulo-sub">
+                        {verificandoTipo === "postoperacional" ? "Verificando…" : "Al regresar"}
+                    </div>
                 </button>
             </section>
 

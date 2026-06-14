@@ -34,7 +34,8 @@ export const getVehiculosDisponibles = async (req, res) => {
         const { busqueda } = req.query;
         const vehiculos = await obtenerVehiculosDisponibles(
             req.usuario.centro_id,
-            busqueda || ""
+            busqueda || "",
+            req.usuario.es_pool === true
         );
         res.json({ vehiculos, total: vehiculos.length });
     } catch (err) {

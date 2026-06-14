@@ -312,6 +312,12 @@
     color: var(--color-verde-oscuro);
 }
 
+/* Pool de transporte: conductor de vehículos VIP (docs/diseno-pool-vip.md) */
+.usuarios-admin-rol-pool {
+    background: #EDE7F6;
+    color: #5E35B1;
+}
+
 /* Columna Ámbito: de dónde es (conductor) / qué administra (admin) */
 .usuarios-admin-ambito {
     display: flex;

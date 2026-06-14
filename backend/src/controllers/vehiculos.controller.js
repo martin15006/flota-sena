@@ -158,6 +158,11 @@ export const crearVehiculo = async (req, res) => {
                 nivel_criticidad,
                 notas,
                 centro_id: centroFinal,
+                // Vehiculo VIP / de direccion (Pool, ver docs/diseno-pool-vip.md):
+                // solo lo pueden marcar los Directores (Regional / Nacional).
+                es_vip: ["superadmin", "admin_departamental"].includes(req.usuario.rol)
+                    ? req.body.es_vip === true
+                    : false,
             })
             .select()
             .single();
@@ -200,7 +205,14 @@ export const actualizarVehiculo = async (req, res) => {
             });
         }
 
-        const { centro_id: _, id: __, created_at: ___, ...datos } = req.body;
+        const { centro_id: _, id: __, created_at: ___, es_vip, ...datos } = req.body;
+
+        // El marcado VIP / de direccion solo lo cambian los Directores; para el
+        // resto se ignora (no se toca el valor existente).
+        if (es_vip !== undefined &&
+            ["superadmin", "admin_departamental"].includes(req.usuario.rol)) {
+            datos.es_vip = es_vip === true;
+        }
 
         const { data, error } = await supabase
             .from("vehiculos")

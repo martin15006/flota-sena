@@ -55,6 +55,20 @@ export const ROLES_ADMIN = [
 // comparar contra "admin" a secas, que deja fuera a los roles multinivel.
 export const esAdmin = (rol) => ROLES_ADMIN.includes(rol);
 
+// ¿Es un Director (Regional o Nacional)? Son los que asignan el VIP/pool.
+export const esDirector = (rol) => rol === "superadmin" || rol === "admin_departamental";
+
+// Etiqueta de CARGO considerando el pool (ver docs/diseno-pool-vip.md): un
+// conductor con es_pool se muestra como "Pool de transporte" en vez de "Conductor".
+export const etiquetaCargo = (usuario) => {
+    if (usuario?.rol === "conductor" && usuario?.es_pool) return "Pool de transporte";
+    return ETIQUETA_ROL[usuario?.rol] || usuario?.rol || "";
+};
+export const etiquetaCargoCorta = (usuario) => {
+    if (usuario?.rol === "conductor" && usuario?.es_pool) return "Pool";
+    return ETIQUETA_ROL_CORTA[usuario?.rol] || usuario?.rol || "";
+};
+
 export const rangoDe = (rol) => {
     const r = RANGO_ROL[rol];
     return r === undefined ? -1 : r;

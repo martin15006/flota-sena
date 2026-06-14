@@ -82,10 +82,10 @@ export const registrarIntentoBloqueado = async ({
 };
 
 // Valida que el vehiculo exista, este activo y pertenezca al centro del conductor
-const verificarVehiculoParaChequeo = async (vehiculoId, centroDelConductor) => {
+const verificarVehiculoParaChequeo = async (vehiculoId, centroDelConductor, esPool = false) => {
     const { data: vehiculo, error } = await supabase
         .from("vehiculos")
-        .select("id, placa, activo, centro_id, estado, nivel_criticidad")
+        .select("id, placa, activo, centro_id, estado, nivel_criticidad, es_vip")
         .eq("id", vehiculoId)
         .maybeSingle();
 
@@ -95,6 +95,13 @@ const verificarVehiculoParaChequeo = async (vehiculoId, centroDelConductor) => {
     if (vehiculo.centro_id !== centroDelConductor) {
         // No revelamos que existe en otro centro por seguridad
         return { valido: false, razon: "vehiculo_no_existe", detalle: "El vehiculo no pertenece a tu centro" };
+    }
+    // Regla del pool (docs/diseno-pool-vip.md): un vehiculo VIP solo lo opera un
+    // conductor del pool, y un conductor del pool solo opera vehiculos VIP. Si no
+    // coinciden, se trata como "no existe" para no revelar los vehiculos VIP a un
+    // conductor normal (misma logica de seguridad que el centro ajeno).
+    if (vehiculo.es_vip !== (esPool === true)) {
+        return { valido: false, razon: "vehiculo_no_existe", detalle: "El vehiculo no esta disponible para ti" };
     }
     if (!vehiculo.activo) {
         return {
@@ -198,7 +205,7 @@ export const iniciarChequeo = async ({
     }
 
     // 2. Verificar vehiculo
-    const verif = await verificarVehiculoParaChequeo(vehiculoId, conductor.centro_id);
+    const verif = await verificarVehiculoParaChequeo(vehiculoId, conductor.centro_id, conductor.es_pool === true);
     if (!verif.valido) {
         // Si el vehiculo no existe en BD, pasamos null para no violar la FK del log.
         // Si existe pero esta desactivado o es de otro centro, guardamos su ID.
@@ -729,7 +736,10 @@ export const obtenerChequeosDelConductor = async (conductorId, limite = 10) => {
 // Lista los vehiculos activos del centro del conductor para que pueda seleccionar
 // La busqueda por placa es tolerante: ignora espacios, mayusculas y caracteres no alfanumericos
 // (ej: "ABC 123", "ABC123", "abc-123" todos matchean con la placa "ABC 123")
-export const obtenerVehiculosDisponibles = async (centroId, busqueda = "") => {
+// esPool = ¿el conductor es del pool? Regla de manejo (ver docs/diseno-pool-vip.md):
+//   - pool          -> SOLO vehiculos VIP (especiales / de direccion)
+//   - conductor norm -> SOLO vehiculos no-VIP (la flota normal)
+export const obtenerVehiculosDisponibles = async (centroId, busqueda = "", esPool = false) => {
     if (!centroId) {
         throw new Error("El conductor no tiene centro asignado");
     }
@@ -738,11 +748,12 @@ export const obtenerVehiculosDisponibles = async (centroId, busqueda = "") => {
         .from("vehiculos")
         .select(`
             id, placa, marca, linea, tipo, modelo_anio, color,
-            estado, nivel_criticidad, kilometraje_actual,
+            estado, nivel_criticidad, kilometraje_actual, es_vip,
             fotos:fotos_vehiculo (id, url, es_principal)
         `)
         .eq("centro_id", centroId)
         .eq("activo", true)
+        .eq("es_vip", esPool === true)
         .order("placa", { ascending: true });
 
     if (error) throw error;

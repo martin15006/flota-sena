@@ -517,3 +517,30 @@
         opacity: 1;
     }
 }
+
+/* Casilla "Vehiculo especial (VIP)" — Pool de transporte (ver docs/diseno-pool-vip.md) */
+.form-vehiculo-campo-ancho {
+    grid-column: 1 / -1;
+}
+
+.form-vehiculo-checkbox {
+    display: flex;
+    align-items: center;
+    gap: var(--espacio-sm);
+    padding: var(--espacio-sm) var(--espacio-md);
+    border: 2px solid var(--color-gris-300);
+    border-radius: var(--radio-md);
+    background: var(--color-gris-50);
+    cursor: pointer;
+    font-size: var(--tamano-sm);
+    font-weight: var(--peso-semibold);
+    color: var(--color-gris-900);
+}
+
+.form-vehiculo-checkbox input {
+    width: 18px;
+    height: 18px;
+    accent-color: var(--color-verde-sena);
+    cursor: pointer;
+    flex-shrink: 0;
+}

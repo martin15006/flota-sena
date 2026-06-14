@@ -275,7 +275,7 @@ Después del login exitoso te lleva al panel `/dashboard`.
 - [x] Director Nacional puede nombrar otros Directores Nacionales (continuidad), pero no eliminarlos/editarlos
 - [x] Columna "Ámbito" y filtro por ciudad en Gestión de usuarios
 - [x] Seed de geografía nacional: 33 capitales + Espinal y centros SENA de muestra
-- [ ] **Pool de transporte / conductores VIP** (pendiente de diseño): suplente del Coordinador + chofer de los vehículos exclusivos de los directores
+- [x] **Pool de transporte / conductores VIP — Paso 1** (13-jun): conductores del pool (`es_pool`) manejan los vehículos especiales/VIP (`es_vip`), asignado por los Directores. Falta correr la migración en Supabase. Paso 2 (suplencia) pendiente.
 
 ### Pendientes futuros (ver `docs/bitacora/semana-5-cambios.md`)
 
@@ -283,7 +283,7 @@ Después del login exitoso te lleva al panel `/dashboard`.
 - [x] Pantallas de gestión de la geografía (añadir ciudades y centros desde la app, sin SQL)
 - [x] Repulir interfaz del conductor con la misma calidad visual del admin
 - [ ] Módulo de Ajustes con modo claro/oscuro
-- [ ] **Pool de transporte / conductores VIP** (pendiente de diseño — ver `CONTEXTO_PROYECTO.md` §7)
+- [ ] **Pool de transporte — Paso 2: suplencia del Coordinador** (reemplazo temporal con fechas + notificaciones + vista "Actividad del pool" — ver `docs/diseno-pool-vip.md`)
 - [ ] **Notificaciones importantes por correo** (además de la campanita) — encaja en Fase 7
 - [ ] **Exportar a PDF / Word** información importante (detalle de chequeo, fichas, reportes) — encaja en Fase 5
 

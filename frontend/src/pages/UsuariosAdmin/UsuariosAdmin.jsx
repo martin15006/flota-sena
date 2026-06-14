@@ -2,7 +2,7 @@ import { useEffect, useState } from "react";
 import { useNavigate } from "react-router-dom";
 import { useAuth } from "../../hooks/useAuth.js";
 import { api } from "../../lib/api.js";
-import { esAdmin, ETIQUETA_ROL_CORTA } from "../../lib/roles.js";
+import { esAdmin, etiquetaCargoCorta } from "../../lib/roles.js";
 import "./UsuariosAdmin.css";
 import ModalPasswordTemporal from "./components/ModalPasswordTemporal.jsx";
 import AdminLayout from '../../components/AdminLayout/AdminLayout.jsx';
@@ -268,10 +268,10 @@ function UsuariosAdmin() {
                     <td>{u.cedula}</td>
                     <td>
                       <span
-                        className={`usuarios-admin-rol usuarios-admin-rol-${esAdmin(u.rol) ? "admin" : "conductor"
+                        className={`usuarios-admin-rol usuarios-admin-rol-${u.es_pool ? "pool" : esAdmin(u.rol) ? "admin" : "conductor"
                           }`}
                       >
-                        {ETIQUETA_ROL_CORTA[u.rol] || u.rol}
+                        {etiquetaCargoCorta(u)}
                       </span>
                     </td>
                     <td>
