@@ -72,6 +72,12 @@ function ModalSuplencia({ abierto, onCerrar, usuario, onHecho }) {
                                 ? ` hasta el ${new Date(suplenciaActiva.hasta).toLocaleDateString("es-CO")}`
                                 : " (sin fecha de fin)"}.
                         </p>
+                        <p className="modal-suplencia-meta">
+                            Activada por <strong>{suplenciaActiva.activada_por?.nombre_completo || "—"}</strong>
+                            {" el "}
+                            {new Date(suplenciaActiva.desde).toLocaleDateString("es-CO")}
+                            {suplenciaActiva.motivo ? ` · Motivo: ${suplenciaActiva.motivo}` : ""}
+                        </p>
                         {error && <div className="modal-suplencia-error">⚠️ {error}</div>}
                         <div className="modal-suplencia-acciones">
                             <button className="modal-suplencia-boton-cancelar" onClick={onCerrar} disabled={cargando}>

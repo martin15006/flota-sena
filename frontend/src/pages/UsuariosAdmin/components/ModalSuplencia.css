@@ -20,3 +20,13 @@
 .modal-suplencia-boton-activar { background: #5E35B1; color: #fff; }
 .modal-suplencia-boton-fin { background: #B71C1C; color: #fff; }
 .modal-suplencia-acciones button:disabled { opacity: 0.6; cursor: progress; }
+
+/* Quien activo la suplencia + cuando + motivo */
+.modal-suplencia-meta {
+    font-size: var(--tamano-xs);
+    color: var(--color-gris-700);
+    background: var(--color-gris-50);
+    padding: 8px 12px;
+    border-radius: var(--radio-md);
+    line-height: 1.5;
+}
