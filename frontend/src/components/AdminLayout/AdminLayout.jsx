@@ -14,7 +14,7 @@
 import { useEffect, useState } from "react";
 import { useAuth } from "../../hooks/useAuth.js";
 import { useNavigate } from "react-router-dom";
-import { ETIQUETA_ROL } from "../../lib/roles.js";
+import { ETIQUETA_ROL, enSuplencia } from "../../lib/roles.js";
 import Sidebar from "./Sidebar.jsx";
 import Campanita from "./Campanita.jsx";
 import Footer from "../Footer/Footer.jsx";
@@ -137,9 +137,15 @@ function AdminLayout({ titulo, children }) {
                             <div className="admin-layout-perfil-nombre">
                                 {usuario.nombre_completo}
                             </div>
-                            {/* Badge visible del nivel del admin (no el enum crudo) */}
-                            <span className="admin-layout-perfil-rol">
-                                {ETIQUETA_ROL[usuario.rol] || usuario.rol}
+                            {/* Badge visible del nivel del admin (no el enum crudo).
+                                Si es un pool supliendo, lo mostramos como Coordinador
+                                en suplencia (en morado), no como "Conductor". */}
+                            <span
+                                className={`admin-layout-perfil-rol${enSuplencia(usuario) ? " admin-layout-perfil-rol-suplencia" : ""}`}
+                            >
+                                {enSuplencia(usuario)
+                                    ? "Coordinador · suplencia"
+                                    : ETIQUETA_ROL[usuario.rol] || usuario.rol}
                             </span>
                         </button>
                     </div>

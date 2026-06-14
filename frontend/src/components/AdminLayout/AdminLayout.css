@@ -152,6 +152,11 @@
     line-height: 1.4;
 }
 
+/* Pool supliendo al Coordinador: badge en morado (coherente con el resto del pool) */
+.admin-layout-perfil-rol-suplencia {
+    background: #5E35B1;
+}
+
 /* Accesibilidad: si el usuario tiene "reducir movimiento" activado, sin pulso */
 @media (prefers-reduced-motion: reduce) {
     .admin-layout-perfil {
