@@ -351,7 +351,6 @@ function UsuariosAdmin() {
                       {/* Acciones propias del Pool de transporte, separadas del resto */}
                       {u.rol === "conductor" && u.es_pool && (
                         <div className="usuarios-admin-acciones-pool">
-                          <span className="usuarios-admin-acciones-pool-label">⭐ Pool de transporte</span>
                           <button
                             className="usuarios-admin-accion usuarios-admin-accion-pool"
                             onClick={() => setSuplenciaDe(u)}

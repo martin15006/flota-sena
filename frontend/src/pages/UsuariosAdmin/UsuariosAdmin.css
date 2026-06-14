@@ -446,15 +446,6 @@
     border-top: 1px dashed #D1C4E9;
 }
 
-.usuarios-admin-acciones-pool-label {
-    font-size: var(--tamano-xs);
-    font-weight: var(--peso-bold);
-    color: #5E35B1;
-    text-transform: uppercase;
-    letter-spacing: 0.3px;
-    margin-right: 4px;
-}
-
 .usuarios-admin-accion-pool {
     border-color: #5E35B1;
     color: #5E35B1;
