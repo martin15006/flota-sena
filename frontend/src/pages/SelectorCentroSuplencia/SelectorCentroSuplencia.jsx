@@ -24,7 +24,7 @@ function SelectorCentroSuplencia() {
         try {
             const data = await api("/auth/me"); // ya manda X-Centro-Activo
             actualizarUsuario(data.usuario);
-            navigate("/admin/vehiculos");
+            navigate("/dashboard");
         } catch {
             setCargandoId(null);
         }

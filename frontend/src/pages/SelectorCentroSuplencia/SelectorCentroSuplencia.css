@@ -93,11 +93,19 @@
 .selcentro-vacio { color: var(--color-gris-700); font-size: var(--tamano-sm); }
 
 .selcentro-volver {
-    background: none;
-    border: none;
-    color: var(--color-verde-sena);
+    width: 100%;
+    padding: 12px;
+    background: var(--color-blanco);
+    border: 2px solid var(--color-verde-sena);
+    border-radius: var(--radio-md);
+    color: var(--color-verde-oscuro);
     font-weight: var(--peso-semibold);
     font-size: var(--tamano-sm);
     cursor: pointer;
+    transition: all var(--velocidad-rapida) var(--suavizado);
+    font-family: inherit;
 }
-.selcentro-volver:hover { text-decoration: underline; }
+.selcentro-volver:hover {
+    background: var(--color-verde-claro);
+    transform: translateY(-1px);
+}

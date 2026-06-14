@@ -212,7 +212,7 @@ function ConductorDashboard() {
                     </div>
                     <button
                         className="cond-suplencia-boton"
-                        onClick={() => navigate(variosCentros ? "/suplencia/centros" : "/admin/vehiculos")}
+                        onClick={() => navigate(variosCentros ? "/suplencia/centros" : "/dashboard")}
                     >
                         {variosCentros ? "Elegir centro a gestionar" : "Entrar al panel de Coordinador"}
                     </button>
