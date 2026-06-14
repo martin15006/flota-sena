@@ -236,3 +236,47 @@
     from { opacity: 0; }
     to { opacity: 1; }
 }
+
+/* Barra de suplencia: muestra BIEN VISIBLE en qué centro está gestionando el pool */
+.admin-layout-suplencia-bar {
+    display: flex;
+    align-items: center;
+    gap: var(--espacio-md);
+    background: #5E35B1;
+    color: #fff;
+    padding: var(--espacio-md) var(--espacio-xl);
+    flex-wrap: wrap;
+}
+.admin-layout-suplencia-icono { font-size: 28px; line-height: 1; }
+.admin-layout-suplencia-texto { display: flex; flex-direction: column; line-height: 1.2; }
+.admin-layout-suplencia-label {
+    font-size: var(--tamano-xs);
+    text-transform: uppercase;
+    letter-spacing: 0.5px;
+    opacity: 0.85;
+}
+.admin-layout-suplencia-centro {
+    font-size: var(--tamano-xl);
+    font-weight: var(--peso-bold);
+}
+.admin-layout-suplencia-regional {
+    background: rgba(255, 255, 255, 0.18);
+    padding: 4px 12px;
+    border-radius: var(--radio-xl);
+    font-size: var(--tamano-sm);
+    font-weight: var(--peso-bold);
+    white-space: nowrap;
+}
+.admin-layout-suplencia-cambiar {
+    margin-left: auto;
+    background: #fff;
+    color: #5E35B1;
+    border: none;
+    border-radius: var(--radio-md);
+    padding: 8px 16px;
+    font-weight: var(--peso-bold);
+    font-size: var(--tamano-sm);
+    cursor: pointer;
+    white-space: nowrap;
+}
+.admin-layout-suplencia-cambiar:hover { background: #EDE7F6; }

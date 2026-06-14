@@ -15,7 +15,7 @@ import { useEffect, useState } from "react";
 import { useAuth } from "../../hooks/useAuth.js";
 import { useNavigate, useLocation, Navigate } from "react-router-dom";
 import { api } from "../../lib/api.js";
-import { ETIQUETA_ROL, enSuplencia, esAdminEfectivo, necesitaElegirCentro } from "../../lib/roles.js";
+import { ETIQUETA_ROL, enSuplencia, esAdminEfectivo, necesitaElegirCentro, cubreVariosCentros } from "../../lib/roles.js";
 import Sidebar from "./Sidebar.jsx";
 import Campanita from "./Campanita.jsx";
 import Footer from "../Footer/Footer.jsx";
@@ -103,6 +103,16 @@ function AdminLayout({ titulo, children }) {
         return <Navigate to="/suplencia/centros" replace />;
     }
 
+    // Barra prominente: si está supliendo, mostrar BIEN VISIBLE qué centro está
+    // gestionando (y la regional si cubre varios), para no confundirse de centro.
+    const suplente = enSuplencia(usuario);
+    const variosCentros = cubreVariosCentros(usuario);
+    const centroActivoNombre = usuario.suplencia_centros?.find((c) => c.id === usuario.centro_activo)?.nombre
+        || usuario.suplencia?.centro?.nombre
+        || usuario.centro_nombre
+        || "—";
+    const deptoNombre = usuario.suplencia?.departamento?.nombre;
+
     return (
         <div className={`admin-layout ${sidebarAbierto ? "sidebar-abierto" : "sidebar-cerrado"}`}>
             {/* Sidebar a la izquierda */}
@@ -182,6 +192,29 @@ function AdminLayout({ titulo, children }) {
                         </button>
                     </div>
                 </header>
+
+                {/* Barra de suplencia: BIEN VISIBLE en qué centro está trabajando el pool */}
+                {suplente && (
+                    <div className="admin-layout-suplencia-bar">
+                        <span className="admin-layout-suplencia-icono" aria-hidden="true">🏢</span>
+                        <div className="admin-layout-suplencia-texto">
+                            <span className="admin-layout-suplencia-label">Estás gestionando como suplente</span>
+                            <span className="admin-layout-suplencia-centro">{centroActivoNombre}</span>
+                        </div>
+                        {deptoNombre && (
+                            <span className="admin-layout-suplencia-regional">Regional {deptoNombre}</span>
+                        )}
+                        {variosCentros && (
+                            <button
+                                type="button"
+                                className="admin-layout-suplencia-cambiar"
+                                onClick={() => navigate("/suplencia/centros")}
+                            >
+                                Cambiar de centro
+                            </button>
+                        )}
+                    </div>
+                )}
 
                 <main className="admin-layout-contenido">{children}</main>
 
