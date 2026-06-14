@@ -3,10 +3,11 @@ import Modal from "../../../components/Modal/Modal.jsx";
 import { api } from "../../../lib/api.js";
 import "./ModalSuplencia.css";
 
-// Activa o desactiva la suplencia de un conductor del pool. `usuario` es la fila
-// del conductor (debe tener rol 'conductor' y es_pool true). onHecho(mensaje) avisa
-// al padre para refrescar la lista y mostrar el toast.
-function ModalSuplencia({ abierto, onCerrar, usuario, onHecho }) {
+// Panel "Gestionar pool" de un conductor del pool (`usuario` = la fila del conductor,
+// rol 'conductor' + es_pool true). Reune todo lo del pool: activar/finalizar la
+// suplencia y el acceso a su actividad. onHecho(mensaje) avisa al padre para refrescar
+// la lista y mostrar el toast; onVerActividad() lleva a la vista "Actividad del pool".
+function ModalSuplencia({ abierto, onCerrar, usuario, onHecho, onVerActividad }) {
     const [suplenciaActiva, setSuplenciaActiva] = useState(null);
     const [hasta, setHasta] = useState("");
     const [motivo, setMotivo] = useState("");
@@ -60,7 +61,7 @@ function ModalSuplencia({ abierto, onCerrar, usuario, onHecho }) {
     if (!usuario) return null;
 
     return (
-        <Modal abierto={abierto} onCerrar={onCerrar} titulo={`Suplencia · ${usuario.nombre_completo}`}>
+        <Modal abierto={abierto} onCerrar={onCerrar} titulo={`Pool de transporte · ${usuario.nombre_completo}`}>
             <div className="modal-suplencia">
                 {consultando ? (
                     <p className="modal-suplencia-cargando">Consultando…</p>
@@ -107,6 +108,16 @@ function ModalSuplencia({ abierto, onCerrar, usuario, onHecho }) {
                             </button>
                         </div>
                     </>
+                )}
+
+                {!consultando && onVerActividad && (
+                    <button
+                        type="button"
+                        className="modal-suplencia-actividad"
+                        onClick={onVerActividad}
+                    >
+                        Ver actividad del pool →
+                    </button>
                 )}
             </div>
         </Modal>
