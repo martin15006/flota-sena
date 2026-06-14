@@ -193,3 +193,33 @@
 .sidebar-logout .sidebar-item-icono {
     color: inherit;
 }
+
+/* Boton "Ir a hacer un chequeo" del suplente: vuelve a su panel de conductor (morado) */
+.sidebar-modo-conductor {
+    display: flex;
+    align-items: center;
+    gap: var(--espacio-md);
+    padding: var(--espacio-sm) var(--espacio-md);
+    margin-bottom: var(--espacio-sm);
+    background: var(--color-blanco);
+    color: #5E35B1;
+    border: 2px solid #5E35B1;
+    border-radius: var(--radio-md);
+    font-size: var(--tamano-sm);
+    font-weight: var(--peso-bold);
+    cursor: pointer;
+    transition: all var(--velocidad-rapida) var(--suavizado);
+    text-align: left;
+    width: 100%;
+    font-family: inherit;
+    white-space: nowrap;
+}
+
+.sidebar-modo-conductor:hover {
+    background: #5E35B1;
+    color: var(--color-blanco);
+}
+
+.sidebar-modo-conductor .sidebar-item-icono {
+    color: inherit;
+}

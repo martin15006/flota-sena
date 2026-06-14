@@ -2,7 +2,7 @@ import { useEffect, useState } from "react";
 import { useNavigate } from "react-router-dom";
 import { useAuth } from "../../hooks/useAuth.js";
 import { api } from "../../lib/api.js";
-import { esAdmin, etiquetaCargoCorta } from "../../lib/roles.js";
+import { esAdmin, esAdminEfectivo, etiquetaCargoCorta } from "../../lib/roles.js";
 import "./UsuariosAdmin.css";
 import ModalPasswordTemporal from "./components/ModalPasswordTemporal.jsx";
 import AdminLayout from '../../components/AdminLayout/AdminLayout.jsx';
@@ -58,9 +58,10 @@ function UsuariosAdmin() {
   };
 
   useEffect(() => {
-    // Cargar para CUALQUIER rol admin (todos los niveles + el alias 'admin'), no
-    // solo "admin" a secas — si no, superadmin y los demas niveles nunca cargan.
-    if (usuario && esAdmin(usuario.rol)) cargarUsuarios();
+    // Cargar para CUALQUIER admin (todos los niveles + el alias 'admin') Y para el
+    // pool con suplencia vigente (admin efectivo). Si usaramos esAdmin(rol) a secas,
+    // el suplente (rol real 'conductor') nunca cargaria y quedaria en spinner infinito.
+    if (usuario && esAdminEfectivo(usuario)) cargarUsuarios();
   }, [usuario]);
 
 

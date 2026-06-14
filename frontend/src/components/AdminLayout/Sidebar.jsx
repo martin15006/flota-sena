@@ -5,7 +5,7 @@
 // ocultarse en el futuro — por ahora mostramos todos porque todos los modulos
 // que tenemos pertenecen al ambito del admin.
 
-import { NavLink } from "react-router-dom";
+import { NavLink, useNavigate } from "react-router-dom";
 import { ETIQUETA_ROL, enSuplencia } from "../../lib/roles.js";
 import "./Sidebar.css";
 
@@ -107,6 +107,7 @@ const ITEMS = [
 ];
 
 function Sidebar({ abierto, onCerrar, usuario, onLogout }) {
+    const navigate = useNavigate();
     // El suplente (conductor del pool con suplencia vigente) ve el menú de un
     // Coordinador de Flota (admin_centro) de su centro.
     const suplente = enSuplencia(usuario);
@@ -170,6 +171,19 @@ function Sidebar({ abierto, onCerrar, usuario, onLogout }) {
                             : ""}
                     </div>
                 </div>
+                {/* El suplente sigue siendo conductor: este boton lo lleva a su panel
+                    de conductor para usar un vehiculo y hacer los chequeos. */}
+                {suplente && (
+                    <button
+                        type="button"
+                        className="sidebar-modo-conductor"
+                        onClick={() => navigate("/conductor")}
+                        title="Volver a tu panel de conductor para hacer un chequeo"
+                    >
+                        <span className="sidebar-item-icono">{Icono.vehiculos}</span>
+                        <span className="sidebar-item-etiqueta">Ir a hacer un chequeo</span>
+                    </button>
+                )}
                 <button type="button" className="sidebar-logout" onClick={onLogout}>
                     <span className="sidebar-item-icono">{Icono.logout}</span>
                     <span className="sidebar-item-etiqueta">Cerrar sesión</span>
