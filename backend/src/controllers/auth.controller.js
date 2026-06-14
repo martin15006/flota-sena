@@ -53,7 +53,7 @@ export const login = async (req, res) => {
         // (sin esperar a /auth/me) que este conductor esta supliendo al Coordinador.
         perfil.suplencia = null;
         if (perfil.rol === 'conductor' && perfil.es_pool === true && perfil.centro_id) {
-            perfil.suplencia = await suplenciaVigenteDePool(perfil.id, perfil.centro_id);
+            perfil.suplencia = await suplenciaVigenteDePool(perfil.id);
         }
 
         // Si un conductor inicia sesion con la licencia vencida, avisar al admin.

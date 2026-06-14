@@ -12,9 +12,15 @@ const manejarError = (res, err, dondeError) => {
 
 export const postSuplencia = async (req, res) => {
     try {
-        const { pool_id, hasta, motivo } = req.body;
+        const { pool_id, centro_id, hasta, motivo } = req.body;
         if (!pool_id) return res.status(400).json({ error: 'Falta el conductor (pool_id).' });
-        const suplencia = await activarSuplencia({ actor: req.usuario, poolId: pool_id, hasta: hasta || null, motivo });
+        const suplencia = await activarSuplencia({
+            actor: req.usuario,
+            poolId: pool_id,
+            centroId: centro_id || null,
+            hasta: hasta || null,
+            motivo,
+        });
         res.status(201).json({ suplencia });
     } catch (err) { manejarError(res, err, 'Error activando suplencia:'); }
 };

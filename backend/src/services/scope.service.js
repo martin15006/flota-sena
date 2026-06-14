@@ -52,6 +52,14 @@ export const obtenerScope = async (usuario) => {
         centroIds: [],
     };
 
+    // SUPLENTE (pool con suplencia vigente): su scope es el centro que CUBRE la
+    // suplencia (no su centro propio), que puede ser otro de su area. Fase A: un solo
+    // centro. (Fase B: varios — el centro activo del selector.)
+    if (usuario?.rol === 'conductor' && usuario?.es_pool === true && usuario?.suplencia) {
+        const cid = usuario.suplencia.centro_id;
+        return { ...vacio, centroIds: cid ? [cid] : [] };
+    }
+
     // Admin de centro (nuevo rol explicito) y conductor: solo su centro.
     if (rol === 'admin_centro' || rol === 'conductor') {
         return {

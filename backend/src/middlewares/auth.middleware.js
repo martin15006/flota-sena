@@ -60,7 +60,7 @@ export const verificarToken = async (req, res, next) => {
         // (si la tiene) para que rolEfectivo() lo trate como admin_centro de su centro.
         perfil.suplencia = null;
         if (perfil.rol === 'conductor' && perfil.es_pool === true && perfil.centro_id) {
-            perfil.suplencia = await suplenciaVigenteDePool(perfil.id, perfil.centro_id);
+            perfil.suplencia = await suplenciaVigenteDePool(perfil.id);
         }
 
         req.usuario = perfil;

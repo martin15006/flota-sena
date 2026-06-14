@@ -1045,7 +1045,7 @@ export const obtenerPerfilDetalle = async (req, res) => {
         // Pool · suplencia: marcar si este usuario (pool) esta supliendo ahora mismo.
         let supliendo = false;
         if (usuario.rol === 'conductor' && usuario.es_pool && usuario.centro_id) {
-            supliendo = !!(await suplenciaVigenteDePool(usuario.id, usuario.centro_id));
+            supliendo = !!(await suplenciaVigenteDePool(usuario.id));
         }
 
         // 5) Respuesta unica con todo lo anterior

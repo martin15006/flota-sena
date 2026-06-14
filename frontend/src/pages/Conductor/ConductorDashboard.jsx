@@ -202,7 +202,9 @@ function ConductorDashboard() {
                 <section className="cond-suplencia-banner">
                     <div className="cond-suplencia-texto">
                         Estás supliendo al <strong>Coordinador de Flota</strong>
-                        {usuario.centro_nombre ? ` de ${usuario.centro_nombre}` : ""}
+                        {usuario.suplencia?.centro?.nombre
+                            ? ` de ${usuario.suplencia.centro.nombre}`
+                            : usuario.centro_nombre ? ` de ${usuario.centro_nombre}` : ""}
                         {hastaSuplencia ? ` hasta el ${hastaSuplencia}` : " (sin fecha de fin)"}.
                     </div>
                     <button

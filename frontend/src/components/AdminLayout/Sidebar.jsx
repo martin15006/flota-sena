@@ -161,9 +161,11 @@ function Sidebar({ abierto, onCerrar, usuario, onLogout }) {
                         {suplente
                             ? "Coordinador de Flota · suplencia"
                             : ETIQUETA_ROL[usuario.rol] || usuario.rol}
-                        {/* Area segun el nivel: el superadmin administra todo el pais
-                            (no su centro legado); los roles de centro muestran su centro. */}
-                        {usuario.rol === "superadmin"
+                        {/* Area: el suplente muestra el centro que CUBRE; el superadmin
+                            "Nacional"; los roles de centro su propio centro. */}
+                        {suplente
+                            ? ` · ${usuario.suplencia?.centro?.nombre || usuario.centro_nombre || ""}`
+                            : usuario.rol === "superadmin"
                             ? " · Nacional"
                             : usuario.centro_nombre &&
                               ["admin", "admin_centro", "conductor"].includes(usuario.rol)

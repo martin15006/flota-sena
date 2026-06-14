@@ -1,34 +1,49 @@
 import { useEffect, useState } from "react";
 import Modal from "../../../components/Modal/Modal.jsx";
 import { api } from "../../../lib/api.js";
+import { useAuth } from "../../../hooks/useAuth.js";
+import { esDirector } from "../../../lib/roles.js";
 import "./ModalSuplencia.css";
 
 // Activa o desactiva la suplencia de un conductor del pool. `usuario` es la fila
 // del conductor (debe tener rol 'conductor' y es_pool true). onHecho(mensaje) avisa
 // al padre para refrescar la lista y mostrar el toast.
 function ModalSuplencia({ abierto, onCerrar, usuario, onHecho }) {
+    const { usuario: actor } = useAuth();
     const [suplenciaActiva, setSuplenciaActiva] = useState(null);
     const [hasta, setHasta] = useState("");
     const [motivo, setMotivo] = useState("");
     const [error, setError] = useState(null);
     const [cargando, setCargando] = useState(false);
     const [consultando, setConsultando] = useState(true);
+    // Selector de centro a cubrir (Fase A): un Director puede elegir QUÉ centro de su
+    // área cubrirá el pool. El titular/coordinador solo cubre el centro del pool.
+    const [centros, setCentros] = useState([]);
+    const [centroSel, setCentroSel] = useState("");
+    const actorEsDirector = esDirector(actor?.rol);
 
     useEffect(() => {
         if (!abierto || !usuario) return;
         setError(null);
         setHasta("");
         setMotivo("");
+        setCentroSel(usuario.centro_id || ""); // por defecto, el centro propio del pool
         setConsultando(true);
-        // ¿Ya tiene una suplencia activa? (filtramos por su centro)
-        api(`/suplencias?activa=true&centro_id=${usuario.centro_id}`)
+        // ¿Ya tiene una suplencia activa? (en el área del que consulta)
+        api(`/suplencias?activa=true`)
             .then((data) => {
                 const mia = (data.suplencias || []).find((s) => s.pool_id === usuario.id);
                 setSuplenciaActiva(mia || null);
             })
             .catch((err) => { if (!err.sesionExpirada) setError(err.message); })
             .finally(() => setConsultando(false));
-    }, [abierto, usuario]);
+        // Para Directores: lista de centros de su área (ya scopeada por el backend).
+        if (esDirector(actor?.rol)) {
+            api("/geo/centros")
+                .then((data) => setCentros(data.centros || []))
+                .catch(() => {});
+        }
+    }, [abierto, usuario, actor]);
 
     const activar = async () => {
         setError(null);
@@ -36,7 +51,12 @@ function ModalSuplencia({ abierto, onCerrar, usuario, onHecho }) {
         try {
             await api("/suplencias", {
                 method: "POST",
-                body: { pool_id: usuario.id, hasta: hasta || null, motivo: motivo || null },
+                body: {
+                    pool_id: usuario.id,
+                    centro_id: centroSel || usuario.centro_id || null,
+                    hasta: hasta || null,
+                    motivo: motivo || null,
+                },
             });
             onHecho(`Suplencia activada para ${usuario.nombre_completo}.`);
             onCerrar();
@@ -68,6 +88,7 @@ function ModalSuplencia({ abierto, onCerrar, usuario, onHecho }) {
                     <>
                         <p className="modal-suplencia-info">
                             Este conductor está <strong>supliendo al Coordinador de Flota</strong>
+                            {suplenciaActiva.centro?.nombre ? ` de ${suplenciaActiva.centro.nombre}` : ""}
                             {suplenciaActiva.hasta
                                 ? ` hasta el ${new Date(suplenciaActiva.hasta).toLocaleDateString("es-CO")}`
                                 : " (sin fecha de fin)"}.
@@ -91,9 +112,32 @@ function ModalSuplencia({ abierto, onCerrar, usuario, onHecho }) {
                 ) : (
                     <>
                         <p className="modal-suplencia-info">
-                            Al activar, este conductor del pool reemplaza al Coordinador de Flota de su centro
-                            (gestiona vehículos, conductores y chequeos) mientras dure la suplencia.
+                            Al activar, este conductor del pool reemplaza al Coordinador de Flota
+                            {actorEsDirector ? " del centro que elijas" : " de su centro"}
+                            {" "}(gestiona vehículos, conductores y chequeos) mientras dure la suplencia.
                         </p>
+                        {actorEsDirector && (
+                            <>
+                                <label className="modal-suplencia-label">Centro a cubrir *</label>
+                                <select
+                                    className="modal-suplencia-input"
+                                    value={centroSel}
+                                    onChange={(e) => setCentroSel(e.target.value)}
+                                    disabled={cargando || centros.length === 0}
+                                >
+                                    <option value="">— Selecciona el centro —</option>
+                                    {centros.map((c) => (
+                                        <option key={c.id} value={c.id}>
+                                            {c.nombre}{c.ciudad ? ` · ${c.ciudad}` : ""}
+                                            {c.id === usuario.centro_id ? " (centro del pool)" : ""}
+                                        </option>
+                                    ))}
+                                </select>
+                                <small className="modal-suplencia-ayuda">
+                                    Puede ser el centro del pool u otro de tu área.
+                                </small>
+                            </>
+                        )}
                         <label className="modal-suplencia-label">Hasta (opcional)</label>
                         <input type="date" className="modal-suplencia-input"
                             value={hasta} onChange={(e) => setHasta(e.target.value)} disabled={cargando} />

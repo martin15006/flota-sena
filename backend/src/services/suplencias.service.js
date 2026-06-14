@@ -18,15 +18,16 @@ const SELECT_SUPLENCIA = `
 const esVigente = (s, ahora = Date.now()) =>
     s.hasta == null || new Date(s.hasta).getTime() >= ahora;
 
-// Suplencia VIGENTE de un pool en su centro (o null). La usa el middleware/login
-// para adjuntar req.usuario.suplencia.
-export const suplenciaVigenteDePool = async (poolId, centroId) => {
-    if (!poolId || !centroId) return null;
+// Suplencia VIGENTE de un pool (o null). Busca por pool_id (NO por su centro propio),
+// porque la suplencia puede cubrir un centro distinto al del pool (Fase A: suplir otro
+// centro de su area). Incluye el nombre del centro CUBIERTO para mostrarlo en la UI.
+// La usa el middleware/login para adjuntar req.usuario.suplencia.
+export const suplenciaVigenteDePool = async (poolId) => {
+    if (!poolId) return null;
     const { data, error } = await supabase
         .from('suplencias')
-        .select('*')
+        .select('*, centro:centro_id ( id, nombre )')
         .eq('pool_id', poolId)
-        .eq('centro_id', centroId)
         .eq('activa', true)
         .order('desde', { ascending: false });
     if (error) { console.error('suplenciaVigenteDePool:', error); return null; }
@@ -65,7 +66,7 @@ export const poolsVigentesEnCentro = async (centroId) => {
 // Activa una suplencia. Valida que el pool sea un conductor con es_pool y centro,
 // que no tenga ya una vigente, y que el actor tenga scope sobre el centro del pool.
 // Devuelve la suplencia creada o lanza un Error con .status.
-export const activarSuplencia = async ({ actor, poolId, hasta = null, motivo = null }) => {
+export const activarSuplencia = async ({ actor, poolId, centroId = null, hasta = null, motivo = null }) => {
     const { data: pool, error: errPool } = await supabase
         .from('usuarios')
         .select('id, rol, es_pool, centro_id, activo')
@@ -80,9 +81,14 @@ export const activarSuplencia = async ({ actor, poolId, hasta = null, motivo = n
         const e = new Error('Solo un conductor del pool con centro asignado puede suplir.'); e.status = 400; throw e;
     }
 
-    // El actor debe tener scope sobre el centro del pool (titular del centro,
-    // Director Regional del depto, o Nacional).
-    const tieneScope = await puedeAccederCentro(actor, pool.centro_id);
+    // Centro que va a CUBRIR la suplencia: el elegido por quien activa, o por defecto
+    // el centro propio del pool. Puede ser distinto al del pool (Fase A).
+    const centroCubierto = centroId || pool.centro_id;
+
+    // El actor debe tener scope sobre el centro que va a cubrir (titular de ese centro,
+    // Director Regional del depto, o Nacional). Esto tambien acota a un Director a los
+    // centros de SU departamento.
+    const tieneScope = await puedeAccederCentro(actor, centroCubierto);
     if (!tieneScope) {
         const e = new Error('Ese centro no esta dentro de tu area.'); e.status = 403; throw e;
     }
@@ -92,16 +98,13 @@ export const activarSuplencia = async ({ actor, poolId, hasta = null, motivo = n
         const e = new Error('La fecha de fin debe ser posterior a ahora.'); e.status = 400; throw e;
     }
 
-    // Ya hay una vigente para este pool?
-    const { data: yaVigente } = await supabase
+    // Ya hay una vigente para este pool? (una sola a la vez, sin importar el centro)
+    const { data: activas } = await supabase
         .from('suplencias')
-        .select('id')
+        .select('*')
         .eq('pool_id', poolId)
-        .eq('activa', true)
-        .lte('desde', ahora)
-        .or(`hasta.is.null,hasta.gte.${ahora}`)
-        .maybeSingle();
-    if (yaVigente) {
+        .eq('activa', true);
+    if ((activas || []).some((s) => esVigente(s))) {
         const e = new Error('Este conductor ya tiene una suplencia activa.'); e.status = 409; throw e;
     }
 
@@ -109,7 +112,7 @@ export const activarSuplencia = async ({ actor, poolId, hasta = null, motivo = n
         .from('suplencias')
         .insert({
             pool_id: poolId,
-            centro_id: pool.centro_id,
+            centro_id: centroCubierto,
             activada_por_id: actor.id,
             motivo: (motivo || '').trim() || null,
             hasta: hasta || null,
