@@ -48,6 +48,25 @@ export const login = async (req, res) => {
             });
         }
 
+        // Pool · Paso 2: adjuntar la suplencia VIGENTE para que el front sepa de una
+        // (sin esperar a /auth/me) que este conductor esta supliendo al Coordinador.
+        perfil.suplencia = null;
+        if (perfil.rol === 'conductor' && perfil.es_pool === true && perfil.centro_id) {
+            const ahoraSup = new Date().toISOString();
+            const { data: sup } = await supabase
+                .from('suplencias')
+                .select('*')
+                .eq('pool_id', perfil.id)
+                .eq('centro_id', perfil.centro_id)
+                .eq('activa', true)
+                .lte('desde', ahoraSup)
+                .or(`hasta.is.null,hasta.gte.${ahoraSup}`)
+                .order('desde', { ascending: false })
+                .limit(1)
+                .maybeSingle();
+            perfil.suplencia = sup || null;
+        }
+
         // Si un conductor inicia sesion con la licencia vencida, avisar al admin.
         // Limite: maximo 5 avisos por dia por conductor (dedupeHoras=24, maxPorVentana=5)
         // para que el admin lo vea varias veces sin saturarse si el conductor entra
@@ -82,6 +101,7 @@ export const login = async (req, res) => {
                 centro_id: perfil.centro_id,
                 centro_nombre: perfil.centro_nombre,
                 es_pool: perfil.es_pool === true,
+                suplencia: perfil.suplencia || null,
                 licencia_numero: perfil.licencia_numero,
                 licencia_categoria: perfil.licencia_categoria,
                 licencia_vencimiento: perfil.licencia_vencimiento,
@@ -110,6 +130,7 @@ export const obtenerActual = (req, res) => {
             centro_id: req.usuario.centro_id,
             centro_nombre: req.usuario.centro_nombre,
             es_pool: req.usuario.es_pool === true,
+            suplencia: req.usuario.suplencia || null,
         },
     });
 };

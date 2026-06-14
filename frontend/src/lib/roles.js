@@ -58,6 +58,14 @@ export const esAdmin = (rol) => ROLES_ADMIN.includes(rol);
 // ¿Es un Director (Regional o Nacional)? Son los que asignan el VIP/pool.
 export const esDirector = (rol) => rol === "superadmin" || rol === "admin_departamental";
 
+// ¿Tiene una suplencia VIGENTE? (el backend adjunta usuario.suplencia o null)
+export const enSuplencia = (usuario) => !!usuario?.suplencia;
+
+// ¿Es admin a efectos de UI? Admin por rol, O un conductor del pool con suplencia
+// vigente (actua como Coordinador). Usar esto para gatear la UI admin del suplente.
+export const esAdminEfectivo = (usuario) =>
+    esAdmin(usuario?.rol) || enSuplencia(usuario);
+
 // Etiqueta de CARGO considerando el pool (ver docs/diseno-pool-vip.md): un
 // conductor con es_pool se muestra como "Pool de transporte" en vez de "Conductor".
 export const etiquetaCargo = (usuario) => {
