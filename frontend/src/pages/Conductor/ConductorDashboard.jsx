@@ -6,8 +6,8 @@
 //
 // Cualquier cambio en el layout general (header/footer) vive en ConductorLayout.
 
-import { useState } from "react";
-import { useNavigate } from "react-router-dom";
+import { useState, useEffect } from "react";
+import { useNavigate, useLocation } from "react-router-dom";
 import { useAuth } from "../../hooks/useAuth.js";
 import { api } from "../../lib/api.js";
 import { enSuplencia } from "../../lib/roles.js";
@@ -50,10 +50,23 @@ const tiempoHasta = (iso) => {
 function ConductorDashboard() {
     const { usuario } = useAuth();
     const navigate = useNavigate();
+    const location = useLocation();
     const [toast, setToast] = useState(null);
     // Qué círculo está verificando disponibilidad de vehículos (null = ninguno).
     // Sirve para deshabilitar los botones y mostrar "Verificando…" en el clicado.
     const [verificandoTipo, setVerificandoTipo] = useState(null);
+
+    // Si llegó acá porque le finalizaron la suplencia, avisarle (mensaje neutro).
+    useEffect(() => {
+        if (location.state?.suplenciaTerminada) {
+            setToast({
+                mensaje: "Tu suplencia terminó. Volviste a tu panel de conductor.",
+                tipo: "info",
+            });
+            // Limpiar el state para que no se repita al refrescar/navegar.
+            navigate(location.pathname, { replace: true, state: {} });
+        }
+    }, [location, navigate]);
 
     if (!usuario) return null;
 

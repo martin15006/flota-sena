@@ -13,19 +13,19 @@ function Login() {
     const [tipoError, setTipoError] = useState("credenciales");
     const [cargando, setCargando] = useState(false);
     const [toast, setToast] = useState(null);
-    const { iniciarSesion, sesionExpirada, consumirSesionExpirada } = useAuth();
+    const { iniciarSesion, sesionExpirada, mensajeSalida, consumirSesionExpirada } = useAuth();
     const navigate = useNavigate();
 
     useEffect(() => {
         if (sesionExpirada) {
             setToast({
-                mensaje: "Tu sesión expiró. Vuelve a iniciar sesión.",
+                mensaje: mensajeSalida || "Tu sesión expiró. Vuelve a iniciar sesión.",
                 tipo: "advertencia",
                 key: Date.now(),
             });
             consumirSesionExpirada();
         }
-    }, [sesionExpirada, consumirSesionExpirada]);
+    }, [sesionExpirada, mensajeSalida, consumirSesionExpirada]);
 
     const manejarSubmit = async (e) => {
         e.preventDefault();

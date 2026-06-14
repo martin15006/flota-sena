@@ -47,6 +47,26 @@ export const api = async (endpoint, options = {}) => {
         throw err;
     }
 
+    // Cuenta desactivada: el middleware lo devuelve (403 "Cuenta desactivada") en
+    // CUALQUIER request si activo=false. Cerramos sesion y avisamos en el login.
+    if (
+        response.status === 403 &&
+        data.error === 'Cuenta desactivada' &&
+        endpoint !== '/auth/login'
+    ) {
+        window.dispatchEvent(
+            new CustomEvent('auth:desactivado', {
+                detail: {
+                    mensaje:
+                        'Tu cuenta fue desactivada. Contacta al administrador del SENA.',
+                },
+            })
+        );
+        const err = new Error('Cuenta desactivada');
+        err.cuentaDesactivada = true;
+        throw err;
+    }
+
     if (!response.ok) {
         // Adjuntamos el status al Error para que los callers puedan diferenciar
         // entre tipos de fallo (401, 403, 404, etc) y mostrar UI distinta.

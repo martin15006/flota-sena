@@ -13,8 +13,9 @@
 
 import { useEffect, useState } from "react";
 import { useAuth } from "../../hooks/useAuth.js";
-import { useNavigate } from "react-router-dom";
-import { ETIQUETA_ROL, enSuplencia } from "../../lib/roles.js";
+import { useNavigate, useLocation } from "react-router-dom";
+import { api } from "../../lib/api.js";
+import { ETIQUETA_ROL, enSuplencia, esAdminEfectivo } from "../../lib/roles.js";
 import Sidebar from "./Sidebar.jsx";
 import Campanita from "./Campanita.jsx";
 import Footer from "../Footer/Footer.jsx";
@@ -29,8 +30,33 @@ const STORAGE_KEY = "flota_sena__sidebar_colapsado";
 const esMovil = () => window.innerWidth <= 900;
 
 function AdminLayout({ titulo, children }) {
-    const { usuario, cerrarSesion } = useAuth();
+    const { usuario, cerrarSesion, actualizarUsuario } = useAuth();
     const navigate = useNavigate();
+    const location = useLocation();
+
+    // Red de seguridad para el SUPLENTE: si mientras esta en el panel le finalizan la
+    // suplencia (el titular u otro superior), al navegar revalidamos contra /auth/me y,
+    // si ya no es admin efectivo, lo mandamos a su panel de conductor. Solo corre para
+    // suplentes — no carga /me a los admins normales. (La cuenta desactivada la maneja
+    // el helper api con el evento auth:desactivado.)
+    useEffect(() => {
+        if (!enSuplencia(usuario)) return;
+        let cancelado = false;
+        api("/auth/me")
+            .then((data) => {
+                if (cancelado) return;
+                actualizarUsuario(data.usuario);
+                if (!esAdminEfectivo(data.usuario)) {
+                    navigate("/conductor", {
+                        replace: true,
+                        state: { suplenciaTerminada: true },
+                    });
+                }
+            })
+            .catch(() => { /* desactivacion: la maneja el helper api */ });
+        return () => { cancelado = true; };
+        // eslint-disable-next-line react-hooks/exhaustive-deps
+    }, [location.pathname]);
 
     // sidebarAbierto:
     //   - Escritorio: arranca abierto, salvo que el usuario haya colapsado antes

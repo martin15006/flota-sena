@@ -7,6 +7,9 @@ export const AuthProvider = ({ children }) => {
     const [usuario, setUsuario] = useState(null);
     const [cargando, setCargando] = useState(true);
     const [sesionExpirada, setSesionExpirada] = useState(false);
+    // Mensaje a mostrar en el login cuando la salida fue forzada (sesion expirada
+    // o cuenta desactivada). Lo consume el Login y se limpia.
+    const [mensajeSalida, setMensajeSalida] = useState(null);
 
     useEffect(() => {
         const token = localStorage.getItem('token');
@@ -25,13 +28,20 @@ export const AuthProvider = ({ children }) => {
     }, []);
 
     useEffect(() => {
-        const onExpirado = () => {
+        // Salida forzada: sesion expirada (401) o cuenta desactivada (403). Ambas
+        // cierran sesion y dejan un mensaje para mostrar en el login.
+        const onForzarSalida = (e) => {
             localStorage.removeItem('token');
             setUsuario(null);
             setSesionExpirada(true);
+            setMensajeSalida(e.detail?.mensaje || 'Tu sesión expiró. Vuelve a iniciar sesión.');
         };
-        window.addEventListener('auth:expirado', onExpirado);
-        return () => window.removeEventListener('auth:expirado', onExpirado);
+        window.addEventListener('auth:expirado', onForzarSalida);
+        window.addEventListener('auth:desactivado', onForzarSalida);
+        return () => {
+            window.removeEventListener('auth:expirado', onForzarSalida);
+            window.removeEventListener('auth:desactivado', onForzarSalida);
+        };
     }, []);
 
     const iniciarSesion = async (identificador, password) => {
@@ -57,7 +67,10 @@ export const AuthProvider = ({ children }) => {
         setUsuario(nuevoUsuario);
     };
 
-    const consumirSesionExpirada = () => setSesionExpirada(false);
+    const consumirSesionExpirada = () => {
+        setSesionExpirada(false);
+        setMensajeSalida(null);
+    };
 
     return (
         <AuthContext.Provider
@@ -65,6 +78,7 @@ export const AuthProvider = ({ children }) => {
                 usuario,
                 cargando,
                 sesionExpirada,
+                mensajeSalida,
                 iniciarSesion,
                 cerrarSesion,
                 actualizarUsuario,
