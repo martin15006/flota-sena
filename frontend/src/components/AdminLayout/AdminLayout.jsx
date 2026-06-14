@@ -13,9 +13,9 @@
 
 import { useEffect, useState } from "react";
 import { useAuth } from "../../hooks/useAuth.js";
-import { useNavigate, useLocation } from "react-router-dom";
+import { useNavigate, useLocation, Navigate } from "react-router-dom";
 import { api } from "../../lib/api.js";
-import { ETIQUETA_ROL, enSuplencia, esAdminEfectivo } from "../../lib/roles.js";
+import { ETIQUETA_ROL, enSuplencia, esAdminEfectivo, necesitaElegirCentro } from "../../lib/roles.js";
 import Sidebar from "./Sidebar.jsx";
 import Campanita from "./Campanita.jsx";
 import Footer from "../Footer/Footer.jsx";
@@ -96,6 +96,12 @@ function AdminLayout({ titulo, children }) {
     };
 
     if (!usuario) return null;
+
+    // Suplente que cubre VARIOS centros y todavía no eligió cuál gestionar: lo mandamos
+    // al selector antes de dejarlo entrar al panel (sin centro activo no tendría scope).
+    if (necesitaElegirCentro(usuario)) {
+        return <Navigate to="/suplencia/centros" replace />;
+    }
 
     return (
         <div className={`admin-layout ${sidebarAbierto ? "sidebar-abierto" : "sidebar-cerrado"}`}>

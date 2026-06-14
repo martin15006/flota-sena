@@ -30,3 +30,19 @@
     border-radius: var(--radio-md);
     line-height: 1.5;
 }
+
+/* Selector de alcance (un centro / toda la regional) */
+.modal-suplencia-radios {
+    display: flex;
+    gap: var(--espacio-md);
+    flex-wrap: wrap;
+}
+.modal-suplencia-radio {
+    display: inline-flex;
+    align-items: center;
+    gap: 6px;
+    font-size: var(--tamano-sm);
+    color: var(--color-gris-900);
+    cursor: pointer;
+}
+.modal-suplencia-radio input { accent-color: #5E35B1; cursor: pointer; }

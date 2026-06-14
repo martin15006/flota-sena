@@ -66,6 +66,15 @@ export const enSuplencia = (usuario) => !!usuario?.suplencia;
 export const esAdminEfectivo = (usuario) =>
     esAdmin(usuario?.rol) || enSuplencia(usuario);
 
+// Suplencia Fase B (multi-centro): ¿la suplencia cubre VARIOS centros (toda una regional)?
+export const cubreVariosCentros = (usuario) =>
+    (usuario?.suplencia_centros?.length || 0) > 1;
+
+// ¿El suplente todavia tiene que ELEGIR a que centro entrar? (cubre varios y no eligio).
+// Mientras no elija, no debe ver el panel admin (no tendria scope).
+export const necesitaElegirCentro = (usuario) =>
+    enSuplencia(usuario) && cubreVariosCentros(usuario) && !usuario?.centro_activo;
+
 // Etiqueta de CARGO considerando el pool (ver docs/diseno-pool-vip.md): un
 // conductor con es_pool se muestra como "Pool de transporte" en vez de "Conductor".
 export const etiquetaCargo = (usuario) => {

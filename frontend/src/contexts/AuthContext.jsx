@@ -1,5 +1,6 @@
 import { createContext, useState, useEffect } from "react";
 import { api } from "../lib/api.js";
+import { clearCentroActivo } from "../lib/centroActivo.js";
 
 export const AuthContext = createContext(null);
 
@@ -32,6 +33,7 @@ export const AuthProvider = ({ children }) => {
         // cierran sesion y dejan un mensaje para mostrar en el login.
         const onForzarSalida = (e) => {
             localStorage.removeItem('token');
+            clearCentroActivo();
             setUsuario(null);
             setSesionExpirada(true);
             setMensajeSalida(e.detail?.mensaje || 'Tu sesión expiró. Vuelve a iniciar sesión.');
@@ -57,6 +59,7 @@ export const AuthProvider = ({ children }) => {
 
     const cerrarSesion = () => {
         localStorage.removeItem('token');
+        clearCentroActivo();
         setUsuario(null);
     };
 

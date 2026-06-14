@@ -6,7 +6,7 @@
 // que tenemos pertenecen al ambito del admin.
 
 import { NavLink, useNavigate } from "react-router-dom";
-import { ETIQUETA_ROL, enSuplencia } from "../../lib/roles.js";
+import { ETIQUETA_ROL, enSuplencia, cubreVariosCentros } from "../../lib/roles.js";
 import "./Sidebar.css";
 
 // SVGs inline para iconos del menu — todos siguen el mismo estilo "stroke" para
@@ -112,6 +112,13 @@ function Sidebar({ abierto, onCerrar, usuario, onLogout }) {
     // Coordinador de Flota (admin_centro) de su centro.
     const suplente = enSuplencia(usuario);
     const rolUI = suplente ? "admin_centro" : usuario.rol;
+    const variosCentros = cubreVariosCentros(usuario);
+    // Nombre del centro que está gestionando ahora (centro activo del selector).
+    const centroActivoNombre = suplente
+        ? (usuario.suplencia_centros?.find((c) => c.id === usuario.centro_activo)?.nombre
+            || usuario.suplencia?.centro?.nombre
+            || usuario.centro_nombre || "")
+        : "";
     return (
         <aside className={`sidebar ${abierto ? "sidebar--abierto" : "sidebar--cerrado"}`}>
             {/* Cabecera con logo y datos del SENA */}
@@ -164,7 +171,7 @@ function Sidebar({ abierto, onCerrar, usuario, onLogout }) {
                         {/* Area: el suplente muestra el centro que CUBRE; el superadmin
                             "Nacional"; los roles de centro su propio centro. */}
                         {suplente
-                            ? ` · ${usuario.suplencia?.centro?.nombre || usuario.centro_nombre || ""}`
+                            ? ` · ${centroActivoNombre}`
                             : usuario.rol === "superadmin"
                             ? " · Nacional"
                             : usuario.centro_nombre &&
@@ -173,6 +180,18 @@ function Sidebar({ abierto, onCerrar, usuario, onLogout }) {
                             : ""}
                     </div>
                 </div>
+                {/* Suplente multi-centro: cambiar a qué centro está gestionando. */}
+                {suplente && variosCentros && (
+                    <button
+                        type="button"
+                        className="sidebar-modo-conductor"
+                        onClick={() => navigate("/suplencia/centros")}
+                        title="Cambiar de centro a gestionar"
+                    >
+                        <span className="sidebar-item-icono">{Icono.geografia}</span>
+                        <span className="sidebar-item-etiqueta">Cambiar de centro</span>
+                    </button>
+                )}
                 {/* El suplente sigue siendo conductor: este boton lo lleva a su panel
                     de conductor para usar un vehiculo y hacer los chequeos. */}
                 {suplente && (

@@ -4,12 +4,16 @@ const API_URL = `http://${window.location.hostname}:3001/api`;
 
 export const api = async (endpoint, options = {}) => {
     const token = localStorage.getItem('token');
+    // Pool multi-centro: el centro que el suplente esta gestionando ahora (ver
+    // lib/centroActivo.js). El backend lo valida contra los centros que cubre.
+    const centroActivo = localStorage.getItem('flota_centro_activo');
 
     const headers = {
         'Content-type': 'application/json',
         'Cache-Control': 'no-cache, no-store, must-revalidate',
         'Pragma': 'no-cache',
         ...(token && { Authorization: `Bearer ${token}` }),
+        ...(centroActivo && { 'X-Centro-Activo': centroActivo }),
         ...options.headers,
     };
 

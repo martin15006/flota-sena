@@ -16,10 +16,13 @@ function ModalSuplencia({ abierto, onCerrar, usuario, onHecho }) {
     const [error, setError] = useState(null);
     const [cargando, setCargando] = useState(false);
     const [consultando, setConsultando] = useState(true);
-    // Selector de centro a cubrir (Fase A): un Director puede elegir QUÉ centro de su
-    // área cubrirá el pool. El titular/coordinador solo cubre el centro del pool.
+    // Alcance de la suplencia (Director): un centro (Fase A) o toda la regional /
+    // departamento (Fase B). El titular/coordinador solo cubre el centro del pool.
+    const [alcance, setAlcance] = useState("centro"); // 'centro' | 'departamento'
     const [centros, setCentros] = useState([]);
     const [centroSel, setCentroSel] = useState("");
+    const [departamentos, setDepartamentos] = useState([]);
+    const [deptoSel, setDeptoSel] = useState("");
     const actorEsDirector = esDirector(actor?.rol);
 
     useEffect(() => {
@@ -27,7 +30,9 @@ function ModalSuplencia({ abierto, onCerrar, usuario, onHecho }) {
         setError(null);
         setHasta("");
         setMotivo("");
+        setAlcance("centro");
         setCentroSel(usuario.centro_id || ""); // por defecto, el centro propio del pool
+        setDeptoSel("");
         setConsultando(true);
         // ¿Ya tiene una suplencia activa? (en el área del que consulta)
         api(`/suplencias?activa=true`)
@@ -37,10 +42,13 @@ function ModalSuplencia({ abierto, onCerrar, usuario, onHecho }) {
             })
             .catch((err) => { if (!err.sesionExpirada) setError(err.message); })
             .finally(() => setConsultando(false));
-        // Para Directores: lista de centros de su área (ya scopeada por el backend).
+        // Para Directores: listas de centros y departamentos de su área (ya scopeadas).
         if (esDirector(actor?.rol)) {
             api("/geo/centros")
                 .then((data) => setCentros(data.centros || []))
+                .catch(() => {});
+            api("/geo/departamentos")
+                .then((data) => setDepartamentos(data.departamentos || []))
                 .catch(() => {});
         }
     }, [abierto, usuario, actor]);
@@ -53,7 +61,9 @@ function ModalSuplencia({ abierto, onCerrar, usuario, onHecho }) {
                 method: "POST",
                 body: {
                     pool_id: usuario.id,
-                    centro_id: centroSel || usuario.centro_id || null,
+                    alcance,
+                    centro_id: alcance === "centro" ? (centroSel || usuario.centro_id || null) : null,
+                    departamento_id: alcance === "departamento" ? (deptoSel || null) : null,
                     hasta: hasta || null,
                     motivo: motivo || null,
                 },
@@ -87,8 +97,10 @@ function ModalSuplencia({ abierto, onCerrar, usuario, onHecho }) {
                 ) : suplenciaActiva ? (
                     <>
                         <p className="modal-suplencia-info">
-                            Este conductor está <strong>supliendo al Coordinador de Flota</strong>
-                            {suplenciaActiva.centro?.nombre ? ` de ${suplenciaActiva.centro.nombre}` : ""}
+                            Este conductor está{" "}
+                            {suplenciaActiva.departamento?.nombre
+                                ? <><strong>supliendo a los Coordinadores de la Regional {suplenciaActiva.departamento.nombre}</strong></>
+                                : <><strong>supliendo al Coordinador de Flota</strong>{suplenciaActiva.centro?.nombre ? ` de ${suplenciaActiva.centro.nombre}` : ""}</>}
                             {suplenciaActiva.hasta
                                 ? ` hasta el ${new Date(suplenciaActiva.hasta).toLocaleDateString("es-CO")}`
                                 : " (sin fecha de fin)"}.
@@ -118,24 +130,60 @@ function ModalSuplencia({ abierto, onCerrar, usuario, onHecho }) {
                         </p>
                         {actorEsDirector && (
                             <>
-                                <label className="modal-suplencia-label">Centro a cubrir *</label>
-                                <select
-                                    className="modal-suplencia-input"
-                                    value={centroSel}
-                                    onChange={(e) => setCentroSel(e.target.value)}
-                                    disabled={cargando || centros.length === 0}
-                                >
-                                    <option value="">— Selecciona el centro —</option>
-                                    {centros.map((c) => (
-                                        <option key={c.id} value={c.id}>
-                                            {c.nombre}{c.ciudad ? ` · ${c.ciudad}` : ""}
-                                            {c.id === usuario.centro_id ? " (centro del pool)" : ""}
-                                        </option>
-                                    ))}
-                                </select>
-                                <small className="modal-suplencia-ayuda">
-                                    Puede ser el centro del pool u otro de tu área.
-                                </small>
+                                <label className="modal-suplencia-label">Alcance *</label>
+                                <div className="modal-suplencia-radios">
+                                    <label className="modal-suplencia-radio">
+                                        <input type="radio" name="alcance" checked={alcance === "centro"}
+                                            onChange={() => setAlcance("centro")} disabled={cargando} />
+                                        Un centro
+                                    </label>
+                                    <label className="modal-suplencia-radio">
+                                        <input type="radio" name="alcance" checked={alcance === "departamento"}
+                                            onChange={() => setAlcance("departamento")} disabled={cargando} />
+                                        Toda la regional
+                                    </label>
+                                </div>
+
+                                {alcance === "centro" ? (
+                                    <>
+                                        <label className="modal-suplencia-label">Centro a cubrir *</label>
+                                        <select
+                                            className="modal-suplencia-input"
+                                            value={centroSel}
+                                            onChange={(e) => setCentroSel(e.target.value)}
+                                            disabled={cargando || centros.length === 0}
+                                        >
+                                            <option value="">— Selecciona el centro —</option>
+                                            {centros.map((c) => (
+                                                <option key={c.id} value={c.id}>
+                                                    {c.nombre}{c.ciudad ? ` · ${c.ciudad}` : ""}
+                                                    {c.id === usuario.centro_id ? " (centro del pool)" : ""}
+                                                </option>
+                                            ))}
+                                        </select>
+                                        <small className="modal-suplencia-ayuda">
+                                            Puede ser el centro del pool u otro de tu área.
+                                        </small>
+                                    </>
+                                ) : (
+                                    <>
+                                        <label className="modal-suplencia-label">Regional / departamento *</label>
+                                        <select
+                                            className="modal-suplencia-input"
+                                            value={deptoSel}
+                                            onChange={(e) => setDeptoSel(e.target.value)}
+                                            disabled={cargando || departamentos.length === 0}
+                                        >
+                                            <option value="">— Selecciona el departamento —</option>
+                                            {departamentos.map((d) => (
+                                                <option key={d.id} value={d.id}>{d.nombre}</option>
+                                            ))}
+                                        </select>
+                                        <small className="modal-suplencia-ayuda">
+                                            El pool podrá gestionar TODOS los centros de ese departamento, uno a la vez.
+                                        </small>
+                                    </>
+                                )}
                             </>
                         )}
                         <label className="modal-suplencia-label">Hasta (opcional)</label>
@@ -152,7 +200,11 @@ function ModalSuplencia({ abierto, onCerrar, usuario, onHecho }) {
                             <button className="modal-suplencia-boton-cancelar" onClick={onCerrar} disabled={cargando}>
                                 Cancelar
                             </button>
-                            <button className="modal-suplencia-boton-activar" onClick={activar} disabled={cargando}>
+                            <button
+                                className="modal-suplencia-boton-activar"
+                                onClick={activar}
+                                disabled={cargando || (actorEsDirector && alcance === "departamento" && !deptoSel)}
+                            >
                                 {cargando ? "Activando…" : "Activar suplencia"}
                             </button>
                         </div>

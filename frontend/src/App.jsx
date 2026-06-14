@@ -21,6 +21,7 @@ import ChequeoDetalle from "./pages/ChequeoDetalle/ChequeoDetalle.jsx";
 import IntentosBloqueados from "./pages/IntentosBloqueados/IntentosBloqueados.jsx";
 import GeografiaAdmin from "./pages/GeografiaAdmin/GeografiaAdmin.jsx";
 import ActividadPool from "./pages/ActividadPool/ActividadPool.jsx";
+import SelectorCentroSuplencia from "./pages/SelectorCentroSuplencia/SelectorCentroSuplencia.jsx";
 
 function App() {
     return (
@@ -75,6 +76,12 @@ function App() {
                     <Route path="/admin/actividad-pool/:poolId" element={
                         <ProtectedRoutes>
                             <ActividadPool />
+                        </ProtectedRoutes>
+                    } />
+
+                    <Route path="/suplencia/centros" element={
+                        <ProtectedRoutes>
+                            <SelectorCentroSuplencia />
                         </ProtectedRoutes>
                     } />
 
