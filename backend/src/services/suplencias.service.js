@@ -181,18 +181,22 @@ export const activarSuplencia = async ({
     return data;
 };
 
-// Desactiva una suplencia (manual). Valida scope sobre su centro.
+// Desactiva una suplencia (manual). Valida scope sobre su centro o su departamento.
 export const desactivarSuplencia = async ({ actor, suplenciaId }) => {
     const { data: sup, error: errSup } = await supabase
         .from('suplencias')
-        .select('id, centro_id, activa')
+        .select('id, centro_id, departamento_id, activa')
         .eq('id', suplenciaId)
         .maybeSingle();
     if (errSup) throw errSup;
     if (!sup) { const e = new Error('Suplencia no encontrada.'); e.status = 404; throw e; }
 
-    const tieneScope = await puedeAccederCentro(actor, sup.centro_id);
-    if (!tieneScope) { const e = new Error('Esa suplencia no es de tu area.'); e.status = 403; throw e; }
+    // El actor debe tener en su área el centro (si cubre uno) o el departamento (regional).
+    const scope = await obtenerScope(actor);
+    const enArea = scope.tipo === 'global'
+        || (sup.centro_id && (scope.centroIds || []).includes(sup.centro_id))
+        || (sup.departamento_id && (scope.departamentoIds || []).includes(sup.departamento_id));
+    if (!enArea) { const e = new Error('Esa suplencia no es de tu area.'); e.status = 403; throw e; }
 
     const { data, error } = await supabase
         .from('suplencias')
@@ -205,20 +209,25 @@ export const desactivarSuplencia = async ({ actor, suplenciaId }) => {
 };
 
 // Lista suplencias dentro del scope del actor. Filtros opcionales: centroId, soloActivas.
+// El filtro por scope se hace EN JS para cubrir tanto las de un centro como las de toda
+// una regional (departamento), que el actor ve si el depto está en su área.
 export const listarSuplencias = async ({ actor, centroId = null, soloActivas = false }) => {
     const scope = await obtenerScope(actor);
     let q = supabase.from('suplencias').select(SELECT_SUPLENCIA).order('desde', { ascending: false });
     if (soloActivas) q = q.eq('activa', true);
     if (centroId) q = q.eq('centro_id', centroId);
-    if (scope.tipo !== 'global') {
-        const ids = (scope.centroIds && scope.centroIds.length > 0)
-            ? scope.centroIds
-            : ['00000000-0000-0000-0000-000000000000'];
-        q = q.in('centro_id', ids);
-    }
     const { data, error } = await q;
     if (error) throw error;
-    return data || [];
+    let filas = data || [];
+    if (scope.tipo !== 'global') {
+        const centroSet = new Set(scope.centroIds || []);
+        const deptoSet = new Set(scope.departamentoIds || []);
+        filas = filas.filter((s) =>
+            (s.centro_id && centroSet.has(s.centro_id)) ||
+            (s.departamento_id && deptoSet.has(s.departamento_id))
+        );
+    }
+    return filas;
 };
 
 // "Actividad del pool": acciones de auditoria hechas por un pool (accion_por_id),
