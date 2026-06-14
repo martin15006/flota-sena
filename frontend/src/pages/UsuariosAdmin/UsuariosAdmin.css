@@ -318,11 +318,11 @@
     color: #5E35B1;
 }
 
-/* Marca de suplencia ACTIVA: el pool esta reemplazando al Coordinador ahora mismo */
+/* Marca de suplencia ACTIVA: el pool esta reemplazando al Coordinador ahora mismo.
+   Va AL LADO del pill "POOL" (inline). */
 .usuarios-admin-supliendo {
-    display: block;
-    width: fit-content;
-    margin-top: 4px;
+    display: inline-block;
+    margin-left: 6px;
     padding: 2px var(--espacio-sm);
     border-radius: var(--radio-xl);
     background: #5E35B1;

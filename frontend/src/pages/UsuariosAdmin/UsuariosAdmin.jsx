@@ -284,7 +284,7 @@ function UsuariosAdmin() {
                               : "Supliendo al Coordinador (sin fecha de fin)"
                           }
                         >
-                          ⭐ Supliendo
+                          ⭐ Suplente
                         </span>
                       )}
                     </td>
