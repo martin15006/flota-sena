@@ -7,6 +7,7 @@ import "./UsuariosAdmin.css";
 import ModalPasswordTemporal from "./components/ModalPasswordTemporal.jsx";
 import AdminLayout from '../../components/AdminLayout/AdminLayout.jsx';
 import Toast from '../../components/Toast/Toast.jsx';
+import BotonExportar from "../../components/BotonExportar/BotonExportar.jsx";
 import ModalCrearUsuario from "./components/ModalCrearUsuario.jsx";
 import ModalEditarUsuario from "./components/ModalEditarUsuario.jsx";
 import ModalSuplencia from "./components/ModalSuplencia.jsx";
@@ -376,6 +377,13 @@ function UsuariosAdmin() {
                           >
                             Eliminar
                           </button>
+                        )}
+                        {u.rol === "conductor" && (
+                          <BotonExportar
+                            base={`/export/conductor/${u.id}`}
+                            nombre={`conductor-${u.cedula || u.id}`}
+                            compacto
+                          />
                         )}
                       </div>
                       {/* Acciones propias del Pool de transporte, separadas del resto */}

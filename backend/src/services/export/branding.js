@@ -61,6 +61,12 @@ export const etiquetaTipo = (t) => TIPOS_VEHICULO[t] || t || '—';
 const ESTADOS_VEHICULO = { operativo: 'Operativo', observacion: 'Observación', alerta: 'Alerta', critico: 'Crítico', no_operativo: 'No operativo' };
 export const etiquetaEstado = (e) => ESTADOS_VEHICULO[e] || e || '—';
 
+// Cargo legible (espejo de frontend/src/lib/roles.js). Un conductor del pool se
+// muestra como "Pool de transporte".
+const ETIQUETA_ROL = { superadmin: 'Director Nacional', admin_departamental: 'Director Regional', admin_centro: 'Coordinador de Flota', admin: 'Coordinador de Flota', conductor: 'Conductor' };
+export const etiquetaCargo = (rol, esPool) =>
+    rol === 'conductor' && esPool ? 'Pool de transporte' : (ETIQUETA_ROL[rol] || rol || '—');
+
 // Color del estado (operativo/observacion/alerta/critico/no_operativo) para banderas y badges.
 export const colorDeEstado = (estado) =>
     estado === 'critico' || estado === 'no_operativo' ? COLORES.critico

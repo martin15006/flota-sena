@@ -1,7 +1,7 @@
 import { supabase } from '../../config/supabase.js';
-import { obtenerChequeoCompleto } from '../chequeos.service.js';
+import { obtenerChequeoCompleto, obtenerChequeosDelConductor } from '../chequeos.service.js';
 import { obtenerVehiculoCompleto } from '../vehiculos.service.js';
-import { puedeAccederCentro } from '../scope.service.js';
+import { puedeAccederCentro, obtenerScope, usuarioEnScope } from '../scope.service.js';
 import { cabeceraDeCentro } from './branding.js';
 
 // Junta TODO lo necesario para exportar un chequeo (reusa la capa de datos existente,
@@ -40,4 +40,31 @@ export const datosVehiculo = async (id, usuario) => {
 
     const origen = await cabeceraDeCentro(vehiculo.centro_id);
     return { ok: true, vehiculo, chequeos: chequeos || [], origen };
+};
+
+// Junta el conductor (perfil completo) + sus ultimos chequeos, respetando el scope
+// (mismo criterio que la gestion de usuarios: el objetivo debe estar en el area).
+// Devuelve { ok, error?, status?, conductor, chequeos, origen }.
+export const datosConductor = async (id, usuario) => {
+    const { data: conductor } = await supabase
+        .from('usuarios')
+        .select('*, centro:centros_formacion ( nombre, direccion, ciudad:ciudad_id ( nombre, departamento:departamento_id ( nombre ) ) )')
+        .eq('id', id)
+        .maybeSingle();
+    if (!conductor) return { ok: false, status: 404, error: 'Usuario no encontrado.' };
+
+    const scope = await obtenerScope(usuario);
+    if (usuario.id !== conductor.id && !usuarioEnScope(scope, conductor)) {
+        return { ok: false, status: 403, error: 'Ese usuario no pertenece a tu área.' };
+    }
+
+    let email = null;
+    try {
+        const { data: authUser } = await supabase.auth.admin.getUserById(id);
+        email = authUser?.user?.email || null;
+    } catch { /* sin email de auth */ }
+
+    const chequeos = await obtenerChequeosDelConductor(id, 8);
+    const origen = await cabeceraDeCentro(conductor.centro_id);
+    return { ok: true, conductor: { ...conductor, email }, chequeos: chequeos || [], origen };
 };

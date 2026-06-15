@@ -17,6 +17,7 @@ import { etiquetaCargo } from "../../lib/roles.js";
 import Footer from "../../components/Footer/Footer.jsx";
 import Toast from "../../components/Toast/Toast.jsx";
 import BotonVolver from "../../components/BotonVolver/BotonVolver.jsx";
+import BotonExportar from "../../components/BotonExportar/BotonExportar.jsx";
 import ModalEditarUsuario from "../UsuariosAdmin/components/ModalEditarUsuario.jsx";
 import "./PerfilUsuario.css";
 
@@ -173,6 +174,12 @@ function PerfilUsuario() {
                     >
                         Editar perfil
                     </button>
+                    {esConductor && (
+                        <BotonExportar
+                            base={`/export/conductor/${usuario.id}`}
+                            nombre={`conductor-${usuario.cedula || usuario.id}`}
+                        />
+                    )}
                 </div>
 
                 {/* ===== HERO: foto + datos resumen ===== */}
