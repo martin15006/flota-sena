@@ -284,7 +284,7 @@ Después del login exitoso te lleva al panel `/dashboard`.
 - [x] Repulir interfaz del conductor con la misma calidad visual del admin
 - [ ] Módulo de Ajustes con modo claro/oscuro
 - [ ] **Pool de transporte — Paso 2: suplencia del Coordinador** (reemplazo temporal con fechas + notificaciones + vista "Actividad del pool" — ver `docs/diseno-pool-vip.md`)
-- [ ] **Notificaciones importantes por correo** (además de la campanita) — encaja en Fase 7
+- [ ] **Terminar de pulir las notificaciones** (la campanita + flujo en sitio) **y agregar notificaciones por correo** de los avisos importantes (además de la campanita) — Fase 7. *(Pendiente recordado por Martín el 15-jun: no olvidar cerrar bien este bloque.)*
 - [ ] **Exportar a PDF / Word** información importante (detalle de chequeo, fichas, reportes) — encaja en Fase 5
 
 ---
