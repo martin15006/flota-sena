@@ -168,18 +168,20 @@ function PerfilUsuario() {
             <main className="perfil-main">
                 <div className="perfil-acciones-top">
                     <BotonVolver a="/admin/usuarios" texto="Volver a usuarios" />
-                    <button
-                        className="perfil-boton-editar"
-                        onClick={() => setModalEditarAbierto(true)}
-                    >
-                        Editar perfil
-                    </button>
-                    {esConductor && (
-                        <BotonExportar
-                            base={`/export/conductor/${usuario.id}`}
-                            nombre={`conductor-${usuario.cedula || usuario.id}`}
-                        />
-                    )}
+                    <div className="perfil-acciones-derecha">
+                        <button
+                            className="perfil-boton-editar"
+                            onClick={() => setModalEditarAbierto(true)}
+                        >
+                            Editar perfil
+                        </button>
+                        {esConductor && (
+                            <BotonExportar
+                                base={`/export/conductor/${usuario.id}`}
+                                nombre={`conductor-${usuario.cedula || usuario.id}`}
+                            />
+                        )}
+                    </div>
                 </div>
 
                 {/* ===== HERO: foto + datos resumen ===== */}

@@ -115,6 +115,14 @@
     gap: var(--espacio-md);
 }
 
+/* Editar + PDF/Word agrupados a la derecha (Volver queda solo a la izquierda) */
+.perfil-acciones-derecha {
+    display: flex;
+    align-items: center;
+    gap: var(--espacio-md);
+    flex-wrap: wrap;
+}
+
 .perfil-volver {
     padding: var(--espacio-sm) var(--espacio-md);
     background: var(--color-blanco);
