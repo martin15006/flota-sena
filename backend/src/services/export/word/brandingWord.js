@@ -38,3 +38,24 @@ export const encabezadoDocx = (titulo, origen, meta) => {
 
 export const tituloSeccion = (texto) =>
     new Paragraph({ spacing: { before: 280, after: 120 }, children: [new TextRun({ text: texto, bold: true, size: 26, color: '2A7A00' })] });
+
+// --- Helpers de tabla reutilizables (usados por las fichas) ---
+const BORDE = { style: BorderStyle.SINGLE, size: 2, color: 'E0DED6' };
+export const BORDES_TABLA = { top: BORDE, bottom: BORDE, left: BORDE, right: BORDE };
+
+// Celda de texto generica. opts: { width, bold, fill, size, color, align }.
+export const celdaTexto = (texto, { width, bold = false, fill = null, size = 22, color = null, align = null } = {}) =>
+    new TableCell({
+        ...(width ? { width: { size: width, type: WidthType.DXA } } : {}),
+        borders: BORDES_TABLA,
+        ...(fill ? { shading: { fill, type: ShadingType.CLEAR } } : {}),
+        margins: { top: 90, bottom: 90, left: 160, right: 120 },
+        children: [new Paragraph({ ...(align ? { alignment: align } : {}), children: [new TextRun({ text: texto == null || texto === '' ? '—' : String(texto), bold, size, ...(color ? { color } : {}) })] })],
+    });
+
+// Fila etiqueta (gris, negrita) + valor.
+export const filaDato = (etiqueta, valor, colEtiqueta, colValor) =>
+    new TableRow({ children: [
+        celdaTexto(etiqueta, { width: colEtiqueta, bold: true, fill: 'F1EFE8' }),
+        celdaTexto(valor, { width: colValor }),
+    ] });

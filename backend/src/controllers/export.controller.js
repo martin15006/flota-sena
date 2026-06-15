@@ -1,6 +1,10 @@
-import { datosChequeo } from '../services/export/datos.js';
+import { datosChequeo, datosVehiculo } from '../services/export/datos.js';
 import { chequeoPdfBuffer } from '../services/export/pdf/chequeoPdf.js';
 import { chequeoWordBuffer } from '../services/export/word/chequeoWord.js';
+import { vehiculoPdfBuffer } from '../services/export/pdf/vehiculoPdf.js';
+import { vehiculoWordBuffer } from '../services/export/word/vehiculoWord.js';
+
+const TIPO_WORD = 'application/vnd.openxmlformats-officedocument.wordprocessingml.document';
 
 // GET /api/export/chequeo/:id?formato=pdf|word
 export const exportarChequeo = async (req, res) => {
@@ -13,7 +17,7 @@ export const exportarChequeo = async (req, res) => {
         const nombreBase = `chequeo-${(datos.chequeo.vehiculo?.placa || id).replace(/\s+/g, '')}`;
         if (formato === 'word') {
             const buffer = await chequeoWordBuffer(datos);
-            res.setHeader('Content-Type', 'application/vnd.openxmlformats-officedocument.wordprocessingml.document');
+            res.setHeader('Content-Type', TIPO_WORD);
             res.setHeader('Content-Disposition', `attachment; filename="${nombreBase}.docx"`);
             return res.send(buffer);
         }
@@ -23,6 +27,31 @@ export const exportarChequeo = async (req, res) => {
         return res.send(buffer);
     } catch (err) {
         console.error('Error exportando chequeo:', err);
+        res.status(500).json({ error: 'No se pudo generar el documento.' });
+    }
+};
+
+// GET /api/export/vehiculo/:id?formato=pdf|word
+export const exportarVehiculo = async (req, res) => {
+    try {
+        const { id } = req.params;
+        const formato = req.query.formato === 'word' ? 'word' : 'pdf';
+        const datos = await datosVehiculo(id, req.usuario);
+        if (!datos.ok) return res.status(datos.status || 404).json({ error: datos.error });
+
+        const nombreBase = `vehiculo-${(datos.vehiculo.placa || id).replace(/\s+/g, '')}`;
+        if (formato === 'word') {
+            const buffer = await vehiculoWordBuffer(datos);
+            res.setHeader('Content-Type', TIPO_WORD);
+            res.setHeader('Content-Disposition', `attachment; filename="${nombreBase}.docx"`);
+            return res.send(buffer);
+        }
+        const buffer = await vehiculoPdfBuffer(datos);
+        res.setHeader('Content-Type', 'application/pdf');
+        res.setHeader('Content-Disposition', `attachment; filename="${nombreBase}.pdf"`);
+        return res.send(buffer);
+    } catch (err) {
+        console.error('Error exportando vehiculo:', err);
         res.status(500).json({ error: 'No se pudo generar el documento.' });
     }
 };

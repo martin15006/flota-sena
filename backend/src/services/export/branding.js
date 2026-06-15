@@ -53,3 +53,23 @@ export const fechaHora = (iso) => {
         day: '2-digit', month: '2-digit', year: 'numeric', hour: '2-digit', minute: '2-digit',
     });
 };
+
+// Etiquetas legibles (espejo de las del frontend) para los documentos.
+const TIPOS_VEHICULO = { camion: 'Camión', camioneta: 'Camioneta', tractocamion: 'Tractocamión', microbus: 'Microbús', buseta: 'Buseta', bus: 'Bus' };
+export const etiquetaTipo = (t) => TIPOS_VEHICULO[t] || t || '—';
+
+const ESTADOS_VEHICULO = { operativo: 'Operativo', observacion: 'Observación', alerta: 'Alerta', critico: 'Crítico', no_operativo: 'No operativo' };
+export const etiquetaEstado = (e) => ESTADOS_VEHICULO[e] || e || '—';
+
+// Color del estado (operativo/observacion/alerta/critico/no_operativo) para banderas y badges.
+export const colorDeEstado = (estado) =>
+    estado === 'critico' || estado === 'no_operativo' ? COLORES.critico
+        : estado === 'alerta' || estado === 'observacion' ? COLORES.alerta
+            : COLORES.ok;
+
+// ¿La fecha (vencimiento) ya pasó? Devuelve false si no hay fecha.
+export const estaVencido = (fecha) => {
+    if (!fecha) return false;
+    const t = new Date(fecha).getTime();
+    return Number.isFinite(t) && t < Date.now();
+};
