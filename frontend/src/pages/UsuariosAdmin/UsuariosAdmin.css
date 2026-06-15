@@ -393,6 +393,12 @@
     flex-wrap: wrap;
 }
 
+/* Botones PDF/Word al mismo tamaño que los demás botones de acción de la fila */
+.usuarios-admin-acciones .boton-exportar-compacto button {
+    padding: 6px 16px;
+    font-size: var(--tamano-xs);
+}
+
 .usuarios-admin-accion {
     padding: 6px 14px;
     border: 2px solid var(--color-gris-200);
