@@ -4,6 +4,7 @@ import { useAuth } from "../../hooks/useAuth.js";
 import { api } from "../../lib/api.js";
 import AdminLayout from "../../components/AdminLayout/AdminLayout.jsx";
 import Toast from "../../components/Toast/Toast.jsx";
+import BotonExportar from "../../components/BotonExportar/BotonExportar.jsx";
 import ModalVehiculo from "./components/ModalVehiculo.jsx";
 import "./VehiculosAdmin.css";
 
@@ -344,6 +345,11 @@ function VehiculosAdmin() {
                                         >
                                             Eliminar
                                         </button>
+                                        <BotonExportar
+                                            base={`/export/vehiculo/${v.id}`}
+                                            nombre={`vehiculo-${v.placa || v.id}`}
+                                            compacto
+                                        />
                                     </div>
                                 </div>
                             );

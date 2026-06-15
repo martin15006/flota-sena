@@ -6,6 +6,7 @@ import Footer from "../../components/Footer/Footer.jsx";
 import Lightbox from "../../components/Lightbox/Lightbox.jsx";
 import Toast from "../../components/Toast/Toast.jsx";
 import BotonVolver from "../../components/BotonVolver/BotonVolver.jsx";
+import BotonExportar from "../../components/BotonExportar/BotonExportar.jsx";
 import ModalVehiculo from "../VehiculosAdmin/components/ModalVehiculo.jsx";
 import "./VehiculoDetalle.css";
 
@@ -190,6 +191,10 @@ function VehiculoDetalle() {
                                     Abrir RUNT
                                 </a>
                             )}
+                            <BotonExportar
+                                base={`/export/vehiculo/${vehiculo.id}`}
+                                nombre={`vehiculo-${vehiculo.placa || vehiculo.id}`}
+                            />
                         </div>
                     </div>
                 </section>
