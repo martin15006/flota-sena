@@ -393,10 +393,25 @@
     flex-wrap: wrap;
 }
 
-/* Botones PDF/Word al mismo tamaño que los demás botones de acción de la fila */
-.usuarios-admin-acciones .boton-exportar-compacto button {
-    padding: 6px 16px;
+/* Fila propia para descargar la ficha (PDF/Word), con botones más grandes */
+.usuarios-admin-acciones-exportar {
+    display: flex;
+    align-items: center;
+    gap: var(--espacio-sm);
+    margin-top: 8px;
+    padding-top: 8px;
+    border-top: 1px dashed var(--color-gris-300);
+}
+
+.usuarios-admin-exportar-label {
     font-size: var(--tamano-xs);
+    color: var(--color-gris-700);
+    font-weight: var(--peso-semibold);
+}
+
+.usuarios-admin-acciones-exportar .boton-exportar button {
+    padding: 9px 26px;
+    font-size: var(--tamano-sm);
 }
 
 .usuarios-admin-accion {

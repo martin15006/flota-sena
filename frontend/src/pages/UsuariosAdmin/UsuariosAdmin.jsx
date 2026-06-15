@@ -378,14 +378,18 @@ function UsuariosAdmin() {
                             Eliminar
                           </button>
                         )}
-                        {u.rol === "conductor" && (
+                      </div>
+                      {u.rol === "conductor" && (
+                        <div className="usuarios-admin-acciones-exportar">
+                          <span className="usuarios-admin-exportar-label">
+                            Descargar ficha:
+                          </span>
                           <BotonExportar
                             base={`/export/conductor/${u.id}`}
                             nombre={`conductor-${u.cedula || u.id}`}
-                            compacto
                           />
-                        )}
-                      </div>
+                        </div>
+                      )}
                       {/* Acciones propias del Pool de transporte, separadas del resto */}
                       {u.rol === "conductor" && u.es_pool && (
                         <div className="usuarios-admin-acciones-pool">
