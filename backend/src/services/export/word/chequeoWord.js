@@ -1,6 +1,6 @@
 import { Document, Packer, Paragraph, TextRun, Table, TableRow, TableCell, WidthType, BorderStyle, ShadingType, TableLayoutType } from 'docx';
 import { fechaLarga } from '../branding.js';
-import { encabezadoDocx, tituloSeccion, ANCHO_CONTENIDO } from './brandingWord.js';
+import { encabezadoDocx, tituloSeccion, ANCHO_CONTENIDO, espaciadoresSuperior } from './brandingWord.js';
 
 const borde = { style: BorderStyle.SINGLE, size: 2, color: 'E0DED6' };
 const bordes = { top: borde, bottom: borde, left: borde, right: borde };
@@ -51,9 +51,7 @@ export const chequeoWordBuffer = async ({ chequeo, origen }) => {
             children: [
                 // Espaciadores reales: bajan el encabezado en CUALQUIER vista de Word
                 // (incluida "Diseño web", que ignora el margen superior de pagina).
-                new Paragraph({ spacing: { after: 0 } }),
-                new Paragraph({ spacing: { after: 0 } }),
-                new Paragraph({ spacing: { after: 0 } }),
+                ...espaciadoresSuperior(),
                 encabezadoDocx('Chequeo preoperacional', origen, [`N.º ${(chequeo.id || '').slice(0, 8).toUpperCase()}`, fechaLarga(chequeo.fecha)]),
                 new Paragraph({ text: '' }),
                 tituloSeccion('Datos'),

@@ -39,6 +39,12 @@ export const encabezadoDocx = (titulo, origen, meta) => {
 export const tituloSeccion = (texto) =>
     new Paragraph({ spacing: { before: 280, after: 120 }, children: [new TextRun({ text: texto, bold: true, size: 26, color: '2A7A00' })] });
 
+// Lineas en blanco que bajan el encabezado (se respetan en cualquier vista de Word,
+// incluida "Diseño web", que ignora el margen superior de pagina). Mismo valor en
+// las tres fichas para que el espacio de arriba quede igual.
+export const espaciadoresSuperior = (n = 0) =>
+    Array.from({ length: n }, () => new Paragraph({ spacing: { after: 0 } }));
+
 // --- Helpers de tabla reutilizables (usados por las fichas) ---
 const BORDE = { style: BorderStyle.SINGLE, size: 2, color: 'E0DED6' };
 export const BORDES_TABLA = { top: BORDE, bottom: BORDE, left: BORDE, right: BORDE };

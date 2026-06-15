@@ -1,6 +1,6 @@
 import { Document, Packer, Paragraph, TextRun, Table, TableRow, WidthType, TableLayoutType } from 'docx';
 import { fechaLarga, etiquetaCargo, estaVencido } from '../branding.js';
-import { encabezadoDocx, tituloSeccion, ANCHO_CONTENIDO, celdaTexto, filaDato } from './brandingWord.js';
+import { encabezadoDocx, tituloSeccion, ANCHO_CONTENIDO, celdaTexto, filaDato, espaciadoresSuperior } from './brandingWord.js';
 
 const ROJO = 'A32D2D';
 const textoResultado = (c) => c.cerrado ? (c.resultado_estado || '—').replace('_', ' ').toUpperCase() : 'EN PROCESO';
@@ -71,9 +71,7 @@ export const conductorWordBuffer = async ({ conductor, chequeos, origen }) => {
         sections: [{
             properties: { page: { size: { width: 12240, height: 15840 }, margin: { top: 1440, right: 720, bottom: 1080, left: 720 } } },
             children: [
-                new Paragraph({ spacing: { after: 0 } }),
-                new Paragraph({ spacing: { after: 0 } }),
-                new Paragraph({ spacing: { after: 0 } }),
+                ...espaciadoresSuperior(),
                 encabezadoDocx('Ficha de conductor', origen, [`CC ${conductor.cedula || '—'}`, cargo]),
                 new Paragraph({ text: '' }),
                 tituloSeccion('Identificación'),
