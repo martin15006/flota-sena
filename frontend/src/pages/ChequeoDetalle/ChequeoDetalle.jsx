@@ -7,6 +7,7 @@ import { useAuth } from "../../hooks/useAuth.js";
 import Toast from "../../components/Toast/Toast.jsx";
 import Footer from "../../components/Footer/Footer.jsx";
 import BotonVolver from "../../components/BotonVolver/BotonVolver.jsx";
+import BotonExportar from "../../components/BotonExportar/BotonExportar.jsx";
 import "./ChequeoDetalle.css";
 
 const CONFIG_ESTADO = {
@@ -169,6 +170,12 @@ function ChequeoDetalle() {
                 <div className="cheqdet-barra-titulo">
                     <h1>Detalle del chequeo</h1>
                     <p>{v.placa || "—"} · {formatearFecha(chequeo.fecha)}</p>
+                </div>
+                <div style={{ marginLeft: "auto" }}>
+                    <BotonExportar
+                        base={`/export/chequeo/${chequeo.id}`}
+                        nombre={`chequeo-${v.placa || chequeo.id}`}
+                    />
                 </div>
             </section>
 

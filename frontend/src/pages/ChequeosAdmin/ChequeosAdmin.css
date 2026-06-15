@@ -475,6 +475,14 @@
     font-weight: var(--peso-bold);
 }
 
+.cheqadmin-card-exportar {
+    display: flex;
+    justify-content: flex-end;
+    margin-top: var(--espacio-sm);
+    padding-top: var(--espacio-sm);
+    border-top: 1px solid var(--color-gris-300);
+}
+
 .cheqadmin-resumen-cumple {
     background: var(--color-verde-claro);
     color: var(--color-verde-oscuro);

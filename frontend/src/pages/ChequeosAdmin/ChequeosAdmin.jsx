@@ -6,6 +6,7 @@ import { api } from "../../lib/api.js";
 import { useAuth } from "../../hooks/useAuth.js";
 import Toast from "../../components/Toast/Toast.jsx";
 import AdminLayout from "../../components/AdminLayout/AdminLayout.jsx";
+import BotonExportar from "../../components/BotonExportar/BotonExportar.jsx";
 import "./ChequeosAdmin.css";
 
 const ESTADOS = [
@@ -262,6 +263,17 @@ function ChequeosAdmin() {
                                         )}
                                     </div>
                                 )}
+
+                                <div
+                                    className="cheqadmin-card-exportar"
+                                    onClick={(e) => e.stopPropagation()}
+                                >
+                                    <BotonExportar
+                                        base={`/export/chequeo/${c.id}`}
+                                        nombre={`chequeo-${c.vehiculo?.placa || c.id}`}
+                                        compacto
+                                    />
+                                </div>
                             </article>
                         ))}
                     </div>
