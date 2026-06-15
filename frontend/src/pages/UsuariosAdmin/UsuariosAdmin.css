@@ -403,12 +403,6 @@
     border-top: 1px dashed var(--color-gris-300);
 }
 
-.usuarios-admin-exportar-label {
-    font-size: var(--tamano-xs);
-    color: var(--color-gris-700);
-    font-weight: var(--peso-semibold);
-}
-
 .usuarios-admin-acciones-exportar .boton-exportar button {
     padding: 9px 26px;
     font-size: var(--tamano-sm);

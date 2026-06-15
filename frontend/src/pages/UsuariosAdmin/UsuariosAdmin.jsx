@@ -381,9 +381,6 @@ function UsuariosAdmin() {
                       </div>
                       {u.rol === "conductor" && (
                         <div className="usuarios-admin-acciones-exportar">
-                          <span className="usuarios-admin-exportar-label">
-                            Descargar ficha:
-                          </span>
                           <BotonExportar
                             base={`/export/conductor/${u.id}`}
                             nombre={`conductor-${u.cedula || u.id}`}
