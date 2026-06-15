@@ -22,10 +22,10 @@ function BotonExportar({ base, nombre = "documento", compacto = false, onError }
 
     return (
         <span className={`boton-exportar ${compacto ? "boton-exportar-compacto" : ""}`}>
-            <button type="button" onClick={() => bajar("pdf")} disabled={cargando !== null} title="Descargar PDF">
+            <button type="button" className="boton-exportar-pdf" onClick={() => bajar("pdf")} disabled={cargando !== null} title="Descargar PDF">
                 {cargando === "pdf" ? "…" : "PDF"}
             </button>
-            <button type="button" onClick={() => bajar("word")} disabled={cargando !== null} title="Descargar Word">
+            <button type="button" className="boton-exportar-word" onClick={() => bajar("word")} disabled={cargando !== null} title="Descargar Word">
                 {cargando === "word" ? "…" : "Word"}
             </button>
         </span>

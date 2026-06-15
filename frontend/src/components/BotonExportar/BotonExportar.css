@@ -1,9 +1,8 @@
 .boton-exportar { display: inline-flex; gap: 6px; }
 .boton-exportar button {
     padding: 6px 14px;
-    border: 2px solid var(--color-verde-sena);
-    background: var(--color-blanco);
-    color: var(--color-verde-oscuro);
+    border: none;
+    color: var(--color-blanco);
     border-radius: var(--radio-md);
     font-size: var(--tamano-sm);
     font-weight: var(--peso-semibold);
@@ -11,6 +10,8 @@
     transition: all var(--velocidad-rapida) var(--suavizado);
     font-family: inherit;
 }
-.boton-exportar button:hover:not(:disabled) { background: var(--color-verde-claro); }
+.boton-exportar-pdf { background: var(--color-rojo); }
+.boton-exportar-word { background: var(--color-verde-sena); }
+.boton-exportar button:hover:not(:disabled) { filter: brightness(0.92); }
 .boton-exportar button:disabled { opacity: 0.6; cursor: progress; }
 .boton-exportar-compacto button { padding: 4px 10px; font-size: var(--tamano-xs); }
