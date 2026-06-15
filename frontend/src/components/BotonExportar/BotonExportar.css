@@ -1,0 +1,16 @@
+.boton-exportar { display: inline-flex; gap: 6px; }
+.boton-exportar button {
+    padding: 6px 14px;
+    border: 2px solid var(--color-verde-sena);
+    background: var(--color-blanco);
+    color: var(--color-verde-oscuro);
+    border-radius: var(--radio-md);
+    font-size: var(--tamano-sm);
+    font-weight: var(--peso-semibold);
+    cursor: pointer;
+    transition: all var(--velocidad-rapida) var(--suavizado);
+    font-family: inherit;
+}
+.boton-exportar button:hover:not(:disabled) { background: var(--color-verde-claro); }
+.boton-exportar button:disabled { opacity: 0.6; cursor: progress; }
+.boton-exportar-compacto button { padding: 4px 10px; font-size: var(--tamano-xs); }
