@@ -32,7 +32,7 @@ export const datosVehiculo = async (id, usuario) => {
 
     const { data: chequeos } = await supabase
         .from('chequeos_preoperacionales')
-        .select('id, fecha, tipo, es_oficial, resultado_estado, resultado_criticidad, cerrado, tiene_falla_critica')
+        .select('id, fecha, tipo, es_oficial, resultado_estado, resultado_criticidad, cerrado, tiene_falla_critica, conductor:usuarios!chequeos_preoperacionales_conductor_id_fkey (nombre_completo)')
         .eq('vehiculo_id', id)
         .eq('cerrado', true)
         .order('fecha', { ascending: false })

@@ -15,6 +15,10 @@ const s = StyleSheet.create({
     col1: { flex: 1, fontSize: 9 },
     col2: { width: 130, fontSize: 9 },
     col3: { width: 90, textAlign: 'right', fontSize: 9 },
+    chFecha: { width: 104, fontSize: 9, paddingRight: 12 },
+    chCond: { flex: 1, fontSize: 9, paddingRight: 12 },
+    chTipo: { width: 92, fontSize: 9 },
+    chRes: { width: 80, textAlign: 'right', fontSize: 9 },
     th: { fontSize: 8, color: COLORES.grisSuave, textTransform: 'uppercase' },
 });
 
@@ -49,9 +53,10 @@ export const vehiculoPdfBuffer = async ({ vehiculo, chequeos, origen }) => {
     const filasChequeos = (chequeos || []).length
         ? chequeos.map((c, i) =>
             h(View, { key: i, style: s.tablaFila }, [
-                h(Text, { key: 'f', style: s.col1 }, fechaLarga(c.fecha)),
-                h(Text, { key: 't', style: s.col2 }, c.tipo === 'postoperacional' ? 'Post-operacional' : 'Preoperacional'),
-                h(Text, { key: 'r', style: [s.col3, { color: colorDeEstado(c.resultado_estado), fontFamily: 'Helvetica-Bold' }] }, textoResultado(c.resultado_estado)),
+                h(Text, { key: 'f', style: s.chFecha }, fechaLarga(c.fecha)),
+                h(Text, { key: 'co', style: s.chCond }, c.conductor?.nombre_completo || '—'),
+                h(Text, { key: 't', style: s.chTipo }, c.tipo === 'postoperacional' ? 'Post-operacional' : 'Preoperacional'),
+                h(Text, { key: 'r', style: [s.chRes, { color: colorDeEstado(c.resultado_estado), fontFamily: 'Helvetica-Bold' }] }, textoResultado(c.resultado_estado)),
             ]))
         : [h(View, { key: 'vacio', style: s.tablaFila }, h(Text, { style: { fontSize: 9, color: COLORES.grisSuave } }, 'Sin chequeos cerrados registrados.'))];
 
@@ -98,9 +103,10 @@ export const vehiculoPdfBuffer = async ({ vehiculo, chequeos, origen }) => {
                 h(Text, { key: 'tch', style: estilos.seccionTitulo }, 'Últimos chequeos'),
                 h(View, { key: 'tabch' }, [
                     h(View, { key: 'cab', style: s.tablaCab }, [
-                        h(Text, { key: 'f', style: [s.col1, s.th] }, 'Fecha'),
-                        h(Text, { key: 't', style: [s.col2, s.th] }, 'Tipo'),
-                        h(Text, { key: 'r', style: [s.col3, s.th] }, 'Resultado'),
+                        h(Text, { key: 'f', style: [s.chFecha, s.th] }, 'Fecha'),
+                        h(Text, { key: 'co', style: [s.chCond, s.th] }, 'Conductor'),
+                        h(Text, { key: 't', style: [s.chTipo, s.th] }, 'Tipo'),
+                        h(Text, { key: 'r', style: [s.chRes, s.th] }, 'Resultado'),
                     ]),
                     ...filasChequeos,
                 ]),

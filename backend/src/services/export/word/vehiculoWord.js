@@ -9,10 +9,11 @@ const textoResultado = (e) => (e || '—').replace('_', ' ').toUpperCase();
 const COL_ETIQUETA = 3200;
 const COL_VALOR = ANCHO_CONTENIDO - COL_ETIQUETA;
 
-// Tabla de chequeos (fecha | tipo | resultado)
-const COL_FECHA = 3400;
-const COL_RES = 2600;
-const COL_TIPO = ANCHO_CONTENIDO - COL_FECHA - COL_RES;
+// Tabla de chequeos (fecha | conductor | tipo | resultado)
+const COL_FECHA = 2400;
+const COL_TIPO = 2300;
+const COL_RES = 2200;
+const COL_COND = ANCHO_CONTENIDO - COL_FECHA - COL_TIPO - COL_RES;
 
 const tablaFull = (rows, columnWidths) => new Table({
     width: { size: ANCHO_CONTENIDO, type: WidthType.DXA },
@@ -56,17 +57,19 @@ export const vehiculoWordBuffer = async ({ vehiculo, chequeos, origen }) => {
     // Últimos chequeos
     const cabCheq = new TableRow({ tableHeader: true, children: [
         celdaTexto('Fecha', { width: COL_FECHA, bold: true, fill: 'F1EFE8', size: 20 }),
+        celdaTexto('Conductor', { width: COL_COND, bold: true, fill: 'F1EFE8', size: 20 }),
         celdaTexto('Tipo', { width: COL_TIPO, bold: true, fill: 'F1EFE8', size: 20 }),
         celdaTexto('Resultado', { width: COL_RES, bold: true, fill: 'F1EFE8', size: 20 }),
     ] });
     const filasCheq = (chequeos || []).length
         ? chequeos.map((c) => new TableRow({ children: [
             celdaTexto(fechaLarga(c.fecha), { width: COL_FECHA }),
+            celdaTexto(c.conductor?.nombre_completo || '—', { width: COL_COND }),
             celdaTexto(c.tipo === 'postoperacional' ? 'Post-operacional' : 'Preoperacional', { width: COL_TIPO }),
             celdaTexto(textoResultado(c.resultado_estado), { width: COL_RES, bold: true }),
         ] }))
         : [new TableRow({ children: [celdaTexto('Sin chequeos cerrados registrados.', { width: ANCHO_CONTENIDO })] })];
-    const tablaCheq = tablaFull([cabCheq, ...filasCheq], (chequeos || []).length ? [COL_FECHA, COL_TIPO, COL_RES] : [ANCHO_CONTENIDO]);
+    const tablaCheq = tablaFull([cabCheq, ...filasCheq], (chequeos || []).length ? [COL_FECHA, COL_COND, COL_TIPO, COL_RES] : [ANCHO_CONTENIDO]);
 
     const doc = new Document({
         styles: { default: { document: { run: { font: 'Arial' } } } },
