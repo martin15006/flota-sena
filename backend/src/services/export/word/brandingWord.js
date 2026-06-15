@@ -1,34 +1,40 @@
 import fs from 'fs';
-import { Paragraph, TextRun, ImageRun, Table, TableRow, TableCell, WidthType, BorderStyle, ShadingType, AlignmentType } from 'docx';
+import { Paragraph, TextRun, ImageRun, Table, TableRow, TableCell, WidthType, BorderStyle, ShadingType, AlignmentType, TableLayoutType } from 'docx';
 import { LOGO_PATH, lineaOrigen } from '../branding.js';
 
 const VERDE = '39A900';
 const LOGO_DATA = fs.readFileSync(LOGO_PATH);
 
+// Ancho del contenido = ancho de pagina (12240) - margenes laterales (720 c/u = 0.5") = 10800 twips.
+// Las tablas usan este ancho + layout FIXED para ocupar la hoja completa (sin esto docx
+// hace "autofit" y encoge las tablas al contenido, que es lo que se veia pequeno).
+export const ANCHO_CONTENIDO = 10800;
+
 // Encabezado: logo + titulo + linea de origen, dentro de una "banda" verde simulada
 // con shading de celda (docx no tiene banner, usamos una tabla de 1 fila sin bordes).
 export const encabezadoDocx = (titulo, origen, meta) => {
     const logo = new Paragraph({
-        children: [new ImageRun({ type: 'png', data: LOGO_DATA, transformation: { width: 46, height: 46 } })],
+        children: [new ImageRun({ type: 'png', data: LOGO_DATA, transformation: { width: 54, height: 54 } })],
     });
-    const tituloP = new Paragraph({ children: [new TextRun({ text: titulo, bold: true, size: 30, color: 'FFFFFF' })] });
-    const subP = new Paragraph({ children: [new TextRun({ text: lineaOrigen(origen), size: 18, color: 'FFFFFF' })] });
+    const tituloP = new Paragraph({ children: [new TextRun({ text: titulo, bold: true, size: 34, color: 'FFFFFF' })] });
+    const subP = new Paragraph({ spacing: { before: 40 }, children: [new TextRun({ text: lineaOrigen(origen), size: 22, color: 'FFFFFF' })] });
     const metaP = new Paragraph({
         alignment: AlignmentType.RIGHT,
-        children: (meta || []).map((m, i) => new TextRun({ text: m, size: 16, color: 'FFFFFF', break: i ? 1 : 0 })),
+        children: (meta || []).map((m, i) => new TextRun({ text: m, size: 18, color: 'FFFFFF', break: i ? 1 : 0 })),
     });
     const sinBorde = { style: BorderStyle.NONE };
     return new Table({
-        width: { size: 9360, type: WidthType.DXA },
-        columnWidths: [1200, 5760, 2400],
+        width: { size: ANCHO_CONTENIDO, type: WidthType.DXA },
+        columnWidths: [1300, 6800, 2700],
+        layout: TableLayoutType.FIXED,
         borders: { top: sinBorde, bottom: sinBorde, left: sinBorde, right: sinBorde, insideHorizontal: sinBorde, insideVertical: sinBorde },
         rows: [new TableRow({ children: [
-            new TableCell({ width: { size: 1200, type: WidthType.DXA }, shading: { fill: VERDE, type: ShadingType.CLEAR }, margins: { top: 120, bottom: 120, left: 120, right: 60 }, children: [logo] }),
-            new TableCell({ width: { size: 5760, type: WidthType.DXA }, shading: { fill: VERDE, type: ShadingType.CLEAR }, margins: { top: 120, bottom: 120, left: 60, right: 60 }, children: [tituloP, subP] }),
-            new TableCell({ width: { size: 2400, type: WidthType.DXA }, shading: { fill: VERDE, type: ShadingType.CLEAR }, margins: { top: 120, bottom: 120, left: 60, right: 120 }, children: [metaP] }),
+            new TableCell({ width: { size: 1300, type: WidthType.DXA }, verticalAlign: 'center', shading: { fill: VERDE, type: ShadingType.CLEAR }, margins: { top: 160, bottom: 160, left: 160, right: 60 }, children: [logo] }),
+            new TableCell({ width: { size: 6800, type: WidthType.DXA }, verticalAlign: 'center', shading: { fill: VERDE, type: ShadingType.CLEAR }, margins: { top: 160, bottom: 160, left: 60, right: 60 }, children: [tituloP, subP] }),
+            new TableCell({ width: { size: 2700, type: WidthType.DXA }, verticalAlign: 'center', shading: { fill: VERDE, type: ShadingType.CLEAR }, margins: { top: 160, bottom: 160, left: 60, right: 160 }, children: [metaP] }),
         ] })],
     });
 };
 
 export const tituloSeccion = (texto) =>
-    new Paragraph({ spacing: { before: 220, after: 80 }, children: [new TextRun({ text: texto, bold: true, size: 22, color: '2A7A00' })] });
+    new Paragraph({ spacing: { before: 280, after: 120 }, children: [new TextRun({ text: texto, bold: true, size: 26, color: '2A7A00' })] });
