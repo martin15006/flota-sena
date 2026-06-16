@@ -11,7 +11,9 @@ function BotonExportar({ base, nombre = "documento", compacto = false, onError }
         setCargando(formato);
         try {
             const ext = formato === "word" ? "docx" : "pdf";
-            await descargarArchivo(`${base}?formato=${formato}`, `${nombre}.${ext}`);
+            // El base puede traer filtros (?a=b); en ese caso encadenamos con &.
+            const sep = base.includes("?") ? "&" : "?";
+            await descargarArchivo(`${base}${sep}formato=${formato}`, `${nombre}.${ext}`);
         } catch (err) {
             if (onError) onError(err.message);
             else alert(err.message);

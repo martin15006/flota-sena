@@ -97,6 +97,19 @@ function ChequeosAdmin() {
 
     const totalPaginas = Math.max(1, Math.ceil(total / LIMITE_POR_PAGINA));
 
+    // Reporte: misma cara de filtros que la lista (sin paginación → trae todo lo visible).
+    const baseReporte = (() => {
+        const p = new URLSearchParams();
+        if (fechaDesde) p.append("fecha_desde", fechaDesde);
+        if (fechaHasta) p.append("fecha_hasta", fechaHasta);
+        if (placa.trim()) p.append("placa", placa.trim());
+        if (resultadoEstado) p.append("resultado_estado", resultadoEstado);
+        if (soloOficiales) p.append("solo_oficiales", "true");
+        if (soloCerrados) p.append("solo_cerrados", "true");
+        const qs = p.toString();
+        return `/export/reporte/chequeos${qs ? `?${qs}` : ""}`;
+    })();
+
     return (
         <AdminLayout titulo="Chequeos preoperacionales">
             {/* Barra de página (sin botones de navegacion — el sidebar los cubre) */}
@@ -104,6 +117,9 @@ function ChequeosAdmin() {
                 <div className="cheqadmin-barra-titulo">
                     <h1>Chequeos preoperacionales</h1>
                     <p>{total} chequeo{total === 1 ? "" : "s"} encontrado{total === 1 ? "" : "s"}</p>
+                </div>
+                <div style={{ marginLeft: "auto" }}>
+                    <BotonExportar base={baseReporte} nombre="reporte-chequeos" />
                 </div>
             </section>
 
