@@ -12,7 +12,8 @@ export const ANCHO_CONTENIDO = 10800;
 
 // Encabezado: logo + titulo + linea de origen, dentro de una "banda" verde simulada
 // con shading de celda (docx no tiene banner, usamos una tabla de 1 fila sin bordes).
-export const encabezadoDocx = (titulo, origen, meta) => {
+export const encabezadoDocx = (titulo, origen, meta, ancho = ANCHO_CONTENIDO) => {
+    const colTitulo = ancho - 1300 - 2700; // logo fijo + meta fija; el titulo toma el resto
     const logo = new Paragraph({
         children: [new ImageRun({ type: 'png', data: LOGO_DATA, transformation: { width: 54, height: 54 } })],
     });
@@ -24,13 +25,13 @@ export const encabezadoDocx = (titulo, origen, meta) => {
     });
     const sinBorde = { style: BorderStyle.NONE };
     return new Table({
-        width: { size: ANCHO_CONTENIDO, type: WidthType.DXA },
-        columnWidths: [1300, 6800, 2700],
+        width: { size: ancho, type: WidthType.DXA },
+        columnWidths: [1300, colTitulo, 2700],
         layout: TableLayoutType.FIXED,
         borders: { top: sinBorde, bottom: sinBorde, left: sinBorde, right: sinBorde, insideHorizontal: sinBorde, insideVertical: sinBorde },
         rows: [new TableRow({ children: [
             new TableCell({ width: { size: 1300, type: WidthType.DXA }, verticalAlign: 'center', shading: { fill: VERDE, type: ShadingType.CLEAR }, margins: { top: 160, bottom: 160, left: 160, right: 60 }, children: [logo] }),
-            new TableCell({ width: { size: 6800, type: WidthType.DXA }, verticalAlign: 'center', shading: { fill: VERDE, type: ShadingType.CLEAR }, margins: { top: 160, bottom: 160, left: 60, right: 60 }, children: [tituloP, subP] }),
+            new TableCell({ width: { size: colTitulo, type: WidthType.DXA }, verticalAlign: 'center', shading: { fill: VERDE, type: ShadingType.CLEAR }, margins: { top: 160, bottom: 160, left: 60, right: 60 }, children: [tituloP, subP] }),
             new TableCell({ width: { size: 2700, type: WidthType.DXA }, verticalAlign: 'center', shading: { fill: VERDE, type: ShadingType.CLEAR }, margins: { top: 160, bottom: 160, left: 60, right: 160 }, children: [metaP] }),
         ] })],
     });

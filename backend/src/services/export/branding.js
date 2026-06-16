@@ -61,6 +61,23 @@ export const etiquetaTipo = (t) => TIPOS_VEHICULO[t] || t || '—';
 const ESTADOS_VEHICULO = { operativo: 'Operativo', observacion: 'Observación', alerta: 'Alerta', critico: 'Crítico', no_operativo: 'No operativo' };
 export const etiquetaEstado = (e) => ESTADOS_VEHICULO[e] || e || '—';
 
+// Origen de un REPORTE segun el scope del admin que lo genera (no hay un solo
+// centro): admin de centro -> su centro; Director Regional -> su departamento;
+// superadmin -> solo "SENA". El suplente usa el centro que esta cubriendo.
+export const origenDeUsuario = async (usuario) => {
+    const centroId = usuario.centroActivo || usuario.centro_id;
+    if (centroId) return cabeceraDeCentro(centroId);
+    if (usuario.departamento_id) {
+        const { data } = await supabase
+            .from('departamentos')
+            .select('nombre')
+            .eq('id', usuario.departamento_id)
+            .maybeSingle();
+        return { centroNombre: '', departamentoNombre: data?.nombre || '' };
+    }
+    return { centroNombre: '', departamentoNombre: '' };
+};
+
 // Cargo legible (espejo de frontend/src/lib/roles.js). Un conductor del pool se
 // muestra como "Pool de transporte".
 const ETIQUETA_ROL = { superadmin: 'Director Nacional', admin_departamental: 'Director Regional', admin_centro: 'Coordinador de Flota', admin: 'Coordinador de Flota', conductor: 'Conductor' };

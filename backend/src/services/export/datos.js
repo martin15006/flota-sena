@@ -1,8 +1,8 @@
 import { supabase } from '../../config/supabase.js';
-import { obtenerChequeoCompleto, obtenerChequeosDelConductor } from '../chequeos.service.js';
+import { obtenerChequeoCompleto, obtenerChequeosDelConductor, listarChequeosParaAdmin } from '../chequeos.service.js';
 import { obtenerVehiculoCompleto } from '../vehiculos.service.js';
 import { puedeAccederCentro, obtenerScope, usuarioEnScope } from '../scope.service.js';
-import { cabeceraDeCentro } from './branding.js';
+import { cabeceraDeCentro, origenDeUsuario, etiquetaEstado, fechaLarga } from './branding.js';
 
 // Junta TODO lo necesario para exportar un chequeo (reusa la capa de datos existente,
 // respetando el scope del usuario). Devuelve { ok, error?, status?, chequeo, origen }.
@@ -67,4 +67,34 @@ export const datosConductor = async (id, usuario) => {
     const chequeos = await obtenerChequeosDelConductor(id, 8);
     const origen = await cabeceraDeCentro(conductor.centro_id);
     return { ok: true, conductor: { ...conductor, email }, chequeos: chequeos || [], origen };
+};
+
+// Reporte/listado de chequeos visibles segun el scope del admin, respetando los
+// mismos filtros de ChequeosAdmin (periodo, placa, resultado, oficiales, cerrados).
+// Devuelve { ok, chequeos, total, origen, filtrosTexto }.
+export const datosReporteChequeos = async (filtros, usuario) => {
+    const { chequeos } = await listarChequeosParaAdmin({
+        usuario,
+        fechaDesde: filtros.fechaDesde,
+        fechaHasta: filtros.fechaHasta,
+        placa: filtros.placa,
+        resultadoEstado: filtros.resultadoEstado,
+        soloOficiales: filtros.soloOficiales,
+        soloCerrados: filtros.soloCerrados,
+        pagina: 1,
+        limite: 5000,
+    });
+
+    const partes = [];
+    if (filtros.fechaDesde || filtros.fechaHasta) {
+        partes.push(`Período: ${filtros.fechaDesde ? fechaLarga(filtros.fechaDesde) : '…'} – ${filtros.fechaHasta ? fechaLarga(filtros.fechaHasta) : '…'}`);
+    }
+    if (filtros.placa) partes.push(`Placa: ${filtros.placa}`);
+    if (filtros.resultadoEstado) partes.push(`Resultado: ${etiquetaEstado(filtros.resultadoEstado)}`);
+    if (filtros.soloOficiales === 'true') partes.push('Solo oficiales');
+    if (filtros.soloCerrados === 'true') partes.push('Solo cerrados');
+    const filtrosTexto = partes.length ? partes.join('   ·   ') : 'Todos los chequeos visibles';
+
+    const origen = await origenDeUsuario(usuario);
+    return { ok: true, chequeos: chequeos || [], total: (chequeos || []).length, origen, filtrosTexto };
 };
