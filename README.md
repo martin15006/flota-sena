@@ -283,9 +283,9 @@ Después del login exitoso te lleva al panel `/dashboard`.
 - [x] Pantallas de gestión de la geografía (añadir ciudades y centros desde la app, sin SQL)
 - [x] Repulir interfaz del conductor con la misma calidad visual del admin
 - [ ] Módulo de Ajustes con modo claro/oscuro
-- [ ] **Pool de transporte — Paso 2: suplencia del Coordinador** (reemplazo temporal con fechas + notificaciones + vista "Actividad del pool" — ver `docs/diseno-pool-vip.md`)
+- [x] **Pool de transporte — Paso 2: suplencia del Coordinador** (reemplazo temporal con fechas + notificaciones + vista "Actividad del pool"; incluye alcance por centro/regional y "centro activo" — ver `docs/diseno-pool-vip.md`)
 - [ ] **Terminar de pulir las notificaciones** (la campanita + flujo en sitio) **y agregar notificaciones por correo** de los avisos importantes (además de la campanita) — Fase 7. *(Pendiente recordado por Martín el 15-jun: no olvidar cerrar bien este bloque.)*
-- [ ] **Exportar a PDF / Word** información importante (detalle de chequeo, fichas, reportes) — encaja en Fase 5
+- [x] **Exportar a PDF / Word** (17-jun): detalle de chequeo, ficha de vehículo, ficha de conductor y reporte/listado de chequeos — los cuatro en PDF y Word, con header dinámico por centro/regional y pie de página
 
 ---
 
