@@ -1,6 +1,6 @@
 import { Document, Packer, Paragraph, TextRun, Table, TableRow, WidthType, TableLayoutType } from 'docx';
 import { fechaLarga, etiquetaTipo, etiquetaEstado, estaVencido } from '../branding.js';
-import { encabezadoDocx, tituloSeccion, ANCHO_CONTENIDO, celdaTexto, filaDato, espaciadoresSuperior } from './brandingWord.js';
+import { encabezadoDocx, tituloSeccion, ANCHO_CONTENIDO, celdaTexto, filaDato, espaciadoresSuperior, pieDocx } from './brandingWord.js';
 
 const ROJO = 'A32D2D';
 const textoResultado = (e) => (e || '—').replace('_', ' ').toUpperCase();
@@ -75,6 +75,7 @@ export const vehiculoWordBuffer = async ({ vehiculo, chequeos, origen }) => {
         styles: { default: { document: { run: { font: 'Arial' } } } },
         sections: [{
             properties: { page: { size: { width: 12240, height: 15840 }, margin: { top: 1440, right: 720, bottom: 1080, left: 720 } } },
+            footers: { default: pieDocx() },
             children: [
                 ...espaciadoresSuperior(),
                 encabezadoDocx('Ficha de vehículo', origen, [`Placa ${vehiculo.placa || '—'}`, etiquetaTipo(vehiculo.tipo)]),

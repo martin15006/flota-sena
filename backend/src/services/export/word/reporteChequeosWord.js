@@ -1,6 +1,6 @@
 import { Document, Packer, Paragraph, TextRun, Table, TableRow, WidthType, TableLayoutType, PageOrientation } from 'docx';
 import { fechaLarga, fechaHora, colorDeEstado } from '../branding.js';
-import { encabezadoDocx, espaciadoresSuperior, celdaTexto } from './brandingWord.js';
+import { encabezadoDocx, espaciadoresSuperior, celdaTexto, pieDocx } from './brandingWord.js';
 
 // Hoja apaisada: ancho de contenido = 15840 - 720 - 720 = 14400 twips.
 const ANCHO = 14400;
@@ -47,7 +47,11 @@ export const reporteChequeosWordBuffer = async ({ chequeos, total, origen, filtr
     const doc = new Document({
         styles: { default: { document: { run: { font: 'Arial' } } } },
         sections: [{
-            properties: { page: { size: { width: 15840, height: 12240, orientation: PageOrientation.LANDSCAPE }, margin: { top: 1080, right: 720, bottom: 1080, left: 720 } } },
+            // docx intercambia ancho/alto cuando la orientacion es landscape, asi que
+            // las medidas van en orden VERTICAL (12240 x 15840) y la libreria las voltea
+            // a 15840 x 12240. (Si se pasan ya volteadas, sale vertical por error.)
+            properties: { page: { size: { width: 12240, height: 15840, orientation: PageOrientation.LANDSCAPE }, margin: { top: 1080, right: 720, bottom: 1080, left: 720 } } },
+            footers: { default: pieDocx(ANCHO) },
             children: cuerpo,
         }],
     });

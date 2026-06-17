@@ -1,6 +1,6 @@
 import { Document, Packer, Paragraph, TextRun, Table, TableRow, TableCell, WidthType, BorderStyle, ShadingType, TableLayoutType } from 'docx';
 import { fechaLarga } from '../branding.js';
-import { encabezadoDocx, tituloSeccion, ANCHO_CONTENIDO, espaciadoresSuperior } from './brandingWord.js';
+import { encabezadoDocx, tituloSeccion, ANCHO_CONTENIDO, espaciadoresSuperior, pieDocx } from './brandingWord.js';
 
 const borde = { style: BorderStyle.SINGLE, size: 2, color: 'E0DED6' };
 const bordes = { top: borde, bottom: borde, left: borde, right: borde };
@@ -48,6 +48,7 @@ export const chequeoWordBuffer = async ({ chequeo, origen }) => {
         styles: { default: { document: { run: { font: 'Arial' } } } },
         sections: [{
             properties: { page: { size: { width: 12240, height: 15840 }, margin: { top: 1440, right: 720, bottom: 1080, left: 720 } } },
+            footers: { default: pieDocx() },
             children: [
                 // Espaciadores reales: bajan el encabezado en CUALQUIER vista de Word
                 // (incluida "Diseño web", que ignora el margen superior de pagina).

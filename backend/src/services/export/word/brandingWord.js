@@ -1,6 +1,6 @@
 import fs from 'fs';
-import { Paragraph, TextRun, ImageRun, Table, TableRow, TableCell, WidthType, BorderStyle, ShadingType, AlignmentType, TableLayoutType } from 'docx';
-import { LOGO_PATH, lineaOrigen } from '../branding.js';
+import { Paragraph, TextRun, ImageRun, Table, TableRow, TableCell, WidthType, BorderStyle, ShadingType, AlignmentType, TableLayoutType, Footer, PageNumber, TabStopType } from 'docx';
+import { LOGO_PATH, lineaOrigen, fechaHora } from '../branding.js';
 
 const VERDE = '39A900';
 const LOGO_DATA = fs.readFileSync(LOGO_PATH);
@@ -39,6 +39,22 @@ export const encabezadoDocx = (titulo, origen, meta, ancho = ANCHO_CONTENIDO) =>
 
 export const tituloSeccion = (texto) =>
     new Paragraph({ spacing: { before: 280, after: 120 }, children: [new TextRun({ text: texto, bold: true, size: 26, color: '2A7A00' })] });
+
+// Pie de pagina igual que en los PDF: izquierda "Generado el ... · Sistema de
+// Gestion de Flota SENA", derecha "Pagina X de Y" (con tab a la derecha del ancho).
+export const pieDocx = (ancho = ANCHO_CONTENIDO) => new Footer({
+    children: [
+        new Paragraph({
+            tabStops: [{ type: TabStopType.RIGHT, position: ancho }],
+            border: { top: { style: BorderStyle.SINGLE, size: 4, color: 'E5E5E5', space: 6 } },
+            children: [
+                new TextRun({ text: `Generado el ${fechaHora(new Date().toISOString())} · Sistema de Gestión de Flota SENA`, size: 16, color: '5F5E5A' }),
+                new TextRun({ text: '\t' }),
+                new TextRun({ children: ['Página ', PageNumber.CURRENT, ' de ', PageNumber.TOTAL_PAGES], size: 16, color: '5F5E5A' }),
+            ],
+        }),
+    ],
+});
 
 // Lineas en blanco que bajan el encabezado (se respetan en cualquier vista de Word,
 // incluida "Diseño web", que ignora el margen superior de pagina). Mismo valor en
