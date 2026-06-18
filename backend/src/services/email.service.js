@@ -4,7 +4,8 @@
 // deshabilitado) o el envio falla, loguea y devuelve { enviado:false } sin lanzar.
 import { transporter, correoHabilitado, REMITENTE } from '../config/email.js';
 import { supabase } from '../config/supabase.js';
-import { LOGO_PATH, COLORES, fechaLarga } from './export/branding.js';
+import { LOGO_PATH, COLORES, fechaLarga, lineaOrigen, cabeceraDeCentro } from './export/branding.js';
+import { resolverDestinatariosCentro } from './notificaciones.service.js';
 
 const APP_URL = process.env.CORS_ORIGIN || '';
 
@@ -115,4 +116,15 @@ export const plantillaDigestVencimientos = ({ items, centroNombre }) => {
     </table>
     <div style="margin-top:12px;font-size:13px;color:#5f5e5a;">Renueva estos documentos a tiempo para que los vehiculos puedan seguir operando.</div>`;
     return layout('Documentos por vencer', cuerpo);
+};
+
+// ---- Orquestadores (resuelven destinatarios + arman el correo) ----
+
+// Correo inmediato de falla critica a los admins del centro afectado.
+export const enviarCorreoFallaCritica = async ({ centroId, placa, conductor, criticidad, fecha, chequeoId }) => {
+    const para = await emailsDeUsuarios(await resolverDestinatariosCentro(centroId));
+    if (para.length === 0) return { enviado: false, sinDestinatarios: true };
+    const origen = lineaOrigen(await cabeceraDeCentro(centroId));
+    const html = plantillaFallaCritica({ placa, conductor, criticidad, fecha, chequeoId, origen });
+    return enviarCorreo({ para, asunto: `Falla critica: ${placa || 'vehiculo'} NO OPERATIVO`, html });
 };

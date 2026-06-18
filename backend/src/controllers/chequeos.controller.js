@@ -11,6 +11,7 @@ import {
     registrarIntentoNoApto,
 } from "../services/chequeos.service.js";
 import { crearNotificacion } from "../services/notificaciones.service.js";
+import { enviarCorreoFallaCritica } from "../services/email.service.js";
 import { supabase } from "../config/supabase.js";
 
 const ESTADOS_RESPUESTA_VALIDOS = ["cumple", "no_cumple", "no_aplica"];
@@ -257,6 +258,19 @@ export const postCerrarChequeo = async (req, res) => {
                     vehiculo_id: ch?.vehiculo_id,
                     conductor_id: ch?.conductor_id,
                 });
+
+                // Falla critica (vehiculo NO OPERATIVO) -> correo inmediato a los
+                // admins del centro. Fire-and-forget: no demora la respuesta del cierre.
+                if (estado === 'no_operativo') {
+                    enviarCorreoFallaCritica({
+                        centroId: ch?.centro_id,
+                        placa,
+                        conductor: nombreConductor,
+                        criticidad: ch?.resultado_criticidad,
+                        fecha: ch?.fecha,
+                        chequeoId: id,
+                    }).catch((e) => console.warn('[correo] falla critica no enviada:', e.message));
+                }
             }
         } catch (notifErr) {
             console.warn('[notificaciones] no se pudo crear notif de cierre:', notifErr.message);
