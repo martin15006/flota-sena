@@ -13,6 +13,9 @@ export const ICONOS_TIPO = {
     intento_bloqueado_vehiculo: "✗",
     licencia_proxima_vencer: "⏱",
     licencia_vencida: "⏱",
+    soat_proximo_vencer: "⏱",
+    rtm_proximo_vencer: "⏱",
+    extintor_proximo_vencer: "⏱",
     vehiculo_sin_runt: "📋",
     sistema: "•",
 };
@@ -30,6 +33,9 @@ export const COLOR_TIPO = {
     intento_bloqueado_vehiculo: "naranja",
     licencia_proxima_vencer: "naranja",
     licencia_vencida: "rojo",
+    soat_proximo_vencer: "naranja",
+    rtm_proximo_vencer: "naranja",
+    extintor_proximo_vencer: "naranja",
     vehiculo_sin_runt: "naranja",
     sistema: "verde",
 };
