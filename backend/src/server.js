@@ -15,6 +15,7 @@ import notificacionesRoutes from './routes/notificaciones.routes.js';
 import suplenciasRoutes from './routes/suplencias.routes.js';
 import exportRoutes from './routes/export.routes.js';
 import { iniciarKeepAlive, detenerKeepAlive } from './utils/keepAlive.js';
+import { iniciarCronVencimientos, detenerCronVencimientos } from './jobs/vencimientos.job.js';
 
 dotenv.config();
 
@@ -86,11 +87,14 @@ const servidor = app.listen(PORT, async () => {
     console.log(`Test Supabase: http://localhost:${PORT}/api/test-supabase`);
     // Esperamos el primer latido antes de seguir, asi las primeras requests llegan con la conexion caliente
     await iniciarKeepAlive();
+    // Programar el aviso diario de vencimientos (SOAT/RTM/extintor/licencia)
+    iniciarCronVencimientos();
 });
 
 const cerrarLimpio = (senal) => {
     console.log(`\nRecibida senal ${senal}, cerrando servidor...`);
     detenerKeepAlive();
+    detenerCronVencimientos();
     servidor.close(() => process.exit(0));
 };
 

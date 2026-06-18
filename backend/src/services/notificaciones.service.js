@@ -88,15 +88,18 @@ export const crearNotificacion = async ({
     }
 
     // Control de frecuencia: contar cuantas notificaciones del mismo tipo para el
-    // mismo conductor existen en la ventana. Si ya se alcanzo el maximo, no crear.
-    if (dedupeHoras && conductor_id) {
+    // mismo conductor O vehiculo existen en la ventana. Si ya se alcanzo el maximo,
+    // no crear. (Sirve para no repetir a diario los avisos de vencimiento.)
+    if (dedupeHoras && (conductor_id || vehiculo_id)) {
         const desde = new Date(Date.now() - dedupeHoras * 60 * 60 * 1000).toISOString();
-        const { count } = await supabase
+        let q = supabase
             .from('notificaciones')
             .select('id', { count: 'exact', head: true })
             .eq('tipo', tipo)
-            .eq('conductor_id', conductor_id)
             .gte('created_at', desde);
+        if (conductor_id) q = q.eq('conductor_id', conductor_id);
+        if (vehiculo_id) q = q.eq('vehiculo_id', vehiculo_id);
+        const { count } = await q;
         if (count && count >= maxPorVentana) {
             return { cantidadCreada: 0, omitidaPorLimite: true };
         }
