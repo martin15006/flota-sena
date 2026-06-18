@@ -19,6 +19,40 @@ const ROLES_DESTINATARIOS = [
     'superadmin',
 ];
 
+// resolverDestinatariosCentro: devuelve los IDs de los usuarios que deben recibir
+// un aviso de un centro dado. Misma regla de scope que usa la campanita:
+//   - centro_id null             -> TODOS los admins activos
+//   - admin SIN centro (global)  -> recibe todo
+//   - admin CON centro           -> solo si coincide con el del evento
+//   - + pool con suplencia VIGENTE en ese centro (actua como Coordinador)
+// Se usa para la campanita Y para los correos de avisos importantes.
+//
+// Nota: usamos .neq('rol', 'conductor') (no .in(roles)) porque rol es un ENUM en BD;
+// "todos los que no son conductor" = todos los admins, robusto ante cambios del enum.
+export const resolverDestinatariosCentro = async (centro_id = null) => {
+    const { data: todosAdmins, error } = await supabase
+        .from('usuarios')
+        .select('id, centro_id')
+        .neq('rol', 'conductor')
+        .eq('activo', true);
+    if (error) {
+        console.error('[notificaciones] error obteniendo destinatarios:', error);
+        return [];
+    }
+    const ids = (todosAdmins || [])
+        .filter((u) => !centro_id || !u.centro_id || u.centro_id === centro_id)
+        .map((u) => u.id);
+
+    if (centro_id) {
+        const poolIds = await poolsVigentesEnCentro(centro_id);
+        const set = new Set(ids);
+        for (const poolId of poolIds) {
+            if (poolId && !set.has(poolId)) { ids.push(poolId); set.add(poolId); }
+        }
+    }
+    return ids;
+};
+
 // crearNotificacion: crea una entrada de notificacion para cada admin que aplique.
 //
 // Parametros:
@@ -68,57 +102,16 @@ export const crearNotificacion = async ({
         }
     }
 
-    // Traer TODOS los admins activos y filtrar el destinatario en JS, porque la
-    // regla de scope es mas matizada que un simple .eq():
-    //   - notificacion sin centro          -> va a todos los admins
-    //   - admin SIN centro asignado (global)-> recibe todo (es el admin general)
-    //   - admin CON centro asignado         -> solo si coincide con el del evento
-    // Asi el admin principal (que normalmente no tiene centro) nunca se queda sin
-    // recibir notificaciones, pero un admin_centro solo ve las de su centro.
-    //
-    // IMPORTANTE: usamos .neq('rol', 'conductor') en vez de .in(lista de roles admin)
-    // porque la columna rol es un ENUM en la BD (rol_usuario). "Todos los que no son
-    // conductor" = todos los admins, y es robusto sin importar que valores tenga el
-    // enum (incluidos los dormidos tras aplanar roles el 12 jun 2026).
-    const { data: todosAdmins, error: errDest } = await supabase
-        .from('usuarios')
-        .select('id, rol, centro_id')
-        .neq('rol', 'conductor')
-        .eq('activo', true);
+    const destinatarioIds = await resolverDestinatariosCentro(centro_id);
 
-    if (errDest) {
-        console.error('[notificaciones] error obteniendo destinatarios:', errDest);
-        return { cantidadCreada: 0 };
-    }
-
-    const destinatarios = (todosAdmins || []).filter((u) => {
-        if (!centro_id) return true;       // evento sin centro -> todos
-        if (!u.centro_id) return true;     // admin global -> recibe todo
-        return u.centro_id === centro_id;  // admin de centro -> solo el suyo
-    });
-
-    // Pool · Paso 2: si el evento es de un centro, tambien notificar a los
-    // conductores del pool con suplencia VIGENTE para ese centro (actuan como
-    // Coordinador). Se agregan sin duplicar.
-    if (centro_id) {
-        const poolIds = await poolsVigentesEnCentro(centro_id);
-        const yaIncluidos = new Set(destinatarios.map((d) => d.id));
-        for (const poolId of poolIds) {
-            if (poolId && !yaIncluidos.has(poolId)) {
-                destinatarios.push({ id: poolId });
-                yaIncluidos.add(poolId);
-            }
-        }
-    }
-
-    if (destinatarios.length === 0) {
+    if (destinatarioIds.length === 0) {
         // No hay a quien notificar — no es un error, solo no se crea nada
         return { cantidadCreada: 0 };
     }
 
     // Construir una fila por destinatario
-    const filas = destinatarios.map((d) => ({
-        destinatario_id: d.id,
+    const filas = destinatarioIds.map((id) => ({
+        destinatario_id: id,
         tipo,
         titulo,
         mensaje,
