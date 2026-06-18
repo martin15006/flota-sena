@@ -8,14 +8,21 @@ import { supabase } from '../config/supabase.js';
 import { correoHabilitado } from '../config/email.js';
 import { obtenerVencimientos } from '../services/vencimientos.service.js';
 import { crearNotificacion } from '../services/notificaciones.service.js';
-import { enviarCorreo, plantillaDigestVencimientos } from '../services/email.service.js';
+import { enviarCorreo, plantillaDigestVencimientos, obtenerMapaEmails } from '../services/email.service.js';
+import { obtenerScope } from '../services/scope.service.js';
 import { cabeceraDeCentro, fechaLarga } from '../services/export/branding.js';
 
 const DEDUPE_HORAS = 24 * 7; // no repetir el mismo aviso (mismo doc) en 7 dias
 
 // Ejecuta una revision completa. Exportada para poder dispararla manualmente.
 export const ejecutarRevisionVencimientos = async () => {
-    const items = await obtenerVencimientos();
+    let items = [];
+    try {
+        items = await obtenerVencimientos();
+    } catch (e) {
+        console.error('[vencimientos] error consultando vencimientos:', e.message);
+        return { items: 0, notifsCreadas: 0, correosEnviados: 0, error: e.message };
+    }
     console.log(`[vencimientos] revision: ${items.length} documento(s) por vencer`);
 
     // 1) Notificaciones en la campanita (una por item, fan-out a los admins del centro)
@@ -41,23 +48,28 @@ export const ejecutarRevisionVencimientos = async () => {
         }
     }
 
-    // 2) Correo-resumen por admin (solo si el correo esta habilitado)
+    // 2) Correo-resumen por admin (solo si el correo esta habilitado), respetando
+    //    el SCOPE TERRITORIAL de cada admin: superadmin/admin global ven todo; un
+    //    admin de centro solo su centro; un Director Regional solo su departamento.
     let correosEnviados = 0;
     if (correoHabilitado && items.length > 0) {
         const { data: admins } = await supabase
             .from('usuarios')
-            .select('id, centro_id')
+            .select('id, rol, centro_id, departamento_id')
             .neq('rol', 'conductor')
             .eq('activo', true);
-        const { data: authData } = await supabase.auth.admin.listUsers({ page: 1, perPage: 1000 });
-        const emailPorId = new Map((authData?.users || []).map((u) => [u.id, u.email]));
+        const emailPorId = await obtenerMapaEmails();
+        let sinEmail = 0;
 
         for (const admin of admins || []) {
             const email = emailPorId.get(admin.id);
-            if (!email) continue;
-            // admin global (sin centro) ve todo; admin de centro ve solo el suyo
-            const susItems = items.filter((it) => !admin.centro_id || it.centro_id === admin.centro_id);
+            if (!email) { sinEmail++; continue; }
+            const scope = await obtenerScope(admin);
+            const susItems = scope.tipo === 'global'
+                ? items
+                : items.filter((it) => scope.centroIds?.includes(it.centro_id));
             if (susItems.length === 0) continue;
+            // Nombre del centro solo si el admin gestiona uno solo (no para regionales/global)
             const centroNombre = admin.centro_id ? (await cabeceraDeCentro(admin.centro_id)).centroNombre : '';
             const html = plantillaDigestVencimientos({ items: susItems, centroNombre });
             const r = await enviarCorreo({
@@ -66,6 +78,9 @@ export const ejecutarRevisionVencimientos = async () => {
                 html,
             });
             if (r.enviado) correosEnviados++;
+        }
+        if (sinEmail > 0) {
+            console.warn(`[vencimientos] ${sinEmail} admin(s) activos sin email en Auth — no recibieron el resumen.`);
         }
     } else if (!correoHabilitado) {
         console.log('[vencimientos] correo deshabilitado: solo se llenó la campanita');
@@ -80,6 +95,10 @@ let tarea = null;
 
 export const iniciarCronVencimientos = () => {
     const expr = process.env.CRON_VENCIMIENTOS || '0 7 * * *';
+    if (typeof cron.validate === 'function' && !cron.validate(expr)) {
+        console.error(`[vencimientos] CRON_VENCIMIENTOS invalido ("${expr}") — el aviso diario NO se programara. Revisa el .env.`);
+        return;
+    }
     try {
         tarea = cron.schedule(
             expr,

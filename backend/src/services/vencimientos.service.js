@@ -18,10 +18,11 @@ const enRango = (dias) => dias <= DIAS_AVISO && dias >= DIAS_PISO;
 export const obtenerVencimientos = async () => {
     const items = [];
 
-    const { data: vehiculos } = await supabase
+    const { data: vehiculos, error: errVeh } = await supabase
         .from('vehiculos')
         .select('id, placa, centro_id, soat_vencimiento, rtm_vencimiento, extintor_vencimiento')
         .eq('activo', true);
+    if (errVeh) console.error('[vencimientos] error consultando vehiculos:', errVeh.message);
 
     for (const v of vehiculos || []) {
         const docs = [

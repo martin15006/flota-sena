@@ -16,6 +16,7 @@ import suplenciasRoutes from './routes/suplencias.routes.js';
 import exportRoutes from './routes/export.routes.js';
 import { iniciarKeepAlive, detenerKeepAlive } from './utils/keepAlive.js';
 import { iniciarCronVencimientos, detenerCronVencimientos } from './jobs/vencimientos.job.js';
+import { verificarCorreo } from './services/email.service.js';
 
 dotenv.config();
 
@@ -89,6 +90,8 @@ const servidor = app.listen(PORT, async () => {
     await iniciarKeepAlive();
     // Programar el aviso diario de vencimientos (SOAT/RTM/extintor/licencia)
     iniciarCronVencimientos();
+    // Verificar credenciales de correo (no bloquea el arranque)
+    verificarCorreo();
 });
 
 const cerrarLimpio = (senal) => {

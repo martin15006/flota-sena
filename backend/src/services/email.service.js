@@ -34,19 +34,51 @@ export const enviarCorreo = async ({ para, asunto, html }) => {
     }
 };
 
-// Resuelve los correos de una lista de IDs de usuario. Los emails viven en
-// Supabase Auth (no en la tabla usuarios), asi que se traen de ahi.
+// Mapa id -> email de TODOS los usuarios de Supabase Auth (los emails viven en
+// Auth, no en la tabla usuarios). Pagina hasta traerlos todos (no se queda en la
+// primera pagina). Reutilizable por el correo de falla critica y el digest.
+export const obtenerMapaEmails = async () => {
+    const mapa = new Map();
+    const perPage = 1000;
+    let page = 1;
+    // Tope de seguridad por si la API no devuelve menos de perPage nunca.
+    for (let i = 0; i < 50; i++) {
+        const { data, error } = await supabase.auth.admin.listUsers({ page, perPage });
+        if (error) {
+            console.error('[correo] error listando usuarios auth:', error.message);
+            break;
+        }
+        const usuarios = data?.users || [];
+        for (const u of usuarios) if (u.email) mapa.set(u.id, u.email);
+        if (usuarios.length < perPage) break;
+        page++;
+    }
+    return mapa;
+};
+
+// Resuelve los correos de una lista de IDs de usuario.
 export const emailsDeUsuarios = async (ids) => {
     const set = new Set((ids || []).filter(Boolean));
     if (set.size === 0) return [];
-    const { data, error } = await supabase.auth.admin.listUsers({ page: 1, perPage: 1000 });
-    if (error) {
-        console.error('[correo] error listando usuarios auth:', error.message);
-        return [];
+    const mapa = await obtenerMapaEmails();
+    return [...set].map((id) => mapa.get(id)).filter(Boolean);
+};
+
+// Verifica las credenciales de Gmail al arrancar y lo dice claro en consola
+// (fail loud): asi no pasa desapercibido que el correo quedo mal configurado.
+export const verificarCorreo = async () => {
+    if (!correoHabilitado) {
+        console.log('[correo] deshabilitado (sin GMAIL_USER / GMAIL_APP_PASSWORD) — la app funciona, pero no envia correos.');
+        return false;
     }
-    return (data?.users || [])
-        .filter((u) => set.has(u.id) && u.email)
-        .map((u) => u.email);
+    try {
+        await transporter.verify();
+        console.log('[correo] credenciales de Gmail OK — los correos se enviaran.');
+        return true;
+    } catch (err) {
+        console.error('[correo] ⚠ credenciales de Gmail INVALIDAS o sin conexion:', err.message);
+        return false;
+    }
 };
 
 // ---- Plantillas HTML (estilos inline: los clientes de correo no leen <style>) ----
