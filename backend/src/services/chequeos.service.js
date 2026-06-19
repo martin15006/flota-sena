@@ -85,7 +85,7 @@ export const registrarIntentoBloqueado = async ({
 const verificarVehiculoParaChequeo = async (vehiculoId, centroDelConductor, esPool = false) => {
     const { data: vehiculo, error } = await supabase
         .from("vehiculos")
-        .select("id, placa, activo, centro_id, estado, nivel_criticidad, es_vip")
+        .select("id, placa, activo, centro_id, estado, nivel_criticidad, es_vip, soat_vencimiento, rtm_vencimiento, extintor_vencimiento")
         .eq("id", vehiculoId)
         .maybeSingle();
 
@@ -112,6 +112,30 @@ const verificarVehiculoParaChequeo = async (vehiculoId, centroDelConductor, esPo
         };
     }
     return { valido: true, vehiculo };
+};
+
+// Documentos legales del vehiculo que, vencidos, impiden circular. Devuelve el
+// PRIMERO vencido { nombre, fechaLegible } o null si estan todos al dia.
+const primerDocumentoVencido = (vehiculo) => {
+    const hoy = new Date();
+    hoy.setHours(0, 0, 0, 0);
+    const docs = [
+        ["SOAT", vehiculo.soat_vencimiento],
+        ["revisión técnico-mecánica (RTM)", vehiculo.rtm_vencimiento],
+        ["extintor", vehiculo.extintor_vencimiento],
+    ];
+    for (const [nombre, fecha] of docs) {
+        if (!fecha) continue;
+        const v = new Date(fecha);
+        v.setHours(0, 0, 0, 0);
+        if (v < hoy) {
+            return {
+                nombre,
+                fechaLegible: v.toLocaleDateString("es-CO", { day: "2-digit", month: "long", year: "numeric" }),
+            };
+        }
+    }
+    return null;
 };
 
 // Decide si este chequeo cuenta como "oficial" del dia (el primer preoperacional del dia para el vehiculo)
@@ -222,6 +246,23 @@ export const iniciarChequeo = async ({
             error: verif.detalle,
             razon: verif.razon,
         };
+    }
+
+    // 2.5 Documentos del vehiculo vencidos (SOAT/RTM/extintor): bloquean el
+    // PREOPERACIONAL — legalmente no puede circular. No bloquea el postoperacional
+    // porque el recorrido ya ocurrio y hay que poder registrar el cierre.
+    // Sin aviso al admin: el Coordinador ya se entera por el aviso diario de
+    // vencimientos; aqui solo se le impide salir al conductor.
+    if (tipo === "preoperacional") {
+        const doc = primerDocumentoVencido(verif.vehiculo);
+        if (doc) {
+            return {
+                exito: false,
+                status: 403,
+                error: `No puedes operar este vehículo: el ${doc.nombre} está vencido (desde el ${doc.fechaLegible}). Avísale al Coordinador de Flota para que lo renueve.`,
+                razon: "documento_vencido",
+            };
+        }
     }
 
     // 3. Calcular es_oficial
