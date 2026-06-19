@@ -94,6 +94,10 @@ export const login = async (req, res) => {
                 id: perfil.id,
                 cedula: perfil.cedula,
                 nombre_completo: perfil.nombre_completo,
+                // El email vive en Supabase Auth (no en la tabla usuarios); lo tomamos
+                // del usuario autenticado para que "Mi perfil" lo muestre desde el login.
+                email: data.user.email,
+                telefono: perfil.telefono,
                 rol: perfil.rol,
                 debe_cambiar_password: perfil.debe_cambiar_password,
                 foto_url: perfil.foto_url,
