@@ -52,6 +52,7 @@ function VehiculosAdmin() {
                 : "vehiculos";
     const [deptoSel, setDeptoSel] = useState(null);
     const [centroSel, setCentroSel] = useState(null);
+    const [busquedaNivel, setBusquedaNivel] = useState(""); // buscar departamento/centro
     const vista = centroSel ? "vehiculos"
         : nivelBase === "vehiculos" ? "vehiculos"
             : (nivelBase === "departamentos" && !deptoSel) ? "departamentos"
@@ -149,13 +150,21 @@ function VehiculosAdmin() {
         (v) => (v.centro ? { id: v.centro.id, nombre: v.centro.nombre, ciudad: v.centro.ciudad?.nombre } : null)
     );
 
-    const entrarDepto = (d) => { setDeptoSel(d); setCentroSel(null); };
+    const entrarDepto = (d) => { setDeptoSel(d); setCentroSel(null); setBusquedaNivel(""); };
     const entrarCentro = (c) => setCentroSel(c);
     const volver = () => {
         if (vista === "vehiculos") setCentroSel(null);
         else if (vista === "centros") setDeptoSel(null);
+        setBusquedaNivel("");
     };
     const puedeVolver = vista !== nivelBase;
+
+    // Buscador de los niveles superiores (departamentos / centros).
+    const gruposNivel = vista === "departamentos" ? departamentos : vista === "centros" ? centrosDelNivel : [];
+    const qNivel = busquedaNivel.trim().toLowerCase();
+    const gruposNivelFiltrados = qNivel
+        ? gruposNivel.filter((g) => g.nombre.toLowerCase().includes(qNivel) || (g.ciudad || "").toLowerCase().includes(qNivel))
+        : gruposNivel;
 
     const desactivar = async (id, placa) => {
         if (!confirm(`¿Desactivar el vehículo ${placa}?`)) return;
@@ -258,13 +267,29 @@ function VehiculosAdmin() {
                     </div>
                 )}
 
-                {/* NIVELES SUPERIORES: tarjetas de departamentos o de centros */}
+                {/* NIVELES SUPERIORES: buscador + tarjetas de departamentos o de centros */}
+                {(vista === "departamentos" || vista === "centros") && !cargando && !error && gruposNivel.length > 0 && (
+                    <div className="vehiculos-admin-filtros animar-fade-in">
+                        <input
+                            type="text"
+                            className="vehiculos-admin-busqueda"
+                            placeholder={vista === "departamentos" ? "Buscar departamento..." : "Buscar centro o ciudad..."}
+                            value={busquedaNivel}
+                            onChange={(e) => setBusquedaNivel(e.target.value)}
+                        />
+                    </div>
+                )}
+
                 {(vista === "departamentos" || vista === "centros") && !cargando && !error && (
-                    (vista === "departamentos" ? departamentos : centrosDelNivel).length === 0 ? (
+                    gruposNivel.length === 0 ? (
                         <div className="vehiculos-admin-vacio">No hay vehículos registrados todavía.</div>
+                    ) : gruposNivelFiltrados.length === 0 ? (
+                        <div className="vehiculos-admin-vacio">
+                            No se encontró ningún {vista === "departamentos" ? "departamento" : "centro"} con “{busquedaNivel}”.
+                        </div>
                     ) : (
                         <div className="vehiculos-niveles-grid animar-fade-in">
-                            {(vista === "departamentos" ? departamentos : centrosDelNivel).map((g) => (
+                            {gruposNivelFiltrados.map((g) => (
                                 <button
                                     key={g.id}
                                     className="vehiculos-nivel-card"
