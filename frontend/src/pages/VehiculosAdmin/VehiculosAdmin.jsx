@@ -42,6 +42,21 @@ function VehiculosAdmin() {
     const [refrescando, setRefrescando] = useState(false);
     const [toast, setToast] = useState(null);
 
+    // Navegación territorial: el Nacional ve Departamentos → Centros → Vehículos;
+    // el Regional ve los Centros de su departamento → Vehículos; el Coordinador ve
+    // sus vehículos directo. La "vista" se deriva del rol + lo que el admin haya
+    // seleccionado (sin estado extra ni efectos).
+    const nivelBase =
+        usuario?.rol === "superadmin" ? "departamentos"
+            : usuario?.rol === "admin_departamental" ? "centros"
+                : "vehiculos";
+    const [deptoSel, setDeptoSel] = useState(null);
+    const [centroSel, setCentroSel] = useState(null);
+    const vista = centroSel ? "vehiculos"
+        : nivelBase === "vehiculos" ? "vehiculos"
+            : (nivelBase === "departamentos" && !deptoSel) ? "departamentos"
+                : "centros";
+
     const mostrarToast = (mensaje, tipo = "exito", posicion = "abajo-derecha") => {
         setToast({ mensaje, tipo, posicion, key: Date.now() });
     };
@@ -77,7 +92,13 @@ function VehiculosAdmin() {
         return () => clearInterval(intervalo);
     }, [usuario]);
 
-    const vehiculosFiltrados = vehiculos.filter((v) => {
+    // Si el admin entró a un centro, todo (filtros, conteos, grid) se acota a ese
+    // centro; si no, trabaja sobre todos los vehículos visibles según su scope.
+    const vehiculosBase = centroSel
+        ? vehiculos.filter((v) => v.centro?.id === centroSel.id)
+        : vehiculos;
+
+    const vehiculosFiltrados = vehiculosBase.filter((v) => {
         if (filtroEstado === FILTRO_INACTIVOS) {
             if (v.activo) return false;
         } else if (filtroEstado !== "todos") {
@@ -95,12 +116,46 @@ function VehiculosAdmin() {
         return true;
     });
 
-    const conteoEstados = vehiculos.reduce((acc, v) => {
+    const conteoEstados = vehiculosBase.reduce((acc, v) => {
         if (v.activo) acc[v.estado] = (acc[v.estado] || 0) + 1;
         return acc;
     }, {});
 
-    const conteoInactivos = vehiculos.filter((v) => !v.activo).length;
+    const conteoInactivos = vehiculosBase.filter((v) => !v.activo).length;
+
+    // Agrupa los vehículos por departamento o por centro, con conteo de alertas
+    // (críticos / no operativos) para las tarjetas de los niveles superiores.
+    const agruparNivel = (lista, clave) => {
+        const mapa = new Map();
+        for (const v of lista) {
+            const k = clave(v);
+            if (!k?.id) continue;
+            if (!mapa.has(k.id)) mapa.set(k.id, { ...k, total: 0, criticos: 0, noOperativos: 0 });
+            const g = mapa.get(k.id);
+            g.total++;
+            if (v.activo && v.estado === "critico") g.criticos++;
+            if (v.activo && v.estado === "no_operativo") g.noOperativos++;
+        }
+        return [...mapa.values()].sort(
+            (a, b) => (b.criticos + b.noOperativos) - (a.criticos + a.noOperativos) || a.nombre.localeCompare(b.nombre)
+        );
+    };
+    const departamentos = agruparNivel(vehiculos, (v) => {
+        const d = v.centro?.ciudad?.departamento;
+        return d ? { id: d.id, nombre: d.nombre } : null;
+    });
+    const centrosDelNivel = agruparNivel(
+        deptoSel ? vehiculos.filter((v) => v.centro?.ciudad?.departamento?.id === deptoSel.id) : vehiculos,
+        (v) => (v.centro ? { id: v.centro.id, nombre: v.centro.nombre, ciudad: v.centro.ciudad?.nombre } : null)
+    );
+
+    const entrarDepto = (d) => { setDeptoSel(d); setCentroSel(null); };
+    const entrarCentro = (c) => setCentroSel(c);
+    const volver = () => {
+        if (vista === "vehiculos") setCentroSel(null);
+        else if (vista === "centros") setDeptoSel(null);
+    };
+    const puedeVolver = vista !== nivelBase;
 
     const desactivar = async (id, placa) => {
         if (!confirm(`¿Desactivar el vehículo ${placa}?`)) return;
@@ -147,7 +202,11 @@ function VehiculosAdmin() {
                     <div>
                         <h1 className="vehiculos-admin-titulo">Vehículos</h1>
                         <p className="vehiculos-admin-subtitulo">
-                            {vehiculos.length} registrados · {vehiculosFiltrados.length} visibles
+                            {vista === "departamentos"
+                                ? `${departamentos.length} departamento${departamentos.length === 1 ? "" : "s"} con vehículos`
+                                : vista === "centros"
+                                    ? `${centrosDelNivel.length} centro${centrosDelNivel.length === 1 ? "" : "s"}${deptoSel ? ` · ${deptoSel.nombre}` : ""}`
+                                    : `${vehiculosBase.length} registrados · ${vehiculosFiltrados.length} visibles${centroSel ? ` · ${centroSel.nombre}` : ""}`}
                             {ultimaActualizacion && (
                                 <span className="vehiculos-admin-actualizado">
                                     · Actualizado a las {ultimaActualizacion.toLocaleTimeString("es-CO", { hour: "2-digit", minute: "2-digit", second: "2-digit" })}
@@ -188,12 +247,59 @@ function VehiculosAdmin() {
                     </div>
                 </div>
 
+                {/* Barra de navegación territorial: volver + ruta (depto › centro) */}
+                {puedeVolver && (
+                    <div className="vehiculos-nivel-barra animar-fade-in">
+                        <button className="vehiculos-nivel-volver" onClick={volver}>← Volver</button>
+                        <span className="vehiculos-nivel-ruta">
+                            {deptoSel && <span>{deptoSel.nombre}</span>}
+                            {centroSel && <span> › {centroSel.nombre}</span>}
+                        </span>
+                    </div>
+                )}
+
+                {/* NIVELES SUPERIORES: tarjetas de departamentos o de centros */}
+                {(vista === "departamentos" || vista === "centros") && !cargando && !error && (
+                    (vista === "departamentos" ? departamentos : centrosDelNivel).length === 0 ? (
+                        <div className="vehiculos-admin-vacio">No hay vehículos registrados todavía.</div>
+                    ) : (
+                        <div className="vehiculos-niveles-grid animar-fade-in">
+                            {(vista === "departamentos" ? departamentos : centrosDelNivel).map((g) => (
+                                <button
+                                    key={g.id}
+                                    className="vehiculos-nivel-card"
+                                    onClick={() => (vista === "departamentos" ? entrarDepto(g) : entrarCentro(g))}
+                                >
+                                    <div className="vehiculos-nivel-card-nombre">{g.nombre}</div>
+                                    {g.ciudad && <div className="vehiculos-nivel-card-sub">{g.ciudad}</div>}
+                                    <div className="vehiculos-nivel-card-total">
+                                        {g.total} vehículo{g.total === 1 ? "" : "s"}
+                                    </div>
+                                    <div className="vehiculos-nivel-card-alertas">
+                                        {g.criticos > 0 && (
+                                            <span className="vehiculos-nivel-alerta rojo">{g.criticos} crítico{g.criticos === 1 ? "" : "s"}</span>
+                                        )}
+                                        {g.noOperativos > 0 && (
+                                            <span className="vehiculos-nivel-alerta gris">{g.noOperativos} no operativo{g.noOperativos === 1 ? "" : "s"}</span>
+                                        )}
+                                        {g.criticos === 0 && g.noOperativos === 0 && (
+                                            <span className="vehiculos-nivel-alerta ok">Sin alertas</span>
+                                        )}
+                                    </div>
+                                    <div className="vehiculos-nivel-card-flecha">Ver →</div>
+                                </button>
+                            ))}
+                        </div>
+                    )
+                )}
+
+                {vista === "vehiculos" && (<>
                 <div className="vehiculos-admin-resumen animar-fade-in">
                     <div
                         className="vehiculos-admin-resumen-item"
                         onClick={() => setFiltroEstado("todos")}
                     >
-                        <div className="vehiculos-admin-resumen-num">{vehiculos.length}</div>
+                        <div className="vehiculos-admin-resumen-num">{vehiculosBase.length}</div>
                         <div className="vehiculos-admin-resumen-label">Total</div>
                     </div>
                     {Object.entries(ESTADOS).map(([key, info]) => (
@@ -245,6 +351,7 @@ function VehiculosAdmin() {
                         ))}
                     </select>
                 </div>
+                </>)}
 
                 {cargando && (
                     <div className="vehiculos-admin-estado-cargando">Cargando vehículos...</div>
@@ -254,13 +361,13 @@ function VehiculosAdmin() {
                     <div className="vehiculos-admin-estado-error animar-shake">⚠️ {error}</div>
                 )}
 
-                {!cargando && !error && vehiculosFiltrados.length === 0 && (
+                {vista === "vehiculos" && !cargando && !error && vehiculosFiltrados.length === 0 && (
                     <div className="vehiculos-admin-vacio">
                         No hay vehículos que coincidan con los filtros.
                     </div>
                 )}
 
-                {!cargando && !error && vehiculosFiltrados.length > 0 && (
+                {vista === "vehiculos" && !cargando && !error && vehiculosFiltrados.length > 0 && (
                     <div className="vehiculos-admin-grid animar-fade-in">
                         {vehiculosFiltrados.map((v) => {
                             const estadoInfo = ESTADOS[v.estado] || ESTADOS.operativo;

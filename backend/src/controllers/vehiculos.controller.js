@@ -35,7 +35,16 @@ export const listarVehiculos = async (req, res) => {
             .from("vehiculos")
             .select(`
                 *,
-                fotos:fotos_vehiculo (id, url, es_principal)
+                fotos:fotos_vehiculo (id, url, es_principal),
+                centro:centro_id (
+                    id,
+                    nombre,
+                    ciudad:ciudad_id (
+                        id,
+                        nombre,
+                        departamento:departamento_id ( id, nombre )
+                    )
+                )
             `)
             .order("nivel_criticidad", { ascending: false })
             .order("placa", { ascending: true });

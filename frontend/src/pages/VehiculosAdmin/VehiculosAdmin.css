@@ -500,3 +500,91 @@
     color: #fff;
     box-shadow: var(--sombra-md);
 }
+
+/* ===== Navegación territorial (Departamentos / Centros) ===== */
+.vehiculos-nivel-barra {
+    display: flex;
+    align-items: center;
+    gap: var(--espacio-md);
+    margin-bottom: var(--espacio-md);
+    flex-wrap: wrap;
+}
+.vehiculos-nivel-volver {
+    padding: 6px 16px;
+    border: 2px solid var(--color-verde-sena);
+    background: var(--color-blanco);
+    color: var(--color-verde-oscuro);
+    border-radius: var(--radio-md);
+    font-weight: var(--peso-semibold);
+    font-family: inherit;
+    cursor: pointer;
+    transition: all var(--velocidad-rapida) var(--suavizado);
+}
+.vehiculos-nivel-volver:hover { background: var(--color-verde-claro); }
+.vehiculos-nivel-ruta {
+    font-size: var(--tamano-md);
+    font-weight: var(--peso-semibold);
+    color: var(--color-gris-700);
+}
+
+.vehiculos-niveles-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fill, minmax(240px, 1fr));
+    gap: var(--espacio-md);
+}
+.vehiculos-nivel-card {
+    text-align: left;
+    background: var(--color-blanco);
+    border: 2px solid var(--color-gris-300);
+    border-left: 6px solid var(--color-verde-sena);
+    border-radius: var(--radio-md);
+    padding: var(--espacio-md);
+    cursor: pointer;
+    transition: all var(--velocidad-rapida) var(--suavizado);
+    box-shadow: var(--sombra-sm);
+    display: flex;
+    flex-direction: column;
+    gap: 4px;
+    font-family: inherit;
+}
+.vehiculos-nivel-card:hover {
+    transform: translateY(-3px);
+    box-shadow: var(--sombra-md);
+    border-left-color: var(--color-verde-oscuro);
+}
+.vehiculos-nivel-card-nombre {
+    font-size: var(--tamano-lg);
+    font-weight: var(--peso-bold);
+    color: var(--color-verde-oscuro);
+}
+.vehiculos-nivel-card-sub {
+    font-size: var(--tamano-sm);
+    color: var(--color-gris-700);
+}
+.vehiculos-nivel-card-total {
+    font-size: var(--tamano-md);
+    font-weight: var(--peso-semibold);
+    margin-top: 4px;
+}
+.vehiculos-nivel-card-alertas {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 6px;
+    margin-top: 6px;
+}
+.vehiculos-nivel-alerta {
+    font-size: var(--tamano-xs);
+    font-weight: var(--peso-semibold);
+    padding: 3px 10px;
+    border-radius: var(--radio-xl);
+}
+.vehiculos-nivel-alerta.rojo { background: #FCE8E8; color: var(--color-rojo); }
+.vehiculos-nivel-alerta.gris { background: var(--color-gris-200); color: var(--color-gris-700); }
+.vehiculos-nivel-alerta.ok { background: var(--color-verde-claro); color: var(--color-verde-oscuro); }
+.vehiculos-nivel-card-flecha {
+    margin-top: 8px;
+    align-self: flex-end;
+    font-weight: var(--peso-bold);
+    color: var(--color-verde-sena);
+    font-size: var(--tamano-sm);
+}
