@@ -12,6 +12,8 @@ import { useNavigate } from "react-router-dom";
 import { useAuth } from "../../hooks/useAuth.js";
 import { api } from "../../lib/api.js";
 import AdminLayout from "../../components/AdminLayout/AdminLayout.jsx";
+import Toast from "../../components/Toast/Toast.jsx";
+import ModalInformeSuperior from "./ModalInformeSuperior.jsx";
 import "./Dashboard.css";
 
 // Helper: formato de fecha tipo "viernes 5 de junio de 2026"
@@ -49,6 +51,8 @@ function Dashboard() {
     const [stats, setStats] = useState(null);
     const [cargando, setCargando] = useState(true);
     const [error, setError] = useState(null);
+    const [modalInforme, setModalInforme] = useState(false);
+    const [toast, setToast] = useState(null);
 
     const cargarStats = async () => {
         try {
@@ -94,14 +98,26 @@ function Dashboard() {
         <AdminLayout titulo="Dashboard">
             {/* ===== Saludo ===== */}
             <div className="dashboard-bienvenida animar-fade-in-up">
-                <h2 className="dashboard-saludo">
-                    Hola, {usuario.nombre_completo?.split(" ")[0]}
-                </h2>
-                <p className="dashboard-fecha">{formatearFechaHoy()}</p>
-                {esScopeLimitado && (
-                    <p className="dashboard-scope">
-                        Estás viendo los datos de tu área asignada.
-                    </p>
+                <div>
+                    <h2 className="dashboard-saludo">
+                        Hola, {usuario.nombre_completo?.split(" ")[0]}
+                    </h2>
+                    <p className="dashboard-fecha">{formatearFechaHoy()}</p>
+                    {esScopeLimitado && (
+                        <p className="dashboard-scope">
+                            Estás viendo los datos de tu área asignada.
+                        </p>
+                    )}
+                </div>
+                {/* El Nacional no tiene superior a quién escalar -> no se le muestra */}
+                {usuario.rol !== "superadmin" && (
+                    <button
+                        className="dashboard-boton-informe"
+                        onClick={() => setModalInforme(true)}
+                        title="Enviar un informe a tu superior"
+                    >
+                        📤 Informar a mi superior
+                    </button>
                 )}
             </div>
 
@@ -349,6 +365,20 @@ function Dashboard() {
                 )}
             </section>
 
+            <ModalInformeSuperior
+                abierto={modalInforme}
+                onCerrar={() => setModalInforme(false)}
+                onEnviado={(msg) => setToast({ mensaje: msg, tipo: "exito" })}
+            />
+            {toast && (
+                <Toast
+                    mensaje={toast.mensaje}
+                    tipo={toast.tipo}
+                    duracion={4000}
+                    posicion="arriba-centro"
+                    onCerrar={() => setToast(null)}
+                />
+            )}
         </AdminLayout>
     );
 }

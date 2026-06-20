@@ -17,6 +17,7 @@ export const ICONOS_TIPO = {
     rtm_proximo_vencer: "⏱",
     extintor_proximo_vencer: "⏱",
     vehiculo_sin_runt: "📋",
+    informe_escalado: "📤",
     sistema: "•",
 };
 
@@ -37,6 +38,7 @@ export const COLOR_TIPO = {
     rtm_proximo_vencer: "naranja",
     extintor_proximo_vencer: "naranja",
     vehiculo_sin_runt: "naranja",
+    informe_escalado: "azul",
     sistema: "verde",
 };
 

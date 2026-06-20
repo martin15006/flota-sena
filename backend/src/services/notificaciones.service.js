@@ -144,6 +144,23 @@ export const crearNotificacion = async ({
 };
 
 
+// crearNotificacionDirecta: crea una notificacion para destinatarios ESPECIFICOS
+// (no broadcast por centro). La usa el escalado de informes para avisarle al
+// superior puntual.
+export const crearNotificacionDirecta = async ({ destinatarioIds, tipo, titulo, mensaje, url_destino = null }) => {
+    const ids = [...new Set((destinatarioIds || []).filter(Boolean))];
+    if (!tipo || !titulo || !mensaje) throw new Error('tipo, titulo y mensaje son obligatorios');
+    if (ids.length === 0) return { cantidadCreada: 0 };
+    const filas = ids.map((id) => ({ destinatario_id: id, tipo, titulo, mensaje, url_destino }));
+    const { error } = await supabase.from('notificaciones').insert(filas);
+    if (error) {
+        console.error('[notificaciones] error insert directo:', error);
+        return { cantidadCreada: 0 };
+    }
+    return { cantidadCreada: filas.length };
+};
+
+
 // listarMisNotificaciones: lista paginada para el admin logueado.
 export const listarMisNotificaciones = async ({
     destinatarioId,

@@ -83,6 +83,7 @@ export const login = async (req, res) => {
                 conductor_id: perfil.id,
                 dedupeHoras: 24,
                 maxPorVentana: 5,
+                soloCentro: true, // se queda en el centro; hacia arriba se escala a mano
             }).catch((e) => console.warn('[notificaciones] login licencia vencida:', e.message));
         }
 

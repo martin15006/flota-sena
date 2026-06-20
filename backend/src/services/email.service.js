@@ -150,6 +150,29 @@ export const plantillaDigestVencimientos = ({ items, centroNombre }) => {
     return layout('Documentos por vencer', cuerpo);
 };
 
+// Informe escalado de un admin a su superior (nota + resumen opcional del area).
+export const plantillaInforme = ({ deQuien, cargo, area, asunto, mensaje, resumen }) => {
+    const filaResumen = (etiqueta, valor, color) => `
+      <td style="padding:10px 14px;text-align:center;background:#fafafa;border:1px solid #eee;">
+        <div style="font-size:22px;font-weight:bold;color:${color || '#1a1a1a'};">${valor}</div>
+        <div style="font-size:11px;color:#5f5e5a;text-transform:uppercase;">${etiqueta}</div>
+      </td>`;
+    const bloqueResumen = resumen ? `
+    <div style="margin-top:18px;font-size:13px;color:#5f5e5a;font-weight:bold;">Resumen del área${area ? ` (${area})` : ''}:</div>
+    <table style="width:100%;border-collapse:collapse;margin-top:8px;"><tr>
+      ${filaResumen('Vehículos', resumen.vehiculos)}
+      ${filaResumen('Críticos', resumen.criticos, resumen.criticos > 0 ? COLORES.critico : '#1a1a1a')}
+      ${filaResumen('No operativos', resumen.noOperativos, resumen.noOperativos > 0 ? COLORES.critico : '#1a1a1a')}
+      ${filaResumen('Chequeos hoy', resumen.chequeosHoy)}
+    </tr></table>` : '';
+    const cuerpo = `
+    <div style="font-size:13px;color:#5f5e5a;">Informe enviado por <b>${deQuien}</b>${cargo ? ` · ${cargo}` : ''}${area ? ` · ${area}` : ''}.</div>
+    <div style="font-size:17px;font-weight:bold;color:${COLORES.verdeOscuro};margin-top:12px;">${asunto || 'Informe'}</div>
+    <div style="margin-top:8px;font-size:14px;white-space:pre-line;">${(mensaje || '').replace(/</g, '&lt;')}</div>
+    ${bloqueResumen}`;
+    return layout('Informe de un administrador', cuerpo);
+};
+
 // ---- Orquestadores (resuelven destinatarios + arman el correo) ----
 
 // Correo inmediato de falla critica a los admins del centro afectado.

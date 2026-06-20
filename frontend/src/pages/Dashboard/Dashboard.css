@@ -12,6 +12,30 @@
     padding: var(--espacio-xl);
     margin-bottom: var(--espacio-xl);
     box-shadow: var(--sombra-md);
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: var(--espacio-md);
+    flex-wrap: wrap;
+}
+
+.dashboard-boton-informe {
+    padding: 10px 18px;
+    border: 2px solid var(--color-verde-oscuro);
+    background: var(--color-verde-sena);
+    color: var(--color-blanco);
+    border-radius: var(--radio-md);
+    font-size: var(--tamano-sm);
+    font-weight: var(--peso-bold);
+    font-family: inherit;
+    cursor: pointer;
+    white-space: nowrap;
+    transition: all var(--velocidad-rapida) var(--suavizado);
+}
+.dashboard-boton-informe:hover {
+    background: var(--color-verde-oscuro);
+    transform: translateY(-1px);
+    box-shadow: var(--sombra-sm);
 }
 
 .dashboard-saludo {

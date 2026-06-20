@@ -126,6 +126,7 @@ export const postIniciarChequeo = async (req, res) => {
                         centro_id: centroId,
                         conductor_id: req.usuario.id,
                         vehiculo_id: vehiculo_id || null,
+                        soloCentro: true, // se queda en el centro; hacia arriba se escala a mano
                     });
                 }
             } catch (notifErr) {
@@ -257,6 +258,7 @@ export const postCerrarChequeo = async (req, res) => {
                     chequeo_id: id,
                     vehiculo_id: ch?.vehiculo_id,
                     conductor_id: ch?.conductor_id,
+                    soloCentro: true, // se queda en el centro; hacia arriba se escala a mano
                 });
 
                 // Falla critica (vehiculo NO OPERATIVO) -> correo inmediato a los
