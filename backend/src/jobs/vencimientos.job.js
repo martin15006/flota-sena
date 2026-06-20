@@ -40,6 +40,7 @@ export const ejecutarRevisionVencimientos = async () => {
                 conductor_id: it.conductor_id || null,
                 dedupeHoras: DEDUPE_HORAS,
                 maxPorVentana: 1,
+                soloCentro: true, // el vencimiento es del Coordinador del centro (no sube a Regional/Nacional)
             });
             notifsCreadas += r.cantidadCreada || 0;
         } catch (e) {

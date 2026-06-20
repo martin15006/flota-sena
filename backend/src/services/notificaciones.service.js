@@ -29,7 +29,7 @@ const ROLES_DESTINATARIOS = [
 //
 // Nota: usamos .neq('rol', 'conductor') (no .in(roles)) porque rol es un ENUM en BD;
 // "todos los que no son conductor" = todos los admins, robusto ante cambios del enum.
-export const resolverDestinatariosCentro = async (centro_id = null) => {
+export const resolverDestinatariosCentro = async (centro_id = null, { soloCentro = false } = {}) => {
     const { data: todosAdmins, error } = await supabase
         .from('usuarios')
         .select('id, centro_id')
@@ -40,7 +40,13 @@ export const resolverDestinatariosCentro = async (centro_id = null) => {
         return [];
     }
     const ids = (todosAdmins || [])
-        .filter((u) => !centro_id || !u.centro_id || u.centro_id === centro_id)
+        .filter((u) => {
+            if (!centro_id) return true;
+            // soloCentro: UNICAMENTE los admins de ese centro (Coordinador de Flota).
+            // Por defecto tambien reciben los globales/departamentales (sin centro).
+            if (soloCentro) return u.centro_id === centro_id;
+            return !u.centro_id || u.centro_id === centro_id;
+        })
         .map((u) => u.id);
 
     if (centro_id) {
@@ -82,6 +88,7 @@ export const crearNotificacion = async ({
     conductor_id = null,
     dedupeHoras = null,
     maxPorVentana = 1,
+    soloCentro = false,
 }) => {
     if (!tipo || !titulo || !mensaje) {
         throw new Error('tipo, titulo y mensaje son obligatorios');
@@ -105,7 +112,7 @@ export const crearNotificacion = async ({
         }
     }
 
-    const destinatarioIds = await resolverDestinatariosCentro(centro_id);
+    const destinatarioIds = await resolverDestinatariosCentro(centro_id, { soloCentro });
 
     if (destinatarioIds.length === 0) {
         // No hay a quien notificar — no es un error, solo no se crea nada
