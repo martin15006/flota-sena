@@ -9,7 +9,6 @@ import { correoHabilitado } from '../config/email.js';
 import { obtenerVencimientos } from '../services/vencimientos.service.js';
 import { crearNotificacion } from '../services/notificaciones.service.js';
 import { enviarCorreo, plantillaDigestVencimientos, obtenerMapaEmails } from '../services/email.service.js';
-import { obtenerScope } from '../services/scope.service.js';
 import { cabeceraDeCentro, fechaLarga } from '../services/export/branding.js';
 
 const DEDUPE_HORAS = 24 * 7; // no repetir el mismo aviso (mismo doc) en 7 dias
@@ -48,29 +47,27 @@ export const ejecutarRevisionVencimientos = async () => {
         }
     }
 
-    // 2) Correo-resumen por admin (solo si el correo esta habilitado), respetando
-    //    el SCOPE TERRITORIAL de cada admin: superadmin/admin global ven todo; un
-    //    admin de centro solo su centro; un Director Regional solo su departamento.
+    // 2) Correo-resumen al COORDINADOR DE FLOTA de cada centro (solo si el correo
+    //    esta habilitado). Es una tarea operativa del centro: va unicamente a los
+    //    admins ASIGNADOS A UN CENTRO (centro_id), NO escala al Director Regional ni
+    //    al Nacional (seria mucho correo y no es su gestion directa).
     let correosEnviados = 0;
     if (correoHabilitado && items.length > 0) {
         const { data: admins } = await supabase
             .from('usuarios')
-            .select('id, rol, centro_id, departamento_id')
+            .select('id, centro_id')
             .neq('rol', 'conductor')
-            .eq('activo', true);
+            .eq('activo', true)
+            .not('centro_id', 'is', null); // solo Coordinadores de Flota (admins de centro)
         const emailPorId = await obtenerMapaEmails();
         let sinEmail = 0;
 
         for (const admin of admins || []) {
             const email = emailPorId.get(admin.id);
             if (!email) { sinEmail++; continue; }
-            const scope = await obtenerScope(admin);
-            const susItems = scope.tipo === 'global'
-                ? items
-                : items.filter((it) => scope.centroIds?.includes(it.centro_id));
+            const susItems = items.filter((it) => it.centro_id === admin.centro_id);
             if (susItems.length === 0) continue;
-            // Nombre del centro solo si el admin gestiona uno solo (no para regionales/global)
-            const centroNombre = admin.centro_id ? (await cabeceraDeCentro(admin.centro_id)).centroNombre : '';
+            const centroNombre = (await cabeceraDeCentro(admin.centro_id)).centroNombre;
             const html = plantillaDigestVencimientos({ items: susItems, centroNombre });
             const r = await enviarCorreo({
                 para: email,
@@ -80,7 +77,7 @@ export const ejecutarRevisionVencimientos = async () => {
             if (r.enviado) correosEnviados++;
         }
         if (sinEmail > 0) {
-            console.warn(`[vencimientos] ${sinEmail} admin(s) activos sin email en Auth — no recibieron el resumen.`);
+            console.warn(`[vencimientos] ${sinEmail} coordinador(es) de centro sin email — no recibieron el resumen.`);
         }
     } else if (!correoHabilitado) {
         console.log('[vencimientos] correo deshabilitado: solo se llenó la campanita');
