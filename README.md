@@ -284,7 +284,11 @@ Después del login exitoso te lleva al panel `/dashboard`.
 - [x] Repulir interfaz del conductor con la misma calidad visual del admin
 - [ ] Módulo de Ajustes con modo claro/oscuro
 - [x] **Pool de transporte — Paso 2: suplencia del Coordinador** (reemplazo temporal con fechas + notificaciones + vista "Actividad del pool"; incluye alcance por centro/regional y "centro activo" — ver `docs/diseno-pool-vip.md`)
-- [ ] **Terminar de pulir las notificaciones** (la campanita + flujo en sitio) **y agregar notificaciones por correo** de los avisos importantes (además de la campanita) — Fase 7. *(Pendiente recordado por Martín el 15-jun: no olvidar cerrar bien este bloque.)*
+- [x] **Notificaciones por correo** (17-jun): falla crítica (inmediato) + resumen diario de vencimientos (SOAT/RTM/extintor/licencia), ambos **solo al Coordinador de Flota** del centro. Infra Gmail+nodemailer con degradación elegante.
+- [ ] **Reducir el ruido de notificaciones al Director Nacional** (pendiente, hablado el 17-jun). Hoy el Nacional recibe la notificación de CADA chequeo del país. Opciones en evaluación:
+  - **A** — resumen diario automático al Nacional.
+  - **B** — los chequeos rutinarios (operativo/observación) se quedan en el centro/regional; al Nacional solo suben los importantes (crítico, no operativo, intentos bloqueados).
+  - **C (idea de Martín)** — nada sube solo; cada admin (Coordinador/Regional) puede **escalar manualmente** un aviso/resumen a su superior y le llega por **correo**. Es una mezcla de "informar algo puntual" + "mandar un reporte del área". Combina bien con B.
 - [x] **Exportar a PDF / Word** (17-jun): detalle de chequeo, ficha de vehículo, ficha de conductor y reporte/listado de chequeos — los cuatro en PDF y Word, con header dinámico por centro/regional y pie de página
 
 ---
