@@ -49,3 +49,10 @@ backups/
 *.md
 !README.md
 !**/README.md
+
+# Respaldos temporales de .docx (se crean al editar la bitácora; NO son entregables)
+*backup*.docx
+
+# Generador local del manual en Word: usa el .md (que es local), así que también
+# se queda local. El entregable es el MANUAL_DE_USO.docx que sí se versiona.
+docs/generar_manual.cjs

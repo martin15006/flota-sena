@@ -1,6 +1,8 @@
-// Usamos el hostname actual para que funcione tanto en localhost como cuando se accede
-// desde un celular conectado al mismo wifi (http://<IP_DEL_PC>:5173 -> API en :3001 de la misma IP)
-const API_URL = `http://${window.location.hostname}:3001/api`;
+// En PRODUCCION (Cloudflare) inyectamos la URL del backend por la variable VITE_API_URL
+// (ej: https://mi-backend.up.railway.app/api). Vite la "hornea" en el build.
+// En DESARROLLO (sin esa variable) caemos al backend local usando el hostname actual,
+// para que siga funcionando en localhost y desde un celular en el mismo wifi.
+const API_URL = import.meta.env.VITE_API_URL || `http://${window.location.hostname}:3001/api`;
 
 export const api = async (endpoint, options = {}) => {
     const token = localStorage.getItem('token');
