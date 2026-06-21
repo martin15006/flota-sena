@@ -2,6 +2,7 @@ import { supabase } from "../config/supabase.js";
 import { resolverIdentificador, obtenerPerfil } from "../services/auth.service.js";
 import { crearNotificacion } from "../services/notificaciones.service.js";
 import { suplenciaVigenteDePool, centrosCubiertosDeSuplencia } from "../services/suplencias.service.js";
+import { estadoBloqueo, registrarFallo, limpiarIntentos } from "../services/loginIntentos.service.js";
 
 // Helper: ¿la fecha de vencimiento (YYYY-MM-DD) ya paso? Compara solo fechas.
 const licenciaEstaVencida = (fechaVencimiento) => {
@@ -29,14 +30,37 @@ export const login = async (req, res) => {
             return res.status(401).json({ error: 'Credenciales invalidas' });
         }
 
+        // Anti fuerza bruta: si la cuenta esta bloqueada por intentos fallidos,
+        // ni siquiera intentamos el login hasta que pase el tiempo. (Fail-soft:
+        // si la tabla aun no existe, esto devuelve no-bloqueado y el login sigue.)
+        const bloqueo = await estadoBloqueo(email);
+        if (bloqueo.bloqueado) {
+            const m = bloqueo.minutosRestantes;
+            return res.status(429).json({
+                error: `Demasiados intentos fallidos. Tu cuenta esta bloqueada temporalmente; intenta de nuevo en ${m} minuto${m === 1 ? '' : 's'}.`,
+            });
+        }
+
         const { data, error } = await supabase.auth.signInWithPassword({
             email,
             password,
         });
 
         if (error) {
+            // Contraseña incorrecta: contamos el fallo. Si llega a 5 seguidos,
+            // la cuenta queda bloqueada 15 minutos.
+            const fallo = await registrarFallo(email);
+            if (fallo.recienBloqueado) {
+                return res.status(429).json({
+                    error: `Demasiados intentos fallidos. Tu cuenta quedo bloqueada por seguridad; intenta de nuevo en ${fallo.minutos} minutos.`,
+                });
+            }
             return res.status(401).json({ error: 'Credenciales invalidas' });
         }
+
+        // Login correcto: reiniciamos el contador de intentos fallidos.
+        // Fire-and-forget (la funcion es fail-soft): no demora ni rompe el login.
+        limpiarIntentos(email);
 
         const perfil = await obtenerPerfil(data.user.id);
 

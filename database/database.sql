@@ -636,6 +636,20 @@ ALTER TABLE suplencias                  DISABLE ROW LEVEL SECURITY;
 
 
 -- ==
+-- INTENTOS DE LOGIN (anti fuerza bruta): 5 contraseñas falladas seguidas
+-- por cuenta -> bloqueo de 15 minutos. El backend lo gestiona; ver
+-- migrations/2026-06-20_login_intentos.sql
+-- ==
+CREATE TABLE IF NOT EXISTS intentos_login (
+    email           text        PRIMARY KEY,
+    intentos        integer     NOT NULL DEFAULT 0,
+    bloqueado_hasta timestamptz,
+    actualizado_en  timestamptz NOT NULL DEFAULT now()
+);
+ALTER TABLE intentos_login              DISABLE ROW LEVEL SECURITY;
+
+
+-- ==
 -- FIN DEL SCHEMA
 -- ==
 -- Después correr los seeds en orden:

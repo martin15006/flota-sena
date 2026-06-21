@@ -45,9 +45,10 @@ function Login() {
             }
 
         } catch (err) {
-            // 403 → la cuenta esta desactivada (asunto administrativo, no typo).
-            // Lo marcamos para que la UI lo muestre con estilo de advertencia.
-            if (err.status === 403) {
+            // 403 → cuenta desactivada; 429 → bloqueada por intentos fallidos.
+            // Ambos son "asunto de seguridad", no un typo: estilo de advertencia
+            // (naranja con candado) en vez del error rojo de credenciales.
+            if (err.status === 403 || err.status === 429) {
                 setTipoError("cuenta_desactivada");
             } else {
                 setTipoError("credenciales");
