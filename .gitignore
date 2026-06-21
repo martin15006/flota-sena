@@ -50,9 +50,9 @@ backups/
 !README.md
 !**/README.md
 
-# Respaldos temporales de .docx (se crean al editar la bitácora; NO son entregables)
+# Respaldos temporales de .docx (se crean al editar la bitácora)
 *backup*.docx
 
-# Generador local del manual en Word: usa el .md (que es local), así que también
-# se queda local. El entregable es el MANUAL_DE_USO.docx que sí se versiona.
-docs/generar_manual.cjs
+# Carpeta docs/ COMPLETA: solo local. Manual, bitácora.docx con evidencias,
+# planning, generador, etc. NO van al repo — Martín los maneja en su PC.
+docs/
