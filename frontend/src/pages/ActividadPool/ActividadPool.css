@@ -5,19 +5,19 @@
 }
 .actividad-pool-sub { color: var(--color-gris-700); font-size: var(--tamano-sm); margin-bottom: var(--espacio-md); }
 .actividad-pool-estado, .actividad-pool-vacio { color: var(--color-gris-700); padding: var(--espacio-md) 0; }
-.actividad-pool-error { background: #FDECEA; color: #B71C1C; padding: 10px 14px; border-radius: var(--radio-md); }
+.actividad-pool-error { background: var(--estado-error-fondo); color: var(--estado-error-texto); padding: 10px 14px; border-radius: var(--radio-md); }
 .actividad-pool-lista { list-style: none; padding: 0; margin: 0; display: flex; flex-direction: column; gap: 6px; }
 .actividad-pool-item {
     display: grid; grid-template-columns: 110px 1fr auto; gap: var(--espacio-sm); align-items: center;
-    padding: 10px 14px; background: var(--color-gris-50); border-radius: var(--radio-md);
+    padding: 10px 14px; background: var(--superficie-sutil); border-radius: var(--radio-md);
 }
 .actividad-pool-chip {
     font-size: var(--tamano-xs); font-weight: var(--peso-bold); text-align: center;
     padding: 3px 8px; border-radius: var(--radio-xl);
 }
-.actividad-pool-chip-usuario { background: #E3F2FD; color: #1565C0; }
-.actividad-pool-chip-vehiculo { background: #EDE7F6; color: #5E35B1; }
-.actividad-pool-chip-chequeo { background: var(--color-verde-claro); color: var(--color-verde-oscuro); }
+.actividad-pool-chip-usuario { background: var(--estado-info-fondo); color: var(--estado-info-texto); }
+.actividad-pool-chip-vehiculo { background: var(--suplencia-fondo); color: var(--suplencia-color); }
+.actividad-pool-chip-chequeo { background: var(--verde-suave); color: var(--color-verde-oscuro); }
 .actividad-pool-accion { font-size: var(--tamano-sm); color: var(--color-gris-900); }
 .actividad-pool-fecha { font-size: var(--tamano-xs); color: var(--color-gris-700); white-space: nowrap; }
 

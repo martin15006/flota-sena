@@ -98,7 +98,7 @@
 
 .form-usuario-foto-placeholder:hover {
   border-color: var(--color-verde-sena);
-  background: var(--color-verde-claro);
+  background: var(--verde-suave);
   color: var(--color-verde-oscuro);
 }
 
@@ -135,12 +135,12 @@
 }
 
 .form-usuario-foto-quitar:hover {
-  background: #B71C1C;
+  background: var(--estado-error-solido);
 }
 
 /* === MENSAJES === */
 .form-usuario-error {
-  background: #FFEBEE;
+  background: var(--estado-error-fondo);
   color: var(--color-rojo);
   padding: var(--espacio-md);
   border-radius: var(--radio-md);
@@ -149,7 +149,7 @@
 }
 
 .form-usuario-info {
-  background: var(--color-verde-claro);
+  background: var(--verde-suave);
   color: var(--color-verde-oscuro);
   padding: var(--espacio-md);
   border-radius: var(--radio-md);
@@ -209,7 +209,7 @@
   grid-column: 1 / -1;
   margin-top: var(--espacio-xs);
   padding: var(--espacio-sm) var(--espacio-md);
-  background: var(--color-verde-claro);
+  background: var(--verde-suave);
   border: 2px solid var(--color-verde-oscuro);
   border-radius: var(--radio-md);
   color: var(--color-gris-900);
@@ -225,7 +225,7 @@
   display: block;
   margin-top: 6px;
   padding: 8px 12px;
-  background: #eb943e;
+  background: var(--estado-adv-solido);
   color: #1A1A1A;
   border: 2px solid #e29a2d;
   border-radius: var(--radio-md);
@@ -315,7 +315,7 @@
     padding: var(--espacio-sm) var(--espacio-md);
     border: 2px solid var(--color-gris-300);
     border-radius: var(--radio-md);
-    background: var(--color-gris-50);
+    background: var(--superficie-sutil);
     cursor: pointer;
     font-size: var(--tamano-sm);
     font-weight: var(--peso-semibold);
@@ -328,4 +328,12 @@
     accent-color: var(--color-verde-sena);
     cursor: pointer;
     flex-shrink: 0;
+}
+
+/* === Modo oscuro === */
+/* Aviso de validacion: el badge naranja se oscurece en modo oscuro, asi que
+   el texto y borde oscuros del modo claro pierden contraste -> los aclaramos. */
+[data-tema="oscuro"] .form-usuario-aviso-validacion {
+    color: #2B1A06;
+    border-color: #E0A24A;
 }

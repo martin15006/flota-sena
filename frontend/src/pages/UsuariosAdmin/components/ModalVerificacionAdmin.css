@@ -9,7 +9,7 @@
 
 /* Bloque informativo arriba con el usuario que se esta editando */
 .verifadmin-usuario {
-  background: var(--color-gris-50);
+  background: var(--superficie-sutil);
   border: 2px solid var(--color-gris-300);
   border-radius: var(--radio-md);
   padding: var(--espacio-sm) var(--espacio-md);
@@ -32,7 +32,7 @@
 
 /* Aviso amarillo de precaucion (solo para cedula) - alto contraste */
 .verifadmin-aviso-critico {
-  background: #FFC107;
+  background: var(--color-amarillo);
   color: #1A1A1A;
   border: 2px solid #1A1A1A;
   border-radius: var(--radio-md);
@@ -69,7 +69,7 @@
   border: 2px solid var(--color-gris-300);
   border-radius: var(--radio-md);
   font-size: var(--tamano-md);
-  background: var(--color-blanco);
+  background: var(--superficie);
   color: var(--color-gris-900);
   font-family: inherit;
   transition: all var(--velocidad-rapida) var(--suavizado);
@@ -82,7 +82,7 @@
 }
 
 .verifadmin-input-readonly {
-  background: var(--color-gris-50);
+  background: var(--superficie-sutil);
   color: var(--color-gris-700);
 }
 
@@ -106,7 +106,7 @@
   display: block;
   margin-top: 6px;
   padding: 8px 12px;
-  background: #eb943e;
+  background: var(--estado-adv-solido);
   color: #1A1A1A;
   border: 2px solid #e29a2d;
   border-radius: var(--radio-md);
@@ -130,7 +130,7 @@
 
 /* Error en el modal */
 .verifadmin-error {
-  background: #B71C1C;
+  background: var(--estado-error-solido);
   color: #FFFFFF;
   border: 2px solid #7F0000;
   border-radius: var(--radio-md);
@@ -201,4 +201,29 @@
   background: #BF360C;
   transform: translateY(-1px);
   box-shadow: var(--sombra-md);
+}
+
+/* === Modo oscuro === */
+/* Aviso naranja solido: en oscuro el solido se oscurece, asi que el texto
+   oscuro y el borde dorado pasan a tonos legibles sobre el. */
+[data-tema="oscuro"] .verifadmin-aviso-validacion {
+  color: var(--texto-inverso);
+  border-color: var(--estado-adv-texto);
+}
+
+/* Error rojo solido: el borde rojo muy oscuro se aclara para verse en oscuro. */
+[data-tema="oscuro"] .verifadmin-error {
+  border-color: var(--estado-error-texto);
+}
+
+/* Boton confirmar critico: gradiente naranja fuerte aplanado a un naranja
+   solido apropiado para oscuro (texto sigue blanco). */
+[data-tema="oscuro"] .verifadmin-boton-confirmar-critico {
+  background: var(--estado-adv-solido);
+  border-color: var(--estado-adv-texto);
+}
+
+[data-tema="oscuro"] .verifadmin-boton-confirmar-critico:hover:not(:disabled) {
+  background: var(--estado-adv-texto);
+  color: var(--color-negro);
 }

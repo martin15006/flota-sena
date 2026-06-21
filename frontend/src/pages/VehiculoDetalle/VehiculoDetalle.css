@@ -1,13 +1,13 @@
 .vehiculo-detalle {
     min-height: 100vh;
-    background: var(--color-gris-50);
+    background: var(--superficie-sutil);
     display: flex;
     flex-direction: column;
 }
 
 /* HEADER */
 .vehiculo-detalle-header {
-    background: var(--color-blanco);
+    background: var(--superficie);
     border-bottom: var(--borde-fino);
     padding: var(--espacio-md) var(--espacio-xl);
     display: flex;
@@ -104,7 +104,7 @@
 .vehiculo-detalle-estado-error {
     padding: var(--espacio-xl);
     text-align: center;
-    background: var(--color-blanco);
+    background: var(--superficie);
     border-radius: var(--radio-lg);
     margin: var(--espacio-xl);
     box-shadow: var(--sombra-md);
@@ -117,7 +117,7 @@
 
 /* HERO */
 .vehiculo-detalle-hero {
-    background: var(--color-blanco);
+    background: var(--superficie);
     border-radius: var(--radio-lg);
     box-shadow: var(--sombra-md);
     overflow: hidden;
@@ -130,7 +130,7 @@
 .vehiculo-detalle-hero-azul { border-top-color: var(--color-azul); }
 .vehiculo-detalle-hero-amarillo { border-top-color: var(--color-amarillo); }
 .vehiculo-detalle-hero-rojo { border-top-color: var(--color-rojo); }
-.vehiculo-detalle-hero-oscuro { border-top-color: #374151; }
+.vehiculo-detalle-hero-oscuro { border-top-color: var(--estado-neutro-fondo); }
 
 .vehiculo-detalle-hero-inactivo {
     opacity: 0.7;
@@ -206,7 +206,7 @@
 .vehiculo-detalle-badge-azul { background: var(--color-azul); }
 .vehiculo-detalle-badge-amarillo { background: var(--color-amarillo); color: var(--color-gris-900); }
 .vehiculo-detalle-badge-rojo { background: var(--color-rojo); animation: pulse 2s infinite; }
-.vehiculo-detalle-badge-oscuro { background: #374151; }
+.vehiculo-detalle-badge-oscuro { background: var(--estado-neutro-fondo); }
 
 .vehiculo-detalle-badge-inactivo {
     display: inline-block;
@@ -254,13 +254,13 @@
 }
 
 .vehiculo-detalle-boton-secundario {
-    background: var(--color-blanco);
+    background: var(--superficie);
     color: var(--color-verde-sena);
     border-color: var(--color-verde-sena);
 }
 
 .vehiculo-detalle-boton-secundario:hover {
-    background: var(--color-verde-claro);
+    background: var(--verde-suave);
 }
 
 /* COLUMNAS */
@@ -272,7 +272,7 @@
 
 /* TARJETA */
 .vehiculo-detalle-tarjeta {
-    background: var(--color-blanco);
+    background: var(--superficie);
     border-radius: var(--radio-lg);
     box-shadow: var(--sombra-sm);
     padding: var(--espacio-xl);

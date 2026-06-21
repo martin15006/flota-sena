@@ -10,8 +10,8 @@ body {
   height: 100%;
   font-family: var(--fuente-principal);
   font-size: var(--tamano-md);
-  color: var(--color-gris-900);
-  background-color: var(--color-gris-100);
+  color: var(--texto);
+  background-color: var(--fondo);
   line-height: 1.5;
 }
 
@@ -26,21 +26,21 @@ h1 {
   font-size: var(--tamano-xxxl);
   font-weight: var(--peso-bold);
   line-height: 1.2;
-  color: var(--color-verde-oscuro);
+  color: var(--titulo);
 }
 
 h2 {
   font-size: var(--tamano-xxl);
   font-weight: var(--peso-bold);
   line-height: 1.3;
-  color: var(--color-verde-oscuro);
+  color: var(--titulo);
 }
 
 h3 {
   font-size: var(--tamano-xl);
   font-weight: var(--peso-semibold);
   line-height: 1.4;
-  color: var(--color-verde-oscuro);
+  color: var(--titulo);
 }
 
 h4 {
@@ -64,4 +64,32 @@ a:hover {
   outline: 3px solid var(--color-verde-sena);
   outline-offset: 2px;
   border-radius: var(--radio-sm);
+}
+
+/* === Onda de cambio de tema (View Transitions API) ===
+   El nuevo tema se revela con un circulo que crece desde el boton.
+   Origen y radio los fija ToggleTema en --onda-x/--onda-y/--onda-r. */
+@keyframes onda-revelado {
+  from {
+    clip-path: circle(0 at var(--onda-x, 50%) var(--onda-y, 0));
+  }
+  to {
+    clip-path: circle(var(--onda-r, 150vmax) at var(--onda-x, 50%) var(--onda-y, 0));
+  }
+}
+
+@media (prefers-reduced-motion: no-preference) {
+  ::view-transition-old(root) {
+    animation: none;
+  }
+  ::view-transition-new(root) {
+    animation: onda-revelado 0.5s ease-out;
+  }
+}
+
+/* Mientras corre la onda, congelar otras transiciones para que solo se vea la onda */
+html[data-onda-activa] *,
+html[data-onda-activa] *::before,
+html[data-onda-activa] *::after {
+  transition: none !important;
 }

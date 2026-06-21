@@ -8,7 +8,7 @@
 }
 .modal-suplencia-ayuda { color: var(--color-gris-700); font-size: var(--tamano-xs); }
 .modal-suplencia-error {
-    background: #FDECEA; color: #B71C1C; padding: 8px 12px;
+    background: var(--estado-error-fondo); color: var(--estado-error-texto); padding: 8px 12px;
     border-radius: var(--radio-md); font-size: var(--tamano-sm);
 }
 .modal-suplencia-acciones { display: flex; gap: var(--espacio-sm); justify-content: flex-end; margin-top: var(--espacio-md); }
@@ -17,15 +17,15 @@
     font-size: var(--tamano-sm); cursor: pointer; border: none;
 }
 .modal-suplencia-boton-cancelar { background: var(--color-gris-100); color: var(--color-gris-900); }
-.modal-suplencia-boton-activar { background: #5E35B1; color: #fff; }
-.modal-suplencia-boton-fin { background: #B71C1C; color: #fff; }
+.modal-suplencia-boton-activar { background: var(--suplencia-solido); color: var(--texto-inverso); }
+.modal-suplencia-boton-fin { background: var(--estado-error-solido); color: var(--texto-inverso); }
 .modal-suplencia-acciones button:disabled { opacity: 0.6; cursor: progress; }
 
 /* Quien activo la suplencia + cuando + motivo */
 .modal-suplencia-meta {
     font-size: var(--tamano-xs);
     color: var(--color-gris-700);
-    background: var(--color-gris-50);
+    background: var(--superficie-sutil);
     padding: 8px 12px;
     border-radius: var(--radio-md);
     line-height: 1.5;
@@ -45,4 +45,4 @@
     color: var(--color-gris-900);
     cursor: pointer;
 }
-.modal-suplencia-radio input { accent-color: #5E35B1; cursor: pointer; }
+.modal-suplencia-radio input { accent-color: var(--suplencia-solido); cursor: pointer; }

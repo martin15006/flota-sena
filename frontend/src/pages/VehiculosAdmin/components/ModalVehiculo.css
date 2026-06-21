@@ -57,7 +57,7 @@
 .form-vehiculo-input:focus {
     outline: none;
     border-color: var(--color-verde-sena);
-    background: var(--color-blanco);
+    background: var(--superficie);
 }
 
 .form-vehiculo-input:disabled {
@@ -80,7 +80,7 @@
 .form-vehiculo-textarea:focus {
     outline: none;
     border-color: var(--color-verde-sena);
-    background: var(--color-blanco);
+    background: var(--superficie);
 }
 
 .form-vehiculo-rango {
@@ -99,8 +99,8 @@
         var(--color-verde-sena) 19%,
         var(--color-azul) 20%,
         var(--color-azul) 39%,
-        #FFC107 40%,
-        #FFC107 59%,
+        var(--color-amarillo) 40%,
+        var(--color-amarillo) 59%,
         var(--color-rojo) 60%,
         var(--color-rojo) 89%,
         var(--color-gris-500) 90%,
@@ -116,7 +116,7 @@
     width: 22px;
     height: 22px;
     border-radius: 50%;
-    background: var(--color-blanco);
+    background: var(--superficie);
     border: 3px solid var(--color-gris-700);
     cursor: pointer;
     box-shadow: var(--sombra-md);
@@ -131,7 +131,7 @@
     width: 22px;
     height: 22px;
     border-radius: 50%;
-    background: var(--color-blanco);
+    background: var(--superficie);
     border: 3px solid var(--color-gris-700);
     cursor: pointer;
     box-shadow: var(--sombra-md);
@@ -152,7 +152,7 @@
 
 .form-vehiculo-select-operativo { border-left: 5px solid var(--color-verde-sena); }
 .form-vehiculo-select-observacion { border-left: 5px solid var(--color-azul); }
-.form-vehiculo-select-alerta { border-left: 5px solid #FFC107; }
+.form-vehiculo-select-alerta { border-left: 5px solid var(--color-amarillo); }
 .form-vehiculo-select-critico { border-left: 5px solid var(--color-rojo); }
 .form-vehiculo-select-no_operativo { border-left: 5px solid var(--color-gris-500); }
 
@@ -200,13 +200,13 @@
 
 .form-vehiculo-archivo-boton:hover {
     border-color: var(--color-verde-sena);
-    background: var(--color-verde-claro);
+    background: var(--verde-suave);
     color: var(--color-verde-oscuro);
 }
 
 .form-vehiculo-archivo-seleccionado {
     padding: var(--espacio-md);
-    background: var(--color-verde-claro);
+    background: var(--verde-suave);
     border: 2px solid var(--color-verde-sena);
     border-radius: var(--radio-md);
     display: flex;
@@ -249,7 +249,7 @@
     cursor: pointer;
 }
 
-.form-vehiculo-quitar:hover { background: #B71C1C; }
+.form-vehiculo-quitar:hover { background: var(--estado-error-solido); }
 
 .form-vehiculo-link-runt {
     display: inline-flex;
@@ -323,7 +323,7 @@
 
 .form-vehiculo-foto-add:hover {
     border-color: var(--color-verde-sena);
-    background: var(--color-verde-claro);
+    background: var(--verde-suave);
     color: var(--color-verde-oscuro);
 }
 
@@ -383,7 +383,7 @@
 }
 
 .form-vehiculo-foto-quitar:hover {
-    background: #B71C1C;
+    background: var(--estado-error-solido);
     transform: scale(1.1);
 }
 
@@ -429,7 +429,7 @@
 
 /* MENSAJES */
 .form-vehiculo-error {
-    background: #FFEBEE;
+    background: var(--estado-error-fondo);
     color: var(--color-rojo);
     padding: var(--espacio-md);
     border-radius: var(--radio-md);
@@ -438,7 +438,7 @@
 }
 
 .form-vehiculo-info {
-    background: var(--color-verde-claro);
+    background: var(--verde-suave);
     color: var(--color-verde-oscuro);
     padding: var(--espacio-md);
     border-radius: var(--radio-md);
@@ -530,7 +530,7 @@
     padding: var(--espacio-sm) var(--espacio-md);
     border: 2px solid var(--color-gris-300);
     border-radius: var(--radio-md);
-    background: var(--color-gris-50);
+    background: var(--superficie-sutil);
     cursor: pointer;
     font-size: var(--tamano-sm);
     font-weight: var(--peso-semibold);

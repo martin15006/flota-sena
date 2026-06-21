@@ -2,14 +2,14 @@
 
 .items-pagina {
     min-height: 100vh;
-    background: var(--color-gris-50);
+    background: var(--superficie-sutil);
     display: flex;
     flex-direction: column;
 }
 
 /* Header */
 .items-header {
-    background: var(--color-blanco);
+    background: var(--superficie);
     border-bottom: var(--borde-fino);
     padding: var(--espacio-sm) var(--espacio-md);
     display: flex;
@@ -79,7 +79,7 @@
     grid-template-columns: repeat(5, 1fr);
     gap: 4px;
     padding: var(--espacio-xs) var(--espacio-md);
-    background: var(--color-blanco);
+    background: var(--superficie);
     border-bottom: var(--borde-fino);
     position: sticky;
     top: 56px;
@@ -116,7 +116,7 @@
 
 /* Encabezado de la categoria */
 .items-cat-encabezado {
-    background: var(--color-blanco);
+    background: var(--superficie);
     border: 2px solid var(--color-gris-300);
     border-left: 6px solid var(--color-verde-sena);
     border-radius: var(--radio-lg);
@@ -170,7 +170,7 @@
 }
 
 .items-card {
-    background: var(--color-blanco);
+    background: var(--superficie);
     border: 2px solid var(--color-gris-300);
     border-radius: var(--radio-md);
     padding: var(--espacio-md);
@@ -230,7 +230,7 @@
     padding: 10px 6px;
     border-radius: var(--radio-md);
     border: 2px solid var(--color-gris-200);
-    background: var(--color-blanco);
+    background: var(--superficie);
     color: var(--color-gris-700);
     font-size: var(--tamano-xs);
     font-weight: var(--peso-bold);
@@ -266,7 +266,7 @@
 }
 
 .items-card-boton-na.items-card-boton-activo {
-    background: var(--color-gris-500);
+    background: var(--badge-gris);
     color: var(--color-blanco);
     border-color: var(--color-gris-500);
     box-shadow: 0 3px 10px rgba(0, 0, 0, 0.2);
@@ -302,7 +302,7 @@
     font-size: var(--tamano-sm);
     border: 2px solid var(--color-rojo);
     border-radius: var(--radio-md);
-    background: #FEF7F7;
+    background: var(--estado-error-fondo);
     color: var(--color-gris-900);
     font-family: inherit;
     resize: vertical;
@@ -312,7 +312,7 @@
 
 .items-card-obs:focus {
     outline: none;
-    background: var(--color-blanco);
+    background: var(--superficie);
     box-shadow: 0 0 0 3px rgba(211, 47, 47, 0.15);
 }
 
@@ -346,7 +346,7 @@
     font-size: var(--tamano-xs);
     color: var(--color-gris-900);
     line-height: 1.4;
-    background: var(--color-gris-50);
+    background: var(--superficie-sutil);
     border: 1px solid var(--color-gris-300);
     border-radius: var(--radio-md);
     padding: 8px var(--espacio-sm);
@@ -383,7 +383,7 @@
     border-radius: 50%;
     background: var(--color-rojo);
     color: var(--color-blanco);
-    border: 2px solid var(--color-blanco);
+    border: 2px solid var(--superficie);
     font-size: 14px;
     font-weight: var(--peso-bold);
     cursor: pointer;
@@ -396,15 +396,15 @@
 }
 
 .items-card-foto-eliminar:hover {
-    background: #B71C1C;
+    background: var(--estado-error-solido);
     transform: scale(1.1);
 }
 
 /* Aviso cuando aún no hay observación válida */
 .items-card-fotos-aviso {
-    background: #FFF8E1;
-    border: 2px solid #FFB74D;
-    color: #E65100;
+    background: var(--estado-adv-fondo);
+    border: 2px solid var(--estado-adv-borde);
+    color: var(--estado-adv-texto);
     padding: var(--espacio-xs) var(--espacio-sm);
     border-radius: var(--radio-md);
     font-size: var(--tamano-xs);
@@ -446,14 +446,14 @@
 }
 
 .items-card-foto-boton-galeria {
-    background: var(--color-blanco);
+    background: var(--superficie);
     color: var(--color-verde-oscuro);
     border-color: var(--color-verde-sena);
     border-style: dashed;
 }
 
 .items-card-foto-boton-galeria:hover:not(:disabled) {
-    background: var(--color-verde-claro);
+    background: var(--verde-suave);
     border-style: solid;
     box-shadow: var(--sombra-md);
 }
@@ -474,7 +474,7 @@
 
 /* Error de categoria */
 .items-error-categoria {
-    background: #FEF3F3;
+    background: var(--estado-error-fondo);
     color: var(--color-rojo);
     padding: var(--espacio-sm) var(--espacio-md);
     border-radius: var(--radio-md);
@@ -592,7 +592,7 @@
 }
 
 .items-modal {
-    background: var(--color-blanco);
+    background: var(--superficie);
     border-radius: var(--radio-lg);
     padding: var(--espacio-lg) var(--espacio-md);
     max-width: 460px;

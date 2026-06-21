@@ -6,14 +6,14 @@
 
 .cond-layout {
     min-height: 100vh;
-    background: var(--color-gris-50);
+    background: var(--superficie-sutil);
     display: flex;
     flex-direction: column;
 }
 
 /* ===== Header sticky en todas las pantallas del conductor ===== */
 .cond-layout-header {
-    background: var(--color-blanco);
+    background: var(--superficie);
     border-bottom: 2px solid var(--color-gris-300);
     padding: var(--espacio-md) var(--espacio-lg);
     display: flex;
@@ -76,7 +76,7 @@
 
 /* Conductor del pool de transporte: se resalta en morado (igual que el badge VIP) */
 .cond-layout-usuario-rol-pool {
-    color: #5E35B1;
+    color: var(--suplencia-color);
     font-weight: var(--peso-bold);
 }
 
@@ -85,7 +85,7 @@
     align-items: center;
     gap: 6px;
     padding: 8px 14px;
-    background: var(--color-blanco);
+    background: var(--superficie);
     color: var(--color-rojo);
     border: 2px solid var(--color-rojo);
     border-radius: var(--radio-md);
@@ -127,12 +127,30 @@
     .cond-layout-titulo-app {
         display: none; /* en movil solo se ve el logo, ahorra espacio */
     }
+    /* Dejamos que el bloque de acciones se comprima (de base es flex-shrink:0),
+       para que el header no desborde al sumarle el interruptor de tema. */
+    .cond-layout-acciones {
+        gap: var(--espacio-sm);
+        min-width: 0;
+        flex-shrink: 1;
+    }
+    /* El nombre/rol del usuario se recorta con "…" en vez de empujar el ancho */
+    .cond-layout-usuario {
+        min-width: 0;
+    }
+    .cond-layout-usuario-nombre,
+    .cond-layout-usuario-rol {
+        overflow: hidden;
+        text-overflow: ellipsis;
+        white-space: nowrap;
+    }
     /* En movil ocultamos el texto "Cerrar sesion", queda solo el icono */
     .cond-layout-cerrar-texto {
         display: none;
     }
     .cond-layout-cerrar {
         padding: 8px;
+        flex-shrink: 0;
     }
     .cond-layout-main {
         padding: var(--espacio-md);

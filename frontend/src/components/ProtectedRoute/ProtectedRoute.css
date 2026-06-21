@@ -8,7 +8,7 @@
        justify-content: center;
        background: linear-gradient(135deg,
                var(--color-verde-claro) 0%,
-               var(--color-blanco) 100%);
+               var(--superficie) 100%);
        gap: var(--espacio-md);
    }
 

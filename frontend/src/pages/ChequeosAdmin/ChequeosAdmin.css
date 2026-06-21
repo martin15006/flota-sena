@@ -2,14 +2,14 @@
 
 .cheqadmin-pagina {
     min-height: 100vh;
-    background: var(--color-gris-50);
+    background: var(--superficie-sutil);
     display: flex;
     flex-direction: column;
 }
 
 /* Header con logo SENA (consistente con el resto del admin) */
 .cheqadmin-header-sena {
-    background: var(--color-blanco);
+    background: var(--superficie);
     border-bottom: 2px solid var(--color-gris-300);
     padding: var(--espacio-sm) var(--espacio-md);
     display: flex;
@@ -80,7 +80,7 @@
 
 /* Barra de página (debajo del header SENA) */
 .cheqadmin-barra-pagina {
-    background: var(--color-blanco);
+    background: var(--superficie);
     border-bottom: 2px solid var(--color-gris-300);
     padding: var(--espacio-md);
     display: flex;
@@ -130,7 +130,7 @@
 
 .cheqadmin-boton-intentos {
     padding: 10px 16px;
-    background: var(--color-blanco);
+    background: var(--superficie);
     color: var(--color-rojo);
     border: 2px solid var(--color-rojo);
     border-radius: var(--radio-md);
@@ -152,7 +152,7 @@
 
 /* Filtros */
 .cheqadmin-filtros {
-    background: var(--color-blanco);
+    background: var(--superficie);
     border: 2px solid var(--color-gris-300);
     border-radius: var(--radio-md);
     margin: var(--espacio-md) auto 0 auto;
@@ -186,7 +186,7 @@
     border: 2px solid var(--color-gris-300);
     border-radius: var(--radio-md);
     font-size: var(--tamano-sm);
-    background: var(--color-blanco);
+    background: var(--superficie);
     color: var(--color-gris-900);
     font-family: inherit;
     transition: all var(--velocidad-rapida) var(--suavizado);
@@ -213,7 +213,7 @@
     display: flex;
     align-items: flex-start;
     gap: var(--espacio-xs);
-    background: var(--color-gris-50);
+    background: var(--superficie-sutil);
     border: 2px solid var(--color-gris-300);
     border-radius: var(--radio-md);
     padding: var(--espacio-sm) var(--espacio-md);
@@ -223,7 +223,7 @@
 
 .cheqadmin-check:hover {
     border-color: var(--color-verde-sena);
-    background: var(--color-blanco);
+    background: var(--superficie);
 }
 
 .cheqadmin-check input[type="checkbox"] {
@@ -296,7 +296,7 @@
     color: var(--color-gris-700);
     font-size: var(--tamano-md);
     font-weight: var(--peso-semibold);
-    background: var(--color-blanco);
+    background: var(--superficie);
     border: 2px dashed var(--color-gris-300);
     border-radius: var(--radio-md);
 }
@@ -310,7 +310,7 @@
 
 /* Card */
 .cheqadmin-card {
-    background: var(--color-blanco);
+    background: var(--superficie);
     border: 2px solid var(--color-gris-300);
     border-left: 8px solid var(--color-gris-500);
     border-radius: var(--radio-md);
@@ -332,7 +332,7 @@
 .cheqadmin-card-observacion { border-left-color: var(--color-azul); }
 .cheqadmin-card-alerta { border-left-color: var(--color-amarillo); }
 .cheqadmin-card-critico { border-left-color: var(--color-rojo); }
-.cheqadmin-card-no_operativo { border-left-color: #374151; }
+.cheqadmin-card-no_operativo { border-left-color: var(--estado-neutro-fondo); }
 .cheqadmin-card-pendiente { border-left-color: var(--color-gris-500); }
 
 .cheqadmin-card-fila-superior {
@@ -370,13 +370,13 @@
 }
 
 .cheqadmin-badge-tipo-preoperacional {
-    background: var(--color-verde-claro);
+    background: var(--verde-suave);
     color: var(--color-verde-oscuro);
 }
 
 .cheqadmin-badge-tipo-postoperacional {
-    background: #FFF3E0;
-    color: #E65100;
+    background: var(--estado-adv-fondo);
+    color: var(--estado-adv-texto);
 }
 
 .cheqadmin-badge-oficial {
@@ -397,16 +397,16 @@
 }
 
 .cheqadmin-badge-abierto {
-    background: #FFF8E1;
-    color: #E65100;
-    border: 1px solid #FFB74D;
+    background: var(--estado-adv-fondo);
+    color: var(--estado-adv-texto);
+    border: 1px solid var(--estado-adv-borde);
 }
 
 /* Badge ABANDONADO (Tarea #104): chequeo cancelado por inactividad o cierre del navegador */
 .cheqadmin-badge-abandonado {
-    background: #FFEBEE;
-    color: #B71C1C;
-    border: 1px solid #B71C1C;
+    background: var(--estado-error-fondo);
+    color: var(--estado-error-texto);
+    border: 1px solid var(--estado-error-texto);
     font-weight: var(--peso-bold);
 }
 
@@ -464,7 +464,7 @@
 .cheqadmin-resultado-observacion { background: var(--color-azul); }
 .cheqadmin-resultado-alerta { background: var(--color-amarillo); color: var(--color-gris-900); }
 .cheqadmin-resultado-critico { background: var(--color-rojo); }
-.cheqadmin-resultado-no_operativo { background: #374151; }
+.cheqadmin-resultado-no_operativo { background: var(--estado-neutro-fondo); }
 
 .cheqadmin-card-resumen {
     display: flex;
@@ -484,18 +484,18 @@
 }
 
 .cheqadmin-resumen-cumple {
-    background: var(--color-verde-claro);
+    background: var(--verde-suave);
     color: var(--color-verde-oscuro);
     padding: 3px 10px;
     border-radius: var(--radio-xl);
 }
 
 .cheqadmin-resumen-no-cumple {
-    background: #FEF3F3;
+    background: var(--estado-error-fondo);
     color: var(--color-rojo);
     padding: 3px 10px;
     border-radius: var(--radio-xl);
-    border: 1px solid #FFCDD2;
+    border: 1px solid var(--estado-error-borde);
 }
 
 .cheqadmin-resumen-na {
@@ -576,4 +576,12 @@
     .cheqadmin-card-placa {
         font-size: var(--tamano-lg);
     }
+}
+
+/* === Modo oscuro === */
+/* Badge CERRADO (teal): categoria propia, se aclara en oscuro */
+[data-tema="oscuro"] .cheqadmin-badge-cerrado {
+    background: rgba(29, 158, 117, 0.16);
+    color: #5DCAA5;
+    border-color: rgba(29, 158, 117, 0.45);
 }

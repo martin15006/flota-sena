@@ -36,7 +36,7 @@
 .geografia-tab {
     padding: var(--espacio-sm) var(--espacio-lg);
     border: 2px solid var(--color-gris-300);
-    background: var(--color-blanco);
+    background: var(--superficie);
     color: var(--color-gris-900);
     font-size: var(--tamano-sm);
     font-weight: var(--peso-semibold);
@@ -47,7 +47,7 @@
 }
 
 .geografia-tab:hover {
-    background: var(--color-verde-claro);
+    background: var(--verde-suave);
     border-color: var(--color-verde-oscuro);
     color: var(--color-verde-oscuro);
 }
@@ -70,7 +70,7 @@
     align-items: center;
     gap: var(--espacio-md);
     flex-wrap: wrap;
-    background: var(--color-blanco);
+    background: var(--superficie);
     border: 2px solid var(--color-gris-300);
     border-radius: var(--radio-lg);
     padding: var(--espacio-md);
@@ -86,7 +86,7 @@
     padding: var(--espacio-sm) var(--espacio-md);
     border: 2px solid var(--color-gris-300);
     border-radius: var(--radio-md);
-    background: var(--color-blanco);
+    background: var(--superficie);
     color: var(--color-gris-900);
     font-size: var(--tamano-sm);
     font-family: inherit;
@@ -131,7 +131,7 @@
 
 /* ===== Formulario crear/editar ===== */
 .geografia-form {
-    background: var(--color-blanco);
+    background: var(--superficie);
     border: 2px solid var(--color-verde-oscuro);
     border-radius: var(--radio-lg);
     padding: var(--espacio-lg);
@@ -171,7 +171,7 @@
     font-size: var(--tamano-sm);
     font-family: inherit;
     color: var(--color-gris-900);
-    background: var(--color-blanco);
+    background: var(--superficie);
 }
 
 .geografia-input:focus {
@@ -208,7 +208,7 @@
 }
 
 .geografia-boton-cancelar {
-    background: var(--color-blanco);
+    background: var(--superficie);
     color: var(--color-gris-900);
     border: 2px solid var(--color-gris-300);
 }
@@ -231,7 +231,7 @@
 
 /* ===== Tabla ===== */
 .geografia-tabla-wrapper {
-    background: var(--color-blanco);
+    background: var(--superficie);
     border: 2px solid var(--color-gris-300);
     border-radius: var(--radio-lg);
     box-shadow: var(--sombra-md);
@@ -264,7 +264,7 @@
 }
 
 .geografia-tabla tbody tr:hover {
-    background: var(--color-gris-50);
+    background: var(--superficie-sutil);
 }
 
 .geografia-celda-nombre {
@@ -286,7 +286,7 @@
 }
 
 .geografia-estado-pill.activo {
-    background: var(--color-verde-claro);
+    background: var(--verde-suave);
     color: var(--color-verde-oscuro);
 }
 
@@ -303,7 +303,7 @@
 
 .geografia-accion {
     padding: 4px 10px;
-    background: var(--color-blanco);
+    background: var(--superficie);
     color: var(--color-gris-900);
     border: 2px solid var(--color-gris-300);
     border-radius: var(--radio-md);
@@ -316,26 +316,26 @@
 }
 
 .geografia-accion:hover {
-    background: var(--color-verde-claro);
+    background: var(--verde-suave);
     border-color: var(--color-verde-oscuro);
     color: var(--color-verde-oscuro);
 }
 
 .geografia-accion-warning:hover {
-    background: #FFF3E0;
+    background: var(--estado-adv-fondo);
     border-color: var(--color-naranja);
     color: var(--color-naranja);
 }
 
 .geografia-accion-success:hover {
-    background: var(--color-verde-claro);
+    background: var(--verde-suave);
     border-color: var(--color-verde-oscuro);
     color: var(--color-verde-oscuro);
 }
 
 /* ===== Estados vacíos / carga ===== */
 .geografia-estado {
-    background: var(--color-blanco);
+    background: var(--superficie);
     border: 2px solid var(--color-gris-300);
     border-radius: var(--radio-lg);
     padding: var(--espacio-xl);

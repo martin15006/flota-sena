@@ -1,6 +1,6 @@
 .toast {
     position: fixed;
-    background: var(--color-blanco);
+    background: var(--superficie);
     border-radius: var(--radio-md);
     box-shadow: var(--sombra-lg);
     padding: var(--espacio-md) var(--espacio-lg);

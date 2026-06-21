@@ -2,14 +2,14 @@
 
 .aptitud-pagina {
     min-height: 100vh;
-    background: var(--color-gris-50);
+    background: var(--superficie-sutil);
     display: flex;
     flex-direction: column;
 }
 
 /* Header */
 .aptitud-header {
-    background: var(--color-blanco);
+    background: var(--superficie);
     border-bottom: var(--borde-fino);
     padding: var(--espacio-sm) var(--espacio-md);
     display: flex;
@@ -105,7 +105,7 @@
     line-height: 1.4;
     margin: 0;
     padding: var(--espacio-md);
-    background: var(--color-blanco);
+    background: var(--superficie);
     border: 2px solid var(--color-gris-300);
     border-radius: var(--radio-lg);
     box-shadow: var(--sombra-md);
@@ -157,13 +157,13 @@
 }
 
 .aptitud-boton-no {
-    background: var(--color-blanco);
+    background: var(--superficie);
     color: var(--color-rojo);
     border: 3px solid var(--color-rojo);
 }
 
 .aptitud-boton-no:hover:not(:disabled) {
-    background: #FEE2E2;
+    background: var(--estado-error-fondo);
     transform: translateY(-2px);
     box-shadow: var(--sombra-lg);
 }
@@ -211,7 +211,7 @@
 }
 
 .aptitud-bloqueada-tarjeta {
-    background: var(--color-blanco);
+    background: var(--superficie);
     border-radius: var(--radio-lg);
     padding: var(--espacio-xl) var(--espacio-lg);
     max-width: 520px;
@@ -267,7 +267,7 @@
 
 .aptitud-bloqueada-detalle {
     width: 100%;
-    background: #FEF3F3;
+    background: var(--estado-error-fondo);
     border-radius: var(--radio-md);
     padding: var(--espacio-md);
     text-align: left;
@@ -308,7 +308,7 @@
 }
 
 .aptitud-modal {
-    background: var(--color-blanco);
+    background: var(--superficie);
     border-radius: var(--radio-lg);
     padding: var(--espacio-lg) var(--espacio-md);
     max-width: 420px;
@@ -326,7 +326,7 @@
     width: 64px;
     height: 64px;
     border-radius: 50%;
-    background: var(--color-verde-claro);
+    background: var(--verde-suave);
     color: var(--color-verde-oscuro);
     display: flex;
     align-items: center;
@@ -377,7 +377,7 @@
 }
 
 .aptitud-modal-boton-cancelar {
-    background: var(--color-gris-50);
+    background: var(--superficie-sutil);
     color: var(--color-gris-700);
     border: 1px solid var(--color-gris-200);
 }
@@ -428,4 +428,11 @@
     .aptitud-bloqueada-icono {
         font-size: 52px;
     }
+}
+
+/* === Modo oscuro === */
+/* El fondo de la pantalla de bloqueo era un gradiente rojo claro: se aplana
+   al fondo de error oscuro para no quedar luminoso. */
+[data-tema="oscuro"] .aptitud-bloqueada {
+    background: var(--estado-error-fondo);
 }

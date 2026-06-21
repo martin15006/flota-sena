@@ -9,7 +9,7 @@
     padding: var(--espacio-md);
 }
 .informe-modal {
-    background: var(--color-blanco);
+    background: var(--superficie);
     border-radius: var(--radio-lg, 12px);
     width: 100%;
     max-width: 520px;
@@ -48,7 +48,7 @@
     margin: 0 0 8px 0;
     font-size: var(--tamano-sm);
     color: var(--color-gris-700);
-    background: var(--color-verde-claro);
+    background: var(--verde-suave);
     padding: 10px 12px;
     border-radius: var(--radio-md);
 }
@@ -104,7 +104,7 @@
 .informe-boton-cancelar {
     padding: 9px 18px;
     border: 2px solid var(--color-gris-300);
-    background: var(--color-blanco);
+    background: var(--superficie);
     color: var(--color-gris-700);
     border-radius: var(--radio-md);
     font-weight: var(--peso-semibold);

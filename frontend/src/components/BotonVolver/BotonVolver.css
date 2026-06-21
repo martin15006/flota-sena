@@ -10,7 +10,7 @@
     align-items: center;
     gap: var(--espacio-sm);
     padding: var(--espacio-sm) var(--espacio-lg);
-    background: var(--color-blanco);
+    background: var(--superficie);
     color: var(--color-verde-oscuro);
     border: 2px solid var(--color-verde-sena);
     border-radius: var(--radio-md);

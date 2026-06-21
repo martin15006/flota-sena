@@ -99,4 +99,86 @@
   --z-overlay: 500;
   --z-modal: 1000;
   --z-notificacion: 2000;
+
+  /* === TOKENS SEMANTICOS DE TEMA (claro = comportamiento actual) ===
+     Estos son los que cambian en modo oscuro. La regla: los FONDOS usan
+     --superficie/--fondo; el TEXTO usa --texto/--texto-suave; los estados
+     usan --estado-*. Asi un solo override de [data-tema] repinta todo. */
+  --fondo: var(--color-gris-100);          /* fondo de pagina (body) */
+  --superficie: var(--color-blanco);       /* tarjetas, modales, barras, sidebar */
+  --superficie-alta: var(--color-blanco);  /* elevacion sobre superficie */
+  --texto: var(--color-gris-900);
+  --texto-suave: var(--color-gris-500);
+  --borde: var(--color-gris-200);
+  --titulo: var(--color-verde-oscuro);     /* h1/h2/h3 */
+  --texto-inverso: #FFFFFF;                /* texto que SIEMPRE es blanco (sobre verde) */
+  --verde-luz: var(--color-verde-sena);    /* acento luminoso (en claro = verde normal) */
+
+  /* Estados (claro = pasteles actuales) */
+  --estado-error-fondo: #FFEBEE;  --estado-error-texto: #B71C1C;  --estado-error-borde: #FFCDD2;
+  --estado-adv-fondo:   #FFF3E0;  --estado-adv-texto:   #E65100;  --estado-adv-borde:   #FFE082;
+  --estado-info-fondo:  #E3F2FD;  --estado-info-texto:  #1565C0;  --estado-info-borde:  #BBDEFB;
+  --estado-exito-fondo: #E8F5E9;  --estado-exito-texto: #2E7D32;  --estado-exito-borde: #C8E6C9;
+  --estado-neutro-fondo:#374151;  --estado-neutro-texto:#FFFFFF;
+
+  /* Suplencia (morado) */
+  --suplencia-fondo: #EDE7F6;  --suplencia-color: #5E35B1;  --suplencia-fuerte: #4527A0;  --suplencia-solido: #5E35B1;
+
+  /* Variantes que tambien cambian en oscuro */
+  --superficie-sutil: var(--color-gris-50);  /* fills gris muy claro (no es la pagina) */
+  --verde-suave: var(--color-verde-claro);   /* tints verdes (activos/hover) */
+  --badge-gris: var(--color-gris-500);       /* fondo de badges grises solidos (texto blanco) */
+  /* SOLIDO = color saturado para FONDO de boton (texto blanco encima); el -texto
+     se aclara en oscuro y NO sirve de fondo de boton, por eso van separados. */
+  --estado-error-solido: #B71C1C;  --estado-adv-solido: #eb943e;  --estado-info-solido: #1565C0;
+}
+
+/* ============================================================
+   TEMA OSCURO — "Onda Monarca" (OLED, el verde es la unica luz)
+   Se activa con <html data-tema="oscuro">. Solo redefine tokens
+   SEMANTICOS; los tokens de marca/grises base no cambian.
+   ============================================================ */
+[data-tema="oscuro"] {
+  --fondo: #05070A;
+  --superficie: #0C1015;
+  --superficie-alta: #141A21;
+  --texto: #EAF2EC;
+  --texto-suave: #9AAAA0;
+  --borde: #1E262E;
+  --titulo: var(--color-verde-sena);
+  --texto-inverso: #FFFFFF;
+  --verde-luz: #5BE600;
+
+  --estado-error-fondo: rgba(211,47,47,.16);  --estado-error-texto: #F09595;  --estado-error-borde: rgba(211,47,47,.38);
+  --estado-adv-fondo:   rgba(255,179,0,.14);  --estado-adv-texto:   #FAC775;  --estado-adv-borde:   rgba(255,179,0,.32);
+  --estado-info-fondo:  rgba(25,118,210,.18); --estado-info-texto:  #85B7EB;  --estado-info-borde:  rgba(25,118,210,.40);
+  --estado-exito-fondo: rgba(57,169,0,.16);   --estado-exito-texto: #97C459;  --estado-exito-borde: rgba(57,169,0,.40);
+  --estado-neutro-fondo:#222A32;              --estado-neutro-texto:#C9D3CC;
+
+  --suplencia-fondo: rgba(126,87,194,.18);  --suplencia-color: #B7A6EC;  --suplencia-fuerte: #9579D6;  --suplencia-solido: #7E57C2;
+
+  --superficie-sutil: #141A21;
+  --verde-suave: rgba(57,169,0,.14);
+  --estado-error-solido: #C62828;  --estado-adv-solido: #C9701C;  --estado-info-solido: #2E7DD0;
+
+  /* Inputs en oscuro (los tokens ya eran semanticos: se sobre-escriben directo) */
+  --color-input-bg: #141A21;
+  --color-input-borde: #2C3644;
+  --badge-gris: #5A6470;
+
+  /* === RAMPA DE GRISES EN OSCURO ===
+     Clave para que todo el texto y los bordes que usan grises DIRECTOS
+     funcionen sin tocar cada archivo. Los grises oscuros (texto) se aclaran;
+     los grises claros (bordes/fills) se oscurecen. */
+  --color-gris-900: #EAF2EC;   /* texto principal -> claro */
+  --color-gris-700: #C2CCC6;   /* texto secundario */
+  --color-gris-500: #9AAAA0;   /* texto terciario / suave */
+  --color-gris-300: #2C3644;   /* bordes / fills fuertes -> oscuro */
+  --color-gris-200: #222A32;   /* bordes / fills sutiles -> oscuro */
+  --color-gris-100: #141A21;   /* fondos gris claro -> superficie */
+  --color-gris-50:  #0F141A;
+
+  /* Tokens de borde con valor fijo */
+  --borde-card: 2px solid #2C3644;
+  --color-separador: #2C3644;
 }

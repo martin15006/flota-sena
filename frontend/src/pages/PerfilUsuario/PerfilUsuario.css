@@ -6,14 +6,14 @@
 
 .perfil-pagina {
     min-height: 100vh;
-    background: var(--color-gris-50);
+    background: var(--superficie-sutil);
     display: flex;
     flex-direction: column;
 }
 
 /* ===== Header (mismo patron que UsuariosAdmin) ===== */
 .perfil-header {
-    background: var(--color-blanco);
+    background: var(--superficie);
     border-bottom: 2px solid var(--color-gris-300);
     padding: var(--espacio-md) var(--espacio-xl);
     display: flex;
@@ -59,7 +59,7 @@
 
 .perfil-logout {
     padding: var(--espacio-sm) var(--espacio-md);
-    background: var(--color-blanco);
+    background: var(--superficie);
     color: var(--color-rojo);
     border: 2px solid var(--color-rojo);
     border-radius: var(--radio-md);
@@ -92,7 +92,7 @@
     max-width: 1100px;
     margin: var(--espacio-xl) auto;
     padding: var(--espacio-xl);
-    background: var(--color-blanco);
+    background: var(--superficie);
     border: 2px solid var(--color-gris-300);
     border-radius: var(--radio-md);
     text-align: center;
@@ -102,7 +102,7 @@
 }
 
 .perfil-error {
-    background: #FFEBEE;
+    background: var(--estado-error-fondo);
     color: var(--color-rojo);
     border: 2px solid var(--color-rojo);
 }
@@ -125,7 +125,7 @@
 
 .perfil-volver {
     padding: var(--espacio-sm) var(--espacio-md);
-    background: var(--color-blanco);
+    background: var(--superficie);
     color: var(--color-verde-oscuro);
     border: 2px solid var(--color-verde-sena);
     border-radius: var(--radio-md);
@@ -165,7 +165,7 @@
 .perfil-hero {
     display: flex;
     gap: var(--espacio-xl);
-    background: var(--color-blanco);
+    background: var(--superficie);
     border: 2px solid var(--color-gris-300);
     border-radius: var(--radio-lg);
     padding: var(--espacio-xl);
@@ -246,19 +246,19 @@
 }
 
 .perfil-rol-admin {
-    background: #E3F2FD;
+    background: var(--estado-info-fondo);
     color: #0D47A1;
     border-color: #0D47A1;
 }
 
 .perfil-rol-conductor {
-    background: var(--color-verde-claro);
+    background: var(--verde-suave);
     color: var(--color-verde-oscuro);
     border-color: var(--color-verde-oscuro);
 }
 
 .perfil-rol-admin_centro {
-    background: #FFF3E0;
+    background: var(--estado-adv-fondo);
     color: #E65100;
     border-color: #E65100;
 }
@@ -275,26 +275,26 @@
 }
 
 .perfil-estado-badge.activo {
-    background: var(--color-verde-claro);
+    background: var(--verde-suave);
     color: var(--color-verde-oscuro);
     border-color: var(--color-verde-oscuro);
 }
 
 .perfil-estado-badge.inactivo {
-    background: #FFEBEE;
+    background: var(--estado-error-fondo);
     color: var(--color-rojo);
     border-color: var(--color-rojo);
 }
 
 .perfil-estado-badge.advertencia {
-    background: #eb943e;
+    background: var(--estado-adv-solido);
     color: #1A1A1A;
     border-color: #e29a2d;
 }
 
 /* ===== Secciones (datos personales, licencia, etc.) ===== */
 .perfil-seccion {
-    background: var(--color-blanco);
+    background: var(--superficie);
     border: 2px solid var(--color-gris-300);
     border-radius: var(--radio-lg);
     padding: var(--espacio-xl);
@@ -352,21 +352,21 @@
     font-size: var(--tamano-xs);
     padding: 2px 8px;
     border-radius: var(--radio-md);
-    background: var(--color-verde-claro);
+    background: var(--verde-suave);
     color: var(--color-verde-oscuro);
     font-weight: var(--peso-bold);
     border: 1px solid var(--color-verde-oscuro);
 }
 
 .perfil-vencimiento.urgente {
-    background: #eb943e;
+    background: var(--estado-adv-solido);
     color: #1A1A1A;
     border-color: #e29a2d;
 }
 
 /* Crítico: rojo claro con texto oscuro (vence en 15 días o menos) */
 .perfil-vencimiento.critico {
-    background: #FFEBEE;
+    background: var(--estado-error-fondo);
     color: var(--color-rojo);
     border-color: var(--color-rojo);
     font-weight: var(--peso-bold);
@@ -376,7 +376,7 @@
 .perfil-vencimiento.vencido {
     background: var(--color-rojo);
     color: var(--color-blanco);
-    border-color: #B71C1C;
+    border-color: var(--estado-error-texto);
 }
 
 /* ===== Sección de stats (chequeos) ===== */
@@ -388,7 +388,7 @@
 }
 
 .perfil-stat {
-    background: var(--color-gris-50);
+    background: var(--superficie-sutil);
     border: 2px solid var(--color-gris-300);
     border-radius: var(--radio-md);
     padding: var(--espacio-lg);
@@ -403,7 +403,7 @@
 }
 
 .perfil-stat-numero.advertencia {
-    color: #E65100;
+    color: var(--estado-adv-texto);
 }
 
 .perfil-stat-label {
@@ -415,7 +415,7 @@
 
 /* Bloque "último chequeo" */
 .perfil-ultimo-chequeo {
-    background: var(--color-gris-50);
+    background: var(--superficie-sutil);
     border: 2px solid var(--color-gris-300);
     border-radius: var(--radio-md);
     padding: var(--espacio-lg);
@@ -481,7 +481,7 @@
 }
 
 .perfil-resultado-verde {
-    background: var(--color-verde-claro);
+    background: var(--verde-suave);
     color: var(--color-verde-oscuro);
     border-color: var(--color-verde-oscuro);
 }
@@ -493,7 +493,7 @@
 }
 
 .perfil-resultado-naranja {
-    background: #eb943e;
+    background: var(--estado-adv-solido);
     color: #1A1A1A;
     border-color: #e29a2d;
 }
@@ -501,7 +501,7 @@
 .perfil-resultado-rojo {
     background: var(--color-rojo);
     color: var(--color-blanco);
-    border-color: #B71C1C;
+    border-color: var(--estado-error-texto);
 }
 
 .perfil-resultado-gris {
@@ -524,7 +524,7 @@
     display: flex;
     gap: var(--espacio-md);
     padding: var(--espacio-md);
-    background: var(--color-gris-50);
+    background: var(--superficie-sutil);
     border: 2px solid var(--color-gris-300);
     border-radius: var(--radio-md);
     align-items: center;
@@ -564,7 +564,7 @@
 
 /* Vacío / sin datos */
 .perfil-sin-datos {
-    background: var(--color-gris-50);
+    background: var(--superficie-sutil);
     border: 2px dashed var(--color-gris-300);
     border-radius: var(--radio-md);
     padding: var(--espacio-lg);
@@ -596,4 +596,27 @@
         flex-direction: column-reverse;
         align-items: stretch;
     }
+}
+
+/* === Modo oscuro === */
+/* Badge rol admin (azul): el fondo info se oscurece, el texto/borde azul
+   profundo #0D47A1 dejaria de leerse -> texto/borde azul claro en oscuro. */
+[data-tema="oscuro"] .perfil-rol-admin {
+    color: var(--estado-info-texto);
+    border-color: var(--estado-info-texto);
+}
+
+/* Badge rol admin_centro (naranja): el fondo adv se oscurece, el texto/borde
+   #E65100 dejaria de leerse -> texto/borde naranja claro en oscuro. */
+[data-tema="oscuro"] .perfil-rol-admin_centro {
+    color: var(--estado-adv-texto);
+    border-color: var(--estado-adv-texto);
+}
+
+/* Badges naranja solidos: en oscuro el fondo adv-solido (#C9701C) es mas
+   oscuro y el texto negro #1A1A1A pierde contraste -> texto blanco. */
+[data-tema="oscuro"] .perfil-estado-badge.advertencia,
+[data-tema="oscuro"] .perfil-vencimiento.urgente,
+[data-tema="oscuro"] .perfil-resultado-naranja {
+    color: var(--texto-inverso);
 }

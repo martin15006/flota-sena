@@ -16,6 +16,7 @@ import { useNavigate } from "react-router-dom";
 import { useAuth } from "../../hooks/useAuth.js";
 import { etiquetaCargoCorta } from "../../lib/roles.js";
 import Footer from "../Footer/Footer.jsx";
+import ToggleTema from "../ToggleTema/ToggleTema.jsx";
 import "./ConductorLayout.css";
 
 function ConductorLayout({ children }) {
@@ -42,6 +43,7 @@ function ConductorLayout({ children }) {
                 </div>
 
                 <div className="cond-layout-acciones">
+                    <ToggleTema />
                     <div className="cond-layout-usuario">
                         <div className="cond-layout-usuario-nombre">
                             {usuario.nombre_completo?.split(" ")[0]}

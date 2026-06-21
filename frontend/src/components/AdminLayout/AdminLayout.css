@@ -6,7 +6,7 @@
 .admin-layout {
     min-height: 100vh;
     display: flex;
-    background: var(--color-gris-50);
+    background: var(--superficie-sutil);
 }
 
 /* ===== Sidebar siempre tiene un ancho fijo en escritorio ===== */
@@ -36,7 +36,7 @@
 
 /* ===== Header de la pagina ===== */
 .admin-layout-header {
-    background: var(--color-blanco);
+    background: var(--superficie);
     border-bottom: 2px solid var(--color-gris-300);
     padding: var(--espacio-md) var(--espacio-xl);
     display: flex;
@@ -52,7 +52,7 @@
     width: 40px;
     height: 40px;
     border: 2px solid var(--color-gris-300);
-    background: var(--color-blanco);
+    background: var(--superficie);
     color: var(--color-gris-900);
     border-radius: var(--radio-md);
     cursor: pointer;
@@ -65,7 +65,7 @@
 }
 
 .admin-layout-hamburguesa:hover {
-    background: var(--color-verde-claro);
+    background: var(--verde-suave);
     color: var(--color-verde-oscuro);
     border-color: var(--color-verde-oscuro);
 }
@@ -95,7 +95,7 @@
 
 .admin-layout-perfil {
     text-align: right;
-    background: var(--color-blanco);
+    background: var(--superficie);
     border: 2px solid transparent;
     padding: 6px 12px;
     border-radius: var(--radio-md);
@@ -110,19 +110,19 @@
 
 @keyframes perfil-pulso {
     0%, 100% {
-        background: var(--color-blanco);
+        background: var(--superficie);
         border-color: transparent;
         box-shadow: none;
     }
     50% {
-        background: var(--color-verde-claro);
+        background: var(--verde-suave);
         border-color: var(--color-verde-oscuro);
         box-shadow: var(--sombra-sm);
     }
 }
 
 .admin-layout-perfil:hover {
-    background: var(--color-verde-claro);
+    background: var(--verde-suave);
     border-color: var(--color-verde-oscuro);
     box-shadow: var(--sombra-sm);
 }
@@ -154,7 +154,7 @@
 
 /* Pool supliendo al Coordinador: badge en morado (coherente con el resto del pool) */
 .admin-layout-perfil-rol-suplencia {
-    background: #5E35B1;
+    background: var(--suplencia-solido);
 }
 
 /* Accesibilidad: si el usuario tiene "reducir movimiento" activado, sin pulso */
@@ -242,7 +242,7 @@
     display: flex;
     align-items: center;
     gap: var(--espacio-md);
-    background: #5E35B1;
+    background: var(--suplencia-solido);
     color: #fff;
     padding: var(--espacio-md) var(--espacio-xl);
     flex-wrap: wrap;

@@ -16,7 +16,7 @@
 }
 
 .modal-contenedor {
-  background: var(--color-blanco);
+  background: var(--superficie);
   border-radius: var(--radio-lg);
   box-shadow: var(--sombra-xl);
   width: 100%;
@@ -37,7 +37,7 @@
   border-bottom: var(--borde-fino);
   position: sticky;
   top: 0;
-  background: var(--color-blanco);
+  background: var(--superficie);
   z-index: 1;
 }
 

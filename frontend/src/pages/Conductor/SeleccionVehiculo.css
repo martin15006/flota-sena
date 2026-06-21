@@ -2,14 +2,14 @@
 
 .selveh-pagina {
     min-height: 100vh;
-    background: var(--color-gris-50);
+    background: var(--superficie-sutil);
     display: flex;
     flex-direction: column;
 }
 
 /* Header */
 .selveh-header {
-    background: var(--color-blanco);
+    background: var(--superficie);
     border-bottom: var(--borde-fino);
     padding: var(--espacio-sm) var(--espacio-md);
     display: flex;
@@ -105,7 +105,7 @@
     font-weight: var(--peso-bold);
     border: 2px solid var(--color-gris-200);
     border-radius: var(--radio-md);
-    background: var(--color-blanco);
+    background: var(--superficie);
     color: var(--color-gris-900);
     font-family: inherit;
     letter-spacing: 1px;
@@ -140,7 +140,7 @@
 .selveh-error-lista,
 .selveh-vacio {
     padding: var(--espacio-md);
-    background: var(--color-blanco);
+    background: var(--superficie);
     border-radius: var(--radio-md);
     text-align: center;
     font-size: var(--tamano-sm);
@@ -165,7 +165,7 @@
 
 /* Tarjetas de vehiculo */
 .selveh-card {
-    background: var(--color-blanco);
+    background: var(--superficie);
     border: 2px solid var(--color-gris-300);
     border-left: 6px solid var(--color-verde-sena);
     border-radius: var(--radio-md);
@@ -194,7 +194,7 @@
 .selveh-card-observacion { border-left-color: var(--color-azul); }
 .selveh-card-alerta { border-left-color: var(--color-amarillo); }
 .selveh-card-critico { border-left-color: var(--color-rojo); }
-.selveh-card-no_operativo { border-left-color: #374151; }
+.selveh-card-no_operativo { border-left-color: var(--estado-neutro-fondo); }
 
 .selveh-card-placa {
     font-size: var(--tamano-lg);
@@ -229,7 +229,7 @@
 .selveh-card-estado-observacion { background: var(--color-azul); }
 .selveh-card-estado-alerta { background: var(--color-amarillo); color: var(--color-gris-900); }
 .selveh-card-estado-critico { background: var(--color-rojo); }
-.selveh-card-estado-no_operativo { background: #374151; }
+.selveh-card-estado-no_operativo { background: var(--estado-neutro-fondo); }
 
 .selveh-card-km {
     font-size: var(--tamano-xs);
@@ -259,7 +259,7 @@
 }
 
 .selveh-modal {
-    background: var(--color-blanco);
+    background: var(--superficie);
     border-radius: var(--radio-lg);
     padding: var(--espacio-lg) var(--espacio-md);
     max-width: 460px;
@@ -281,7 +281,7 @@
 }
 
 .selveh-modal-vehiculo {
-    background: var(--color-gris-50);
+    background: var(--superficie-sutil);
     border-radius: var(--radio-md);
     padding: var(--espacio-md);
     text-align: center;
@@ -324,7 +324,7 @@
     font-weight: var(--peso-bold);
     border: 2px solid var(--color-gris-200);
     border-radius: var(--radio-md);
-    background: var(--color-blanco);
+    background: var(--superficie);
     color: var(--color-gris-900);
     font-family: inherit;
     text-align: center;
@@ -348,7 +348,7 @@
 }
 
 .selveh-modal-error {
-    background: #FEF3F3;
+    background: var(--estado-error-fondo);
     color: var(--color-rojo);
     padding: var(--espacio-sm) var(--espacio-md);
     border-radius: var(--radio-md);

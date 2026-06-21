@@ -13,7 +13,7 @@
   background: linear-gradient(
     135deg,
     var(--color-verde-oscuro) 0%,
-    #004D20 100%
+    var(--color-verde-muy-oscuro) 100%
   );
 }
 
@@ -58,7 +58,7 @@
 .login-tarjeta {
   position: relative;
   z-index: 1;
-  background: var(--color-blanco);
+  background: var(--superficie);
   padding: var(--espacio-xxl);
   border-radius: var(--radio-lg);
   box-shadow: var(--sombra-xl);
@@ -81,7 +81,7 @@
 
 .login-logo-texto {
   display: inline-block;
-  background: var(--color-verde-claro);
+  background: var(--verde-suave);
   color: var(--color-verde-oscuro);
   padding: var(--espacio-xs) var(--espacio-md);
   border-radius: var(--radio-xl);
@@ -133,7 +133,7 @@
 .login-input:focus {
   outline: none;
   border-color: var(--color-verde-sena);
-  background: var(--color-blanco);
+  background: var(--superficie);
   box-shadow: 0 0 0 4px var(--color-verde-claro);
 }
 
@@ -146,7 +146,7 @@
    components/InputPassword/InputPassword.css — usado tambien aqui) */
 
 .login-error {
-  background: #FFEBEE;
+  background: var(--estado-error-fondo);
   color: var(--color-rojo);
   padding: var(--espacio-md);
   border-radius: var(--radio-md);
@@ -158,7 +158,7 @@
    Mismo peach/dorado del resto del proyecto + icono de candado para que sea
    visualmente distinguible del rojo de validacion. */
 .login-error-advertencia {
-  background: #eb943e;
+  background: var(--estado-adv-solido);
   color: #1A1A1A;
   border: 2px solid #e29a2d;
   border-left: 4px solid #e29a2d;
@@ -233,4 +233,11 @@
   .login-titulo {
     font-size: var(--tamano-xl);
   }
+}
+
+/* === Modo oscuro === */
+/* El borde dorado (#e29a2d) del aviso de "cuenta desactivada" se aclara de mas
+   sobre el solido oscuro de advertencia; lo apagamos para que case mejor. */
+[data-tema="oscuro"] .login-error-advertencia {
+  border-color: #A65A14;
 }

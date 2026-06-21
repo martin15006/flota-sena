@@ -3,7 +3,7 @@
    ============================================================ */
 
 .footer {
-  background: var(--color-blanco);
+  background: var(--superficie);
   border-top: var(--borde-fino);
   padding: var(--espacio-lg) var(--espacio-xl);
   margin-top: auto;

@@ -3,7 +3,7 @@
    ================================================================= */
 
 .sidebar {
-    background: var(--color-blanco);
+    background: var(--superficie);
     border-right: 2px solid var(--color-gris-300);
     box-shadow: var(--sombra-md);
     display: flex;
@@ -36,7 +36,7 @@
     width: 36px;
     height: 36px;
     object-fit: contain;
-    background: var(--color-blanco);
+    background: var(--superficie);
     padding: 2px;
     border-radius: var(--radio-md);
     flex-shrink: 0;
@@ -92,7 +92,7 @@
 }
 
 .sidebar-item:hover {
-    background: var(--color-verde-claro);
+    background: var(--verde-suave);
     color: var(--color-verde-oscuro);
     border-color: var(--color-verde-oscuro);
 }
@@ -133,7 +133,7 @@
 .sidebar-pie {
     padding: var(--espacio-md);
     border-top: 2px solid var(--color-gris-200);
-    background: var(--color-gris-50);
+    background: var(--superficie-sutil);
     display: flex;
     flex-direction: column;
     gap: var(--espacio-sm);
@@ -143,7 +143,7 @@
 .sidebar-usuario {
     padding: var(--espacio-sm) var(--espacio-md);
     border-radius: var(--radio-md);
-    background: var(--color-blanco);
+    background: var(--superficie);
     border: 2px solid var(--color-gris-300);
     overflow: hidden;
     /* El nombre y el rol+area se envuelven en varias lineas: nada se trunca. */
@@ -171,7 +171,7 @@
     align-items: center;
     gap: var(--espacio-md);
     padding: var(--espacio-sm) var(--espacio-md);
-    background: var(--color-blanco);
+    background: var(--superficie);
     color: var(--color-rojo);
     border: 2px solid var(--color-rojo);
     border-radius: var(--radio-md);
@@ -201,9 +201,9 @@
     gap: var(--espacio-md);
     padding: var(--espacio-sm) var(--espacio-md);
     margin-bottom: var(--espacio-sm);
-    background: var(--color-blanco);
-    color: #5E35B1;
-    border: 2px solid #5E35B1;
+    background: var(--superficie);
+    color: var(--suplencia-color);
+    border: 2px solid var(--suplencia-color);
     border-radius: var(--radio-md);
     font-size: var(--tamano-sm);
     font-weight: var(--peso-bold);
@@ -216,7 +216,7 @@
 }
 
 .sidebar-modo-conductor:hover {
-    background: #5E35B1;
+    background: var(--suplencia-solido);
     color: var(--color-blanco);
 }
 

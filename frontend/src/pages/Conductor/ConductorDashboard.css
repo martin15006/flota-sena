@@ -5,7 +5,7 @@
 
 /* ===== Contenedor grande que agrupa hero + circulos + licencia ===== */
 .cond-contenedor {
-    background: var(--color-blanco);
+    background: var(--superficie);
     border: 2px solid var(--color-gris-300);
     border-radius: var(--radio-lg);
     box-shadow: var(--sombra-md);
@@ -79,9 +79,9 @@
     gap: 6px;
     margin-top: var(--espacio-sm);
     padding: 6px 14px;
-    background: #EDE7F6;
-    color: #5E35B1;
-    border: 2px solid #5E35B1;
+    background: var(--suplencia-fondo);
+    color: var(--suplencia-color);
+    border: 2px solid var(--suplencia-color);
     border-radius: var(--radio-xl);
 }
 
@@ -92,7 +92,7 @@
     gap: 6px;
     margin-top: var(--espacio-sm);
     padding: 6px 14px;
-    background: var(--color-verde-claro);
+    background: var(--verde-suave);
     color: var(--color-verde-oscuro);
     border: 2px solid var(--color-verde-oscuro);
     border-radius: var(--radio-xl);
@@ -113,7 +113,7 @@
 .cond-licencia-bloqueo {
     background: var(--color-rojo);
     color: var(--color-blanco);
-    border: 2px solid #B71C1C;
+    border: 2px solid var(--estado-error-texto);
     border-radius: var(--radio-md);
     padding: var(--espacio-md) var(--espacio-lg);
     font-size: var(--tamano-sm);
@@ -192,13 +192,13 @@
 }
 
 .cond-circulo-post {
-    background: var(--color-blanco);
+    background: var(--superficie);
     color: #1A1A1A;
-    border-color: #E65100;
+    border-color: var(--estado-adv-texto);
 }
 
 .cond-circulo-post:hover {
-    background: #FFF3E0;
+    background: var(--estado-adv-fondo);
 }
 
 .cond-circulo-icono {
@@ -277,27 +277,27 @@
 }
 
 .cond-licencia-vencimiento-normal {
-    background: var(--color-verde-claro);
+    background: var(--verde-suave);
     color: var(--color-verde-oscuro);
     border-color: var(--color-verde-oscuro);
 }
 
 .cond-licencia-vencimiento-urgente {
-    background: #eb943e;
+    background: var(--estado-adv-solido);
     color: #1A1A1A;
-    border-color: #e29a2d;
+    border-color: var(--estado-adv-solido);
 }
 
 .cond-licencia-vencimiento-critico {
     background: var(--color-rojo);
     color: var(--color-blanco);
-    border-color: #B71C1C;
+    border-color: var(--estado-error-texto);
 }
 
 .cond-licencia-vencimiento-vencido {
     background: var(--color-rojo);
     color: var(--color-blanco);
-    border-color: #B71C1C;
+    border-color: var(--estado-error-texto);
     text-transform: uppercase;
     letter-spacing: 0.3px;
 }
@@ -329,14 +329,22 @@
 .cond-suplencia-banner {
     display: flex; align-items: center; justify-content: space-between; gap: var(--espacio-md);
     flex-wrap: wrap;
-    background: #EDE7F6; border: 2px solid #5E35B1; color: #4527A0;
+    background: var(--suplencia-fondo); border: 2px solid var(--suplencia-color); color: var(--suplencia-fuerte);
     border-radius: var(--radio-md); padding: var(--espacio-md);
     margin: var(--espacio-md) 0;
 }
 .cond-suplencia-texto { font-size: var(--tamano-sm); line-height: 1.4; }
 .cond-suplencia-boton {
-    background: #5E35B1; color: #fff; border: none; border-radius: var(--radio-md);
+    background: var(--suplencia-solido); color: #fff; border: none; border-radius: var(--radio-md);
     padding: 10px 16px; font-weight: var(--peso-bold); font-size: var(--tamano-sm); cursor: pointer;
     white-space: nowrap;
 }
-.cond-suplencia-boton:hover { background: #4527A0; }
+.cond-suplencia-boton:hover { background: var(--suplencia-fuerte); }
+
+/* === Modo oscuro === */
+/* El circulo "post-operacional" usa fondo --superficie (claro en claro, oscuro en oscuro).
+   En claro su texto #1A1A1A casi-negro va perfecto; en oscuro el fondo se vuelve oscuro
+   y ese texto se pierde -> lo subimos a --texto (claro en oscuro). */
+[data-tema="oscuro"] .cond-circulo-post {
+    color: var(--texto);
+}

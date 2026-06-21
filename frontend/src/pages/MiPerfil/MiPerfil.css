@@ -6,7 +6,7 @@
 .mi-perfil-contenedor {
     max-width: 720px;
     margin: 0 auto;
-    background: var(--color-blanco);
+    background: var(--superficie);
     border: 2px solid var(--color-gris-300);
     border-radius: var(--radio-lg);
     box-shadow: var(--sombra-md);
@@ -69,7 +69,7 @@
 .mi-perfil-centro {
     margin-top: 4px;
     padding: 4px 12px;
-    background: var(--color-verde-claro);
+    background: var(--verde-suave);
     color: var(--color-verde-oscuro);
     border: 2px solid var(--color-verde-oscuro);
     border-radius: var(--radio-xl);
@@ -194,7 +194,7 @@
     display: block;
     margin-top: 6px;
     padding: 8px 12px;
-    background: #eb943e;
+    background: var(--estado-adv-solido);
     color: #1A1A1A;
     border: 2px solid #e29a2d;
     border-radius: var(--radio-md);
@@ -217,7 +217,7 @@
 }
 
 .mi-perfil-aviso-bloqueado {
-    background: #FFF8E1;
+    background: var(--estado-adv-fondo);
     border: 2px solid #F9A825;
     color: #1A1A1A;
     padding: var(--espacio-md);
@@ -235,7 +235,7 @@
 
 /* ===== Mensajes ===== */
 .mi-perfil-error {
-    background: #FFEBEE;
+    background: var(--estado-error-fondo);
     color: var(--color-rojo);
     padding: var(--espacio-md);
     border-radius: var(--radio-md);
@@ -245,7 +245,7 @@
 }
 
 .mi-perfil-info {
-    background: var(--color-verde-claro);
+    background: var(--verde-suave);
     color: var(--color-verde-oscuro);
     padding: var(--espacio-md);
     border-radius: var(--radio-md);
@@ -267,7 +267,7 @@
 
 .mi-perfil-boton-pass {
     padding: 10px 18px;
-    background: var(--color-blanco);
+    background: var(--superficie);
     color: var(--color-verde-oscuro);
     border: 2px solid var(--color-verde-sena);
     border-radius: var(--radio-md);
@@ -280,7 +280,7 @@
 }
 
 .mi-perfil-boton-pass:hover:not(:disabled) {
-    background: var(--color-verde-claro);
+    background: var(--verde-suave);
     transform: translateY(-1px);
     box-shadow: var(--sombra-md);
 }
@@ -337,4 +337,20 @@
     .mi-perfil-boton-guardar {
         width: 100%;
     }
+}
+
+/* === Modo oscuro === */
+/* El borde dorado del aviso peach se aclara de mas sobre el solido oscuro;
+   lo bajamos a un ambar mas apagado coherente con --estado-adv-solido oscuro. */
+[data-tema="oscuro"] .mi-perfil-aviso-validacion {
+    border-color: #A65A14;
+}
+/* El aviso "bloqueado" tenia fondo crema claro, borde amarillo fuerte y texto
+   oscuro: en oscuro se convierte en tinte translucido + borde/texto de estado. */
+[data-tema="oscuro"] .mi-perfil-aviso-bloqueado {
+    border-color: var(--estado-adv-borde);
+    color: var(--estado-adv-texto);
+}
+[data-tema="oscuro"] .mi-perfil-aviso-bloqueado strong {
+    color: var(--estado-adv-texto);
 }

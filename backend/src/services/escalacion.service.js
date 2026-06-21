@@ -101,19 +101,31 @@ export const enviarInforme = async ({ usuario, asunto, mensaje, incluirResumen }
     const cargo = etiquetaCargo(usuario.rol, usuario.es_pool);
     const area = await areaDelUsuario(usuario);
 
-    // 1) Campanita al superior (siempre, aunque el correo esté deshabilitado)
+    // 1) Correo al superior (a prueba de fallos: si está deshabilitado o falla,
+    //    seguimos con la campanita igual; solo cambia la nota que mostramos).
+    let correoEnviado = false;
+    try {
+        const para = await emailsDeUsuarios(superior.ids);
+        const html = plantillaInforme({ deQuien: usuario.nombre_completo, cargo, area, asunto: asuntoLimpio, mensaje, resumen });
+        const r = await enviarCorreo({ para, asunto: `Informe: ${asuntoLimpio}`, html });
+        correoEnviado = r.enviado === true;
+    } catch {
+        correoEnviado = false;
+    }
+
+    // 2) Campanita al superior (SIEMPRE, aunque el correo esté deshabilitado).
+    //    Si el correo sí salió, lo avisamos para que el superior sepa que también
+    //    le llegó ahí y no quede buscando "¿me envió un informe pero a dónde?".
+    const notaCorreo = correoEnviado
+        ? ' · 📧 También te llegó una copia a tu correo.'
+        : '';
     await crearNotificacionDirecta({
         destinatarioIds: superior.ids,
         tipo: 'informe_escalado',
         titulo: `${usuario.nombre_completo} te envió un informe`,
-        mensaje: asuntoLimpio,
+        mensaje: `${asuntoLimpio}${notaCorreo}`,
         url_destino: '/admin/notificaciones',
     });
 
-    // 2) Correo al superior
-    const para = await emailsDeUsuarios(superior.ids);
-    const html = plantillaInforme({ deQuien: usuario.nombre_completo, cargo, area, asunto: asuntoLimpio, mensaje, resumen });
-    const r = await enviarCorreo({ para, asunto: `Informe: ${asuntoLimpio}`, html });
-
-    return { ok: true, superior: superior.etiqueta, correoEnviado: r.enviado === true, notificados: superior.ids.length };
+    return { ok: true, superior: superior.etiqueta, correoEnviado, notificados: superior.ids.length };
 };
