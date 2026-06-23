@@ -1,6 +1,6 @@
 // Descarga un archivo de un endpoint protegido (manda el token, lee el blob y dispara
 // la descarga). `endpoint` es relativo a /api. Lanza Error con el mensaje del backend.
-const API_URL = `http://${window.location.hostname}:3001/api`;
+import { API_URL } from './api.js';
 
 export const descargarArchivo = async (endpoint, nombreSugerido) => {
     const token = localStorage.getItem('token');

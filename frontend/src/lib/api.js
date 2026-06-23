@@ -2,7 +2,9 @@
 // (ej: https://mi-backend.up.railway.app/api). Vite la "hornea" en el build.
 // En DESARROLLO (sin esa variable) caemos al backend local usando el hostname actual,
 // para que siga funcionando en localhost y desde un celular en el mismo wifi.
-const API_URL = import.meta.env.VITE_API_URL || `http://${window.location.hostname}:3001/api`;
+// Exportada para que TODAS las llamadas con `fetch` crudo (subida de fotos, RUNT,
+// descargas, etc.) usen la MISMA base que el helper `api()` y no se desincronicen.
+export const API_URL = import.meta.env.VITE_API_URL || `http://${window.location.hostname}:3001/api`;
 
 export const api = async (endpoint, options = {}) => {
     const token = localStorage.getItem('token');

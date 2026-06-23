@@ -3,7 +3,7 @@
 
 import { useEffect, useMemo, useRef, useState } from "react";
 import { useNavigate } from "react-router-dom";
-import { api } from "../../lib/api.js";
+import { api, API_URL } from "../../lib/api.js";
 import {
     obtenerChequeoEnCurso,
     actualizarChequeoEnCurso,
@@ -18,8 +18,8 @@ const TAMANO_MAX_FOTO = 5 * 1024 * 1024;
 // Para que aparezca el botón de adjuntar foto, primero debe haber una obs razonable.
 const MIN_OBSERVACION_PARA_FOTOS = 5;
 
-// Usamos el hostname actual (igual que api.js) para soportar acceso desde celular en LAN
-const API_URL_BASE = `http://${window.location.hostname}:3001/api`;
+// Misma base que api.js: VITE_API_URL en produccion, hostname:3001 en dev/LAN.
+const API_URL_BASE = API_URL;
 
 // Comprime una imagen del lado del cliente antes de subirla. Las cámaras de celular
 // modernas producen fotos de 4-8 MB, demasiado para evidencia de chequeo. Reducimos a

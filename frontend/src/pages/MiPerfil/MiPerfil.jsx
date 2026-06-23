@@ -14,7 +14,7 @@
 import { useEffect, useRef, useState } from "react";
 import { useNavigate } from "react-router-dom";
 import { useAuth } from "../../hooks/useAuth.js";
-import { api } from "../../lib/api.js";
+import { api, API_URL } from "../../lib/api.js";
 import AdminLayout from "../../components/AdminLayout/AdminLayout.jsx";
 import Toast from "../../components/Toast/Toast.jsx";
 import { ETIQUETA_ROL } from "../../lib/roles.js";
@@ -124,7 +124,7 @@ function MiPerfil() {
                 fd.append("folder", "usuarios");
                 const token = localStorage.getItem("token");
                 const resp = await fetch(
-                    `http://${window.location.hostname}:3001/api/upload/foto`,
+                    `${API_URL}/upload/foto`,
                     {
                         method: "POST",
                         headers: { Authorization: `Bearer ${token}` },

@@ -1,6 +1,6 @@
 import { useState, useEffect, useRef } from "react";
 import Modal from "../../../components/Modal/Modal.jsx";
-import { api } from "../../../lib/api.js";
+import { api, API_URL } from "../../../lib/api.js";
 import ModalVerificacionAdmin from "./ModalVerificacionAdmin.jsx";
 import { useAuth } from "../../../hooks/useAuth.js";
 import {
@@ -204,7 +204,7 @@ function ModalEditarUsuario({ abierto, onCerrar, usuario, onEditado }) {
                 fd.append('folder', 'usuarios');
 
                 const token = localStorage.getItem('token');
-                const resp = await fetch('http://localhost:3001/api/upload/foto', {
+                const resp = await fetch(`${API_URL}/upload/foto`, {
                     method: 'POST',
                     headers: { Authorization: `Bearer ${token}` },
                     body: fd,

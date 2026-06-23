@@ -1,6 +1,6 @@
 import { useEffect, useRef, useState } from "react";
 import Modal from "../../../components/Modal/Modal.jsx";
-import { api } from "../../../lib/api.js";
+import { api, API_URL } from "../../../lib/api.js";
 import { useAuth } from "../../../hooks/useAuth.js";
 import {
   ETIQUETA_ROL,
@@ -237,7 +237,7 @@ function ModalCrearUsuario({ abierto, onCerrar, onCreado }) {
         fd.append("folder", "usuarios");
 
         const token = localStorage.getItem("token");
-        const resp = await fetch("http://localhost:3001/api/upload/foto", {
+        const resp = await fetch(`${API_URL}/upload/foto`, {
           method: "POST",
           headers: { Authorization: `Bearer ${token}` },
           body: fd,

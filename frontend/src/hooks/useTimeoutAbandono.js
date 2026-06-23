@@ -17,6 +17,7 @@
 
 import { useEffect, useRef } from "react";
 import { useNavigate } from "react-router-dom";
+import { API_URL } from "../lib/api.js";
 
 const MINUTOS_DEFECTO = 2;
 
@@ -30,7 +31,7 @@ function useTimeoutAbandono(chequeoId, minutos = MINUTOS_DEFECTO) {
         if (!chequeoId) return undefined;
 
         const milisegundos = minutos * 60 * 1000;
-        const apiUrl = `http://${window.location.hostname}:3001/api/chequeos/${chequeoId}/abandonar`;
+        const apiUrl = `${API_URL}/chequeos/${chequeoId}/abandonar`;
 
         // Llama al backend para marcar abandono. Se usa una version con fetch
         // normal y otra con sendBeacon (para cuando la pestaña ya se va a cerrar).

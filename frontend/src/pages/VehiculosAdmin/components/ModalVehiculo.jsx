@@ -1,6 +1,6 @@
 import { useEffect, useState } from "react";
 import Modal from "../../../components/Modal/Modal.jsx";
-import { api } from "../../../lib/api.js";
+import { api, API_URL } from "../../../lib/api.js";
 import { useAuth } from "../../../hooks/useAuth.js";
 import { esDirector } from "../../../lib/roles.js";
 import "./ModalVehiculo.css";
@@ -323,7 +323,7 @@ function ModalVehiculo({ abierto, onCerrar, onGuardado, vehiculo = null, mostrar
                 const fd = new FormData();
                 fotosNuevas.forEach((f) => fd.append("fotos", f));
                 const resp = await fetch(
-                    `http://localhost:3001/api/vehiculos/${vehiculoId}/fotos`,
+                    `${API_URL}/vehiculos/${vehiculoId}/fotos`,
                     {
                         method: "POST",
                         headers: { Authorization: `Bearer ${token}` },
@@ -341,7 +341,7 @@ function ModalVehiculo({ abierto, onCerrar, onGuardado, vehiculo = null, mostrar
                 const fd = new FormData();
                 fd.append("runt", runtNuevo);
                 const resp = await fetch(
-                    `http://localhost:3001/api/vehiculos/${vehiculoId}/runt`,
+                    `${API_URL}/vehiculos/${vehiculoId}/runt`,
                     {
                         method: "POST",
                         headers: { Authorization: `Bearer ${token}` },
