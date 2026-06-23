@@ -42,6 +42,10 @@ build/
 *.sql.gz
 backups/
 
+# Script de limpieza de datos de prueba (uso UNICO antes de la entrega).
+# Es destructivo y solo local: NO debe ir al repo.
+database/limpieza_para_entrega.sql
+
 # Documentación interna en markdown (notas, planning, manuales en proceso,
 # bitácora técnica, mapa del código, bugs conocidos, contexto del proyecto).
 # Se mantienen solo en local porque son apoyo del equipo, no entregables.
