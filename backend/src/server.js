@@ -1,5 +1,7 @@
 import express from 'express';
 import cors from 'cors';
+import helmet from 'helmet';
+import rateLimit from 'express-rate-limit';
 import dotenv from 'dotenv';
 import helloRoutes from './routes/hello.routes.js';
 import authRouter from './routes/auth.routes.js';
@@ -23,6 +25,32 @@ dotenv.config();
 
 const app = express();
 const PORT = process.env.PORT || 3001;
+
+// Detras del proxy de Railway: confiar en 1 salto para leer la IP real del cliente
+// (necesario para que el rate-limit por IP cuente bien y no agrupe a todos en una sola IP).
+app.set('trust proxy', 1);
+// No revelar el framework (fingerprinting).
+app.disable('x-powered-by');
+
+// Helmet: cabeceras de seguridad. Config CONSERVADORA para un API solo-JSON que vive en
+// otro origen que el frontend (Cloudflare): SIN CSP (el del sitio va en frontend/public/_headers)
+// y SIN las politicas cross-origin-isolation, para no interferir con el fetch del front -> backend.
+app.use(helmet({
+    contentSecurityPolicy: false,
+    crossOriginResourcePolicy: false,
+    crossOriginEmbedderPolicy: false,
+}));
+
+// Limite anti-fuerza-bruta POR IP en el login. Complementa el bloqueo por cuenta de
+// loginIntentos.service: frena el password-spraying (rotar muchas cuentas desde una IP).
+// 50 intentos / 15 min por IP es holgado incluso para una oficina con IP compartida.
+const limiteLogin = rateLimit({
+    windowMs: 15 * 60 * 1000,
+    max: 50,
+    standardHeaders: true,
+    legacyHeaders: false,
+    message: { error: 'Demasiados intentos de inicio de sesion. Espera unos minutos e intenta de nuevo.' },
+});
 
 // CORS: en development aceptamos localhost y cualquier IP LAN (192.168.x.x, 10.x.x.x, 172.16-31.x.x)
 // para permitir pruebas desde celulares conectados al mismo wifi. En produccion se respeta
@@ -61,6 +89,7 @@ app.use('/api', (req, res, next) => {
 });
 
 app.use('/api', helloRoutes);
+app.use('/api/auth/login', limiteLogin);
 app.use('/api/auth', authRouter);
 app.use('/api/usuarios', usuariosRoutes);
 app.use('/api/upload', uploadRoutes);
