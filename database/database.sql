@@ -602,37 +602,39 @@ CREATE INDEX IF NOT EXISTS idx_intentos_bloqueado_no_notificados
 
 
 -- ==
--- DESHABILITAR ROW LEVEL SECURITY EN TODAS LAS TABLAS
+-- ACTIVAR ROW LEVEL SECURITY EN TODAS LAS TABLAS
 -- ==
--- Supabase habilita RLS por defecto cuando se crean tablas desde su SQL Editor.
--- En este proyecto la arquitectura es: frontend SOLO se comunica con el backend,
--- el backend usa service_role_key y aplica autorización con middlewares
--- (verificarToken, soloAdmin, soloConductor, etc).
--- Por eso RLS es redundante y se desactiva para evitar comportamientos raros
--- (ej: queries que devuelven vacío sin error cuando la conexión está fría).
--- Ver BUG-008 en docs/bitacora/bugs-conocidos.md
+-- RLS ACTIVADO (2026-06-23, hallazgo de seguridad): la "anon key" de Supabase viaja
+-- en el bundle PÚBLICO del frontend; con RLS apagado, cualquiera podía leer/escribir
+-- la base directamente por la API REST, saltándose el backend. Con RLS activo y SIN
+-- políticas, el rol anon (y authenticated) queda DENEGADO por defecto. El backend usa
+-- service_role (BYPASSRLS) → sus consultas NO cambian. El Realtime anónimo de
+-- notificaciones cae al polling de respaldo (useNotificaciones.js).
+-- Ver migrations/2026-06-23_activar_rls.sql.
+-- (Antes estaba DISABLE por BUG-008, que era sobre queries sujetas a RLS; el backend
+-- con service_role nunca lo está, y el keepAlive ya mantiene la conexión caliente.)
 
-ALTER TABLE regiones                    DISABLE ROW LEVEL SECURITY;
-ALTER TABLE departamentos               DISABLE ROW LEVEL SECURITY;
-ALTER TABLE ciudades                    DISABLE ROW LEVEL SECURITY;
-ALTER TABLE centros_formacion           DISABLE ROW LEVEL SECURITY;
-ALTER TABLE usuarios                    DISABLE ROW LEVEL SECURITY;
-ALTER TABLE auditoria_usuarios          DISABLE ROW LEVEL SECURITY;
-ALTER TABLE vehiculos                   DISABLE ROW LEVEL SECURITY;
-ALTER TABLE fotos_vehiculo              DISABLE ROW LEVEL SECURITY;
-ALTER TABLE auditoria_vehiculos         DISABLE ROW LEVEL SECURITY;
-ALTER TABLE categorias_chequeo          DISABLE ROW LEVEL SECURITY;
-ALTER TABLE items_chequeo               DISABLE ROW LEVEL SECURITY;
-ALTER TABLE preguntas_aptitud           DISABLE ROW LEVEL SECURITY;
-ALTER TABLE excepciones_items_vehiculo  DISABLE ROW LEVEL SECURITY;
-ALTER TABLE chequeos_preoperacionales   DISABLE ROW LEVEL SECURITY;
-ALTER TABLE respuestas_chequeo          DISABLE ROW LEVEL SECURITY;
-ALTER TABLE respuestas_aptitud          DISABLE ROW LEVEL SECURITY;
-ALTER TABLE fotos_chequeo               DISABLE ROW LEVEL SECURITY;
-ALTER TABLE intentos_chequeo_bloqueado  DISABLE ROW LEVEL SECURITY;
-ALTER TABLE auditoria_chequeos          DISABLE ROW LEVEL SECURITY;
-ALTER TABLE notificaciones              DISABLE ROW LEVEL SECURITY;
-ALTER TABLE suplencias                  DISABLE ROW LEVEL SECURITY;
+ALTER TABLE regiones                    ENABLE ROW LEVEL SECURITY;
+ALTER TABLE departamentos               ENABLE ROW LEVEL SECURITY;
+ALTER TABLE ciudades                    ENABLE ROW LEVEL SECURITY;
+ALTER TABLE centros_formacion           ENABLE ROW LEVEL SECURITY;
+ALTER TABLE usuarios                    ENABLE ROW LEVEL SECURITY;
+ALTER TABLE auditoria_usuarios          ENABLE ROW LEVEL SECURITY;
+ALTER TABLE vehiculos                   ENABLE ROW LEVEL SECURITY;
+ALTER TABLE fotos_vehiculo              ENABLE ROW LEVEL SECURITY;
+ALTER TABLE auditoria_vehiculos         ENABLE ROW LEVEL SECURITY;
+ALTER TABLE categorias_chequeo          ENABLE ROW LEVEL SECURITY;
+ALTER TABLE items_chequeo               ENABLE ROW LEVEL SECURITY;
+ALTER TABLE preguntas_aptitud           ENABLE ROW LEVEL SECURITY;
+ALTER TABLE excepciones_items_vehiculo  ENABLE ROW LEVEL SECURITY;
+ALTER TABLE chequeos_preoperacionales   ENABLE ROW LEVEL SECURITY;
+ALTER TABLE respuestas_chequeo          ENABLE ROW LEVEL SECURITY;
+ALTER TABLE respuestas_aptitud          ENABLE ROW LEVEL SECURITY;
+ALTER TABLE fotos_chequeo               ENABLE ROW LEVEL SECURITY;
+ALTER TABLE intentos_chequeo_bloqueado  ENABLE ROW LEVEL SECURITY;
+ALTER TABLE auditoria_chequeos          ENABLE ROW LEVEL SECURITY;
+ALTER TABLE notificaciones              ENABLE ROW LEVEL SECURITY;
+ALTER TABLE suplencias                  ENABLE ROW LEVEL SECURITY;
 
 
 -- ==
@@ -646,7 +648,7 @@ CREATE TABLE IF NOT EXISTS intentos_login (
     bloqueado_hasta timestamptz,
     actualizado_en  timestamptz NOT NULL DEFAULT now()
 );
-ALTER TABLE intentos_login              DISABLE ROW LEVEL SECURITY;
+ALTER TABLE intentos_login              ENABLE ROW LEVEL SECURITY;
 
 
 -- ==
