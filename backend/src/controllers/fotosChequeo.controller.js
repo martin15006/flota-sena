@@ -85,7 +85,11 @@ export const patchPreservarFoto = async (req, res) => {
 export const getFotosDeRespuesta = async (req, res) => {
     try {
         const { respuestaId } = req.params;
-        const fotos = await listarFotosDeRespuesta(respuestaId);
+        const resultado = await listarFotosDeRespuesta(respuestaId, req.usuario.id);
+        if (resultado.error) {
+            return res.status(resultado.error.status).json({ error: resultado.error.mensaje });
+        }
+        const fotos = resultado.fotos;
         res.json({ fotos, total: fotos.length });
     } catch (err) {
         console.error("Error listando fotos:", err);

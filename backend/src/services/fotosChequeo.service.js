@@ -150,13 +150,30 @@ export const togglePreservarFoto = async ({ fotoId, preservar }) => {
     return { foto: data };
 };
 
-// Lista las fotos de una respuesta (para el conductor mientras esta editando el chequeo)
-export const listarFotosDeRespuesta = async (respuestaId) => {
+// Lista las fotos de una respuesta (para el conductor mientras esta editando el chequeo).
+// Valida que la respuesta pertenezca a un chequeo del conductor logueado (IDOR): sin esto,
+// un conductor podria leer las fotos de evidencia de OTRO conductor conociendo el respuestaId.
+// Para LECTURA no exigimos chequeo abierto ni estado 'no_cumple' (el dueno puede ver siempre
+// sus propias fotos), solo propiedad.
+export const listarFotosDeRespuesta = async (respuestaId, conductorId) => {
+    const { data: resp, error: errResp } = await supabase
+        .from("respuestas_chequeo")
+        .select("id, chequeo:chequeos_preoperacionales (conductor_id)")
+        .eq("id", respuestaId)
+        .maybeSingle();
+
+    if (errResp || !resp) {
+        return { error: { status: 404, mensaje: "Respuesta no encontrada" } };
+    }
+    if (resp.chequeo?.conductor_id !== conductorId) {
+        return { error: { status: 403, mensaje: "Esta respuesta no es tuya" } };
+    }
+
     const { data, error } = await supabase
         .from("fotos_chequeo")
         .select("id, url, descripcion, fecha_subida, preservar_siempre, fecha_borrado_programado")
         .eq("respuesta_id", respuestaId)
         .order("fecha_subida", { ascending: true });
     if (error) throw error;
-    return data;
+    return { fotos: data };
 };

@@ -291,6 +291,25 @@ export const reactivarVehiculo = async (req, res) => {
     try {
         const { id } = req.params;
 
+        // Cargar el vehiculo para verificar que existe y que el actor tiene acceso
+        // a su centro (mismo patron que desactivar/eliminar). Sin esto, un admin
+        // podria reactivar vehiculos de OTRO centro (IDOR).
+        const { data: existente } = await supabase
+            .from("vehiculos")
+            .select("centro_id, placa")
+            .eq("id", id)
+            .single();
+
+        if (!existente) {
+            return res.status(404).json({ error: "Vehiculo no encontrado" });
+        }
+
+        if (!(await puedeAccederCentro(req.usuario, existente.centro_id))) {
+            return res.status(403).json({
+                error: "No tienes acceso a este vehiculo",
+            });
+        }
+
         const { error } = await supabase
             .from("vehiculos")
             .update({ activo: true })
@@ -302,10 +321,12 @@ export const reactivarVehiculo = async (req, res) => {
             vehiculoId: id,
             accionPorId: req.usuario.id,
             accion: "reactivado",
+            detalles: { placa: existente.placa },
         });
 
         res.json({ mensaje: "Vehiculo reactivado" });
     } catch (err) {
+        console.error("Error reactivando vehiculo:", err);
         res.status(500).json({ error: "Error al reactivar vehiculo" });
     }
 };
