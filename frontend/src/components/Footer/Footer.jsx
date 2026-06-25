@@ -11,7 +11,7 @@ function Footer() {
                 <img src='/sennova.png' alt='SENNOVA' className='footer-logo' />
             </div>
             <p className='footer-texto'>
-                Proyecto ID+I · SENA Regional Tolima · Centro de Industria y de la Construccion
+                Proyecto ID+I · SENA 
             </p>
         </footer>
     );

@@ -68,7 +68,7 @@ function Login() {
             <div className="login-tarjeta animar-fade-in-up">
                 <div className="login-cabecera">
                     <img src='/logoverde.png' alt="SENA" className="login-logo-img" />
-                    <div className="login-logo-texto">SENA · Regional Tolima</div>
+                    <div className="login-logo-texto">SENA</div>
                     <h1 className="login-titulo">Iniciar sesión</h1>
                     <p className="login-subtitulo">Sistema de Gestión de Flota Vehicular</p>
                 </div>

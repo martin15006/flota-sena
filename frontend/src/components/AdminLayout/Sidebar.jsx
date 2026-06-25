@@ -137,7 +137,7 @@ function Sidebar({ abierto, onCerrar, usuario, onLogout }) {
                 />
                 <div className="sidebar-cabecera-texto">
                     <div className="sidebar-cabecera-titulo">Gestión de Flota</div>
-                    <div className="sidebar-cabecera-sub">SENA · Regional Tolima</div>
+                    <div className="sidebar-cabecera-sub">SENA</div>
                 </div>
             </div>
 
