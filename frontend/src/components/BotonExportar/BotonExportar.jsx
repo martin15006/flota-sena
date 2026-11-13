@@ -2,16 +2,13 @@ import { useState } from "react";
 import { descargarArchivo } from "../../lib/descargar.js";
 import "./BotonExportar.css";
 
-// Dos botones "PDF" / "Word" que descargan de `base` (ej. "/export/chequeo/123").
-// `nombre` es el nombre base del archivo. `compacto` para usarlo en filas de tabla.
 function BotonExportar({ base, nombre = "documento", compacto = false, onError }) {
-    const [cargando, setCargando] = useState(null); // 'pdf' | 'word' | null
+    const [cargando, setCargando] = useState(null);
 
     const bajar = async (formato) => {
         setCargando(formato);
         try {
             const ext = formato === "word" ? "docx" : "pdf";
-            // El base puede traer filtros (?a=b); en ese caso encadenamos con &.
             const sep = base.includes("?") ? "&" : "?";
             await descargarArchivo(`${base}${sep}formato=${formato}`, `${nombre}.${ext}`);
         } catch (err) {

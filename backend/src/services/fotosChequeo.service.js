@@ -1,6 +1,3 @@
-// Fotos de evidencia del chequeo. Asociadas a una respuesta_chequeo (un item respondido).
-// Retencion automatica: 12 meses por trigger en BD. Admin puede marcar preservar_siempre.
-
 import { supabase } from "../config/supabase.js";
 import {
     subirArchivoACloudinary,
@@ -9,8 +6,6 @@ import {
 
 const MAX_FOTOS_POR_RESPUESTA = 3;
 
-// Verifica que la respuesta pertenezca a un chequeo del conductor logueado
-// y que el chequeo este abierto (no cerrado).
 const verificarRespuestaEditable = async (respuestaId, conductorId) => {
     const { data, error } = await supabase
         .from("respuestas_chequeo")
@@ -41,12 +36,10 @@ const verificarRespuestaEditable = async (respuestaId, conductorId) => {
     return { respuesta: data };
 };
 
-// Sube 1 foto y la asocia a una respuesta. Aplica limite de 3 fotos por respuesta.
 export const subirFotoEvidencia = async ({ respuestaId, conductorId, buffer, descripcion }) => {
     const verificacion = await verificarRespuestaEditable(respuestaId, conductorId);
     if (verificacion.error) return verificacion;
 
-    // Contar fotos existentes
     const { count: fotosExistentes, error: errCount } = await supabase
         .from("fotos_chequeo")
         .select("id", { count: "exact", head: true })
@@ -64,7 +57,6 @@ export const subirFotoEvidencia = async ({ respuestaId, conductorId, buffer, des
         };
     }
 
-    // Subir a Cloudinary
     let resultado;
     try {
         resultado = await subirArchivoACloudinary(buffer, "chequeos-evidencia", "image");
@@ -72,7 +64,6 @@ export const subirFotoEvidencia = async ({ respuestaId, conductorId, buffer, des
         return { error: { status: 500, mensaje: `Error subiendo a Cloudinary: ${err.message}` } };
     }
 
-    // Insertar en BD
     const { data: foto, error: errInsert } = await supabase
         .from("fotos_chequeo")
         .insert({
@@ -85,7 +76,6 @@ export const subirFotoEvidencia = async ({ respuestaId, conductorId, buffer, des
         .single();
 
     if (errInsert) {
-        // Si la BD fallo, borrar la foto de Cloudinary para no dejar basura
         await eliminarDeCloudinary(resultado.public_id);
         return { error: { status: 500, mensaje: errInsert.message } };
     }
@@ -93,7 +83,6 @@ export const subirFotoEvidencia = async ({ respuestaId, conductorId, buffer, des
     return { foto };
 };
 
-// Elimina una foto (Cloudinary + BD). Solo conductor dueno mientras el chequeo este abierto.
 export const eliminarFotoEvidencia = async ({ fotoId, conductorId }) => {
     const { data: foto, error } = await supabase
         .from("fotos_chequeo")
@@ -130,14 +119,11 @@ export const eliminarFotoEvidencia = async ({ fotoId, conductorId }) => {
     return { ok: true };
 };
 
-// Admin marca una foto como preservar_siempre (no se borrara automaticamente a los 12 meses).
-// El trigger de BD pone fecha_borrado_programado a NULL cuando preservar_siempre = true.
 export const togglePreservarFoto = async ({ fotoId, preservar }) => {
     const { data, error } = await supabase
         .from("fotos_chequeo")
         .update({
             preservar_siempre: !!preservar,
-            // Si pasa de preservar=true a false, recalcular fecha de borrado
             ...(preservar === false && { fecha_borrado_programado: null }),
         })
         .eq("id", fotoId)
@@ -150,11 +136,6 @@ export const togglePreservarFoto = async ({ fotoId, preservar }) => {
     return { foto: data };
 };
 
-// Lista las fotos de una respuesta (para el conductor mientras esta editando el chequeo).
-// Valida que la respuesta pertenezca a un chequeo del conductor logueado (IDOR): sin esto,
-// un conductor podria leer las fotos de evidencia de OTRO conductor conociendo el respuestaId.
-// Para LECTURA no exigimos chequeo abierto ni estado 'no_cumple' (el dueno puede ver siempre
-// sus propias fotos), solo propiedad.
 export const listarFotosDeRespuesta = async (respuestaId, conductorId) => {
     const { data: resp, error: errResp } = await supabase
         .from("respuestas_chequeo")

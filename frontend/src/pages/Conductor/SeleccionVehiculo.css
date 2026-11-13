@@ -1,5 +1,3 @@
-/* Pantalla de Seleccion de Vehiculo (paso 3 del flujo del conductor). Mobile-first. */
-
 .selveh-pagina {
     min-height: 100vh;
     background: var(--superficie-sutil);
@@ -7,7 +5,6 @@
     flex-direction: column;
 }
 
-/* Header */
 .selveh-header {
     background: var(--superficie);
     border-bottom: var(--borde-fino);
@@ -72,7 +69,6 @@
     text-overflow: ellipsis;
 }
 
-/* Main */
 .selveh-main {
     flex: 1;
     max-width: 600px;
@@ -84,7 +80,6 @@
     gap: var(--espacio-md);
 }
 
-/* Buscador */
 .selveh-buscador-wrap {
     display: flex;
     flex-direction: column;
@@ -120,7 +115,6 @@
     box-shadow: var(--sombra-md);
 }
 
-/* Lista */
 .selveh-lista-wrap {
     display: flex;
     flex-direction: column;
@@ -163,7 +157,6 @@
     gap: var(--espacio-sm);
 }
 
-/* Tarjetas de vehiculo */
 .selveh-card {
     background: var(--superficie);
     border: 2px solid var(--color-gris-300);
@@ -189,7 +182,6 @@
     transform: scale(0.98);
 }
 
-/* Borde izquierdo segun estado del vehiculo */
 .selveh-card-operativo { border-left-color: var(--color-verde-sena); }
 .selveh-card-observacion { border-left-color: var(--color-azul); }
 .selveh-card-alerta { border-left-color: var(--color-amarillo); }
@@ -237,7 +229,6 @@
     font-weight: var(--peso-semibold);
 }
 
-/* Estado generico */
 .selveh-estado {
     text-align: center;
     padding: var(--espacio-xl) var(--espacio-md);
@@ -245,7 +236,6 @@
     font-size: var(--tamano-md);
 }
 
-/* Modal de confirmacion */
 .selveh-modal-overlay {
     position: fixed;
     inset: 0;
@@ -400,7 +390,6 @@
     box-shadow: var(--sombra-md);
 }
 
-/* Animaciones */
 @keyframes selveh-fade-in {
     from { opacity: 0; }
     to { opacity: 1; }
@@ -411,7 +400,6 @@
     to { opacity: 1; transform: scale(1); }
 }
 
-/* Responsive */
 @media (max-width: 480px) {
     .selveh-modal-placa {
         font-size: var(--tamano-xl);

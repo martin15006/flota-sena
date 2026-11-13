@@ -1,6 +1,3 @@
-// Helpers para mantener el estado del chequeo entre pantallas (sessionStorage)
-// Se limpia al cerrar el chequeo o al cerrar sesion
-
 const KEY = "flota_sena_chequeo_en_curso";
 
 export const guardarChequeoEnCurso = (data) => {

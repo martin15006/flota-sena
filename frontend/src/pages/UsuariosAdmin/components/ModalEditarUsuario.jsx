@@ -11,7 +11,6 @@ import {
 } from "../../../lib/roles.js";
 import './ModalCrearUsuario.css';
 
-// Filtros de input (los mismos que ModalCrearUsuario)
 const soloLetrasYEspacios = (texto) =>
     (texto || "").replace(/[^A-Za-zÁÉÍÓÚáéíóúÑñÜü\s]/g, "");
 const soloDigitos = (texto) => (texto || "").replace(/\D/g, "");
@@ -20,7 +19,6 @@ const categoriaLicencia = (texto) =>
     (texto || "").toUpperCase().replace(/[^A-Z0-9]/g, "").slice(0, 2);
 
 function ModalEditarUsuario({ abierto, onCerrar, usuario, onEditado }) {
-    // Admin en sesion (quien edita): define que roles puede asignar.
     const { usuario: usuarioSesion } = useAuth();
     const [form, setForm] = useState({});
     const [foto, setFoto] = useState(null);
@@ -28,20 +26,13 @@ function ModalEditarUsuario({ abierto, onCerrar, usuario, onEditado }) {
     const [subiendoFoto, setSubiendoFoto] = useState(false);
     const [error, setError] = useState(null);
     const [cargando, setCargando] = useState(false);
-    // Listas geograficas (ya scopeadas por el backend) para el selector de territorio
     const [centros, setCentros] = useState([]);
     const [departamentos, setDepartamentos] = useState([]);
-    // Avisos contextuales debajo de cada campo (mismo patron que ModalCrearUsuario)
     const [avisos, setAvisos] = useState({});
     const timersAvisos = useRef({});
 
-    // Modal de verificacion del admin para cambios sensibles (correo / cedula)
-    const [verificacion, setVerificacion] = useState(null); // null | "correo" | "cedula"
+    const [verificacion, setVerificacion] = useState(null);
 
-    // Copia local del usuario para reflejar cambios sensibles (correo/cedula)
-    // sin tener que cerrar y reabrir el modal. La prop "usuario" sigue siendo la
-    // fuente original; este estado solo se desvia cuando el admin cambia un campo
-    // sensible desde el ModalVerificacionAdmin.
     const [usuarioLocal, setUsuarioLocal] = useState(usuario);
 
     const mostrarAviso = (campo, mensaje) => {
@@ -67,9 +58,6 @@ function ModalEditarUsuario({ abierto, onCerrar, usuario, onEditado }) {
         return filtrado;
     };
 
-    // Cargar las listas geograficas (ya scopeadas) al abrir el modal. Solo se usan
-    // centro y departamento como niveles de territorio; el selector muestra el que
-    // corresponde al rol elegido.
     useEffect(() => {
         if (!abierto) return;
         const cargar = (ruta, set) =>
@@ -82,7 +70,6 @@ function ModalEditarUsuario({ abierto, onCerrar, usuario, onEditado }) {
         cargar("/geo/departamentos", setDepartamentos);
     }, [abierto]);
 
-    // rellena el formulario con los datos del usuario
     useEffect(() => {
         if (usuario && abierto) {
             setForm({
@@ -101,24 +88,18 @@ function ModalEditarUsuario({ abierto, onCerrar, usuario, onEditado }) {
             setFotoPreview(usuario.foto_url || null);
             setFoto(null);
             setError(null);
-            // Reset de la copia local al abrir el modal (parte de la fuente original).
             setUsuarioLocal(usuario);
         }
     }, [usuario, abierto]);
 
     const esConductor = form.rol === "conductor";
-    // Nadie cambia su PROPIO rol (anti-accidente; el backend tambien lo bloquea).
     const editandoseASiMismo = usuario?.id === usuarioSesion?.id;
-    // Solo los Directores marcan el "Pool de transporte" (docs/diseno-pool-vip.md).
     const actorEsDirector = esDirector(usuarioSesion?.rol);
-    // Roles asignables: los de rango inferior al admin en sesion (#111). Se incluye
-    // el rol ACTUAL del editado de primero para que el select siempre diga la verdad.
     const rolesAsignables = (() => {
         const inferiores = rolesQuePuedeCrear(usuarioSesion?.rol);
         if (!form.rol || inferiores.includes(form.rol)) return inferiores;
         return [form.rol, ...inferiores];
     })();
-    // Nivel de territorio del rol elegido: departamento | centro
     const nivelTerritorio = NIVEL_TERRITORIO[form.rol] || null;
     const territorio = {
         centro: {
@@ -138,8 +119,6 @@ function ModalEditarUsuario({ abierto, onCerrar, usuario, onEditado }) {
 
     const cambiarCampo = (campo, valor) => setForm({ ...form, [campo]: valor });
 
-    // Al cambiar el rol se resetea el territorio: si vuelve al rol original se
-    // restaura el area original; si es un rol nuevo, queda vacio para elegirla.
     const cambiarRol = (nuevoRol) => {
         const esOriginal = nuevoRol === usuario.rol;
         setForm((prev) => ({
@@ -147,8 +126,6 @@ function ModalEditarUsuario({ abierto, onCerrar, usuario, onEditado }) {
             rol: nuevoRol,
             centro_id: esOriginal ? usuario.centro_id || "" : "",
             departamento_id: esOriginal ? usuario.departamento_id || "" : "",
-            // El pool solo aplica a conductores; al volver al rol original se
-            // restaura su valor, en cualquier otro caso queda en false.
             es_pool: nuevoRol === "conductor" && esOriginal ? (usuario.es_pool ?? false) : false,
         }));
     };
@@ -180,8 +157,6 @@ function ModalEditarUsuario({ abierto, onCerrar, usuario, onEditado }) {
         e.preventDefault();
         setError(null);
 
-        // Validacion frontend: el territorio del nivel del rol es obligatorio
-        // (centro para conductor/Coordinador de Flota, departamento para Director Regional).
         const campoTerritorio = {
             centro: "centro_id",
             departamento: "departamento_id",
@@ -196,7 +171,6 @@ function ModalEditarUsuario({ abierto, onCerrar, usuario, onEditado }) {
         try {
             let foto_url = usuario.foto_url;
 
-            // si selecciona una nueva foto subirla 
             if (foto) {
                 setSubiendoFoto(true);
                 const fd = new FormData();
@@ -215,13 +189,9 @@ function ModalEditarUsuario({ abierto, onCerrar, usuario, onEditado }) {
                 foto_url = dataUpload.url;
                 setSubiendoFoto(false);
             } else if (fotoPreview === null) {
-                // quito la foto sin reemplazar 
                 foto_url = null;
             }
 
-            // Se envia el form completo, incluidos rol y el territorio (centro o
-            // departamento): los campos vacios van como null, asi la BD queda limpia
-            // al cambiar de nivel (p.ej. de Director Regional a conductor).
             const datos = { ...form, foto_url };
             Object.keys(datos).forEach((k) => {
                 if (datos[k] === '') datos[k] = null;
@@ -252,7 +222,6 @@ function ModalEditarUsuario({ abierto, onCerrar, usuario, onEditado }) {
             ancho='grande'
         >
             <form className="form-usuario" onSubmit={enviar}>
-                {/* foto  */}
                 <div className="form-usuario-seccion">
                     <h3 className="form-usuario-seccion-titulo">Foto del usuario</h3>
                     <div className="form-usuario-foto-area">
@@ -419,8 +388,6 @@ function ModalEditarUsuario({ abierto, onCerrar, usuario, onEditado }) {
                             </div>
                         )}
 
-                        {/* Pool de transporte: conductor que maneja los vehículos
-                            especiales/VIP. Solo lo marcan los Directores. */}
                         {esConductor && actorEsDirector && (
                             <div className="form-usuario-campo form-usuario-campo-ancho">
                                 <label className="form-usuario-checkbox">
@@ -570,22 +537,13 @@ function ModalEditarUsuario({ abierto, onCerrar, usuario, onEditado }) {
                 </div>
             </form>
 
-            {/* Modal anidado para cambios sensibles (correo / cedula).
-                - Le pasamos "usuarioLocal" para que muestre como "actual" el valor
-                  ya actualizado si se hace un segundo cambio sin cerrar el modal padre.
-                - El callback recibe (mensajeDelBackend, nuevoValor):
-                    * mensajeDelBackend → para el toast del padre.
-                    * nuevoValor        → para refrescar AL INSTANTE el campo en pantalla
-                                          sin tener que cerrar y reabrir el modal. */}
             <ModalVerificacionAdmin
                 abierto={verificacion !== null}
                 onCerrar={() => setVerificacion(null)}
                 tipo={verificacion}
                 usuario={usuarioLocal}
                 onCambiado={(mensajeDelBackend, nuevoValor) => {
-                    // Actualizar la copia local SOLO en el campo que cambio.
-                    // Asi el input del modal padre muestra el valor nuevo al instante.
-                    const tipoActual = verificacion; // capturar antes del setState
+                    const tipoActual = verificacion;
                     setUsuarioLocal((prev) => ({
                         ...prev,
                         [tipoActual === "correo" ? "email" : "cedula"]: nuevoValor,

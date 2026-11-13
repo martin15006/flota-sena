@@ -5,11 +5,9 @@ import { encabezadoDocx, tituloSeccion, ANCHO_CONTENIDO, celdaTexto, filaDato, e
 const ROJO = 'A32D2D';
 const textoResultado = (c) => c.cerrado ? (c.resultado_estado || '—').replace('_', ' ').toUpperCase() : 'EN PROCESO';
 
-// Tabla de datos (etiqueta + valor)
 const COL_ETIQUETA = 3200;
 const COL_VALOR = ANCHO_CONTENIDO - COL_ETIQUETA;
 
-// Tabla de chequeos (fecha | vehiculo | tipo | resultado)
 const COL_FECHA = 2400;
 const COL_TIPO = 2300;
 const COL_RES = 2200;

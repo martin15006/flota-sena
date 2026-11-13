@@ -180,7 +180,6 @@
     margin-left: var(--espacio-sm);
 }
 
-/* RESUMEN POR ESTADO */
 .vehiculos-admin-resumen {
     display: grid;
     grid-template-columns: repeat(auto-fit, minmax(140px, 1fr));
@@ -228,7 +227,6 @@
     font-weight: var(--peso-semibold);
 }
 
-/* FILTROS */
 .vehiculos-admin-filtros {
     background: var(--superficie);
     padding: var(--espacio-md);
@@ -273,7 +271,6 @@
     border-color: var(--color-verde-sena);
 }
 
-/* GRID DE CARDS */
 .vehiculos-admin-grid {
     display: grid;
     grid-template-columns: repeat(auto-fill, minmax(320px, 1fr));
@@ -308,7 +305,6 @@
     opacity: 0.55;
 }
 
-/* FOTO */
 .vehiculo-card-foto {
     position: relative;
     height: 180px;
@@ -363,7 +359,6 @@
 .vehiculo-card-badge-oscuro { background: var(--estado-neutro-fondo); color: var(--color-blanco); }
 .vehiculo-card-badge-gris { background: var(--badge-gris); color: var(--color-blanco); }
 
-/* INFO */
 .vehiculo-card-info {
     padding: var(--espacio-md);
     flex: 1;
@@ -411,7 +406,6 @@
     font-family: var(--fuente-monospace);
 }
 
-/* ACCIONES */
 .vehiculo-card-acciones {
     padding: var(--espacio-sm) var(--espacio-md) var(--espacio-md);
     display: flex;
@@ -451,7 +445,6 @@
 .vehiculo-card-accion-danger { border-color: var(--color-rojo); color: var(--color-rojo); }
 .vehiculo-card-accion-danger:hover { background: var(--color-rojo); color: var(--color-blanco); }
 
-/* ESTADOS */
 .vehiculos-admin-estado-cargando,
 .vehiculos-admin-vacio {
     background: var(--superficie);
@@ -486,7 +479,6 @@
     }
 }
 
-/* Badge VIP en la tarjeta: vehiculo especial/de direccion (docs/diseno-pool-vip.md) */
 .vehiculo-card-vip-badge {
     position: absolute;
     top: var(--espacio-sm);
@@ -501,7 +493,6 @@
     box-shadow: var(--sombra-md);
 }
 
-/* ===== Navegación territorial (Departamentos / Centros) ===== */
 .vehiculos-nivel-barra {
     display: flex;
     align-items: center;

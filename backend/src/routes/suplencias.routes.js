@@ -1,13 +1,3 @@
-// Endpoints de SUPLENCIA del Coordinador de Flota (Pool · Paso 2).
-// Activar/desactivar/listar suplencias y ver la "Actividad del pool".
-//
-// Quien puede gestionar (requiereRol + validacion de scope dentro del servicio):
-//   - superadmin (Director Nacional): en todo el pais.
-//   - admin_departamental (Director Regional): centros de su departamento.
-//   - admin_centro / admin (Coordinador titular): su propio centro.
-// La validacion de que el centro esta dentro del area del actor se hace en el
-// servicio con puedeAccederCentro().
-
 import { Router } from 'express';
 import { verificarToken, requiereRol } from '../middlewares/auth.middleware.js';
 import {

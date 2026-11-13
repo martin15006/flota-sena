@@ -1,5 +1,3 @@
-// Detalle completo de un chequeo: cabecera, vehiculo, conductor, aptitud, checklist por categoria, notas.
-
 import { useEffect, useState } from "react";
 import { useNavigate, useParams } from "react-router-dom";
 import { api } from "../../lib/api.js";
@@ -42,7 +40,6 @@ function ChequeoDetalle() {
     const [cargando, setCargando] = useState(true);
     const [error, setError] = useState(null);
     const [toast, setToast] = useState(null);
-    // Estado por foto para mostrar "Guardando..." mientras se actualiza preservar_siempre
     const [preservando, setPreservando] = useState({});
 
     const manejarLogout = () => {
@@ -50,8 +47,6 @@ function ChequeoDetalle() {
         navigate("/login");
     };
 
-    // Marca/desmarca una foto como preservar_siempre. Actualiza el estado local
-    // sin volver a pedir todo el chequeo al backend (más rápido y mantiene la posición).
     const togglePreservar = async (fotoId, preservar) => {
         setPreservando((prev) => ({ ...prev, [fotoId]: true }));
         try {
@@ -59,7 +54,6 @@ function ChequeoDetalle() {
                 method: "PATCH",
                 body: { preservar },
             });
-            // Actualizar la foto en el estado local
             setChequeo((prev) => {
                 if (!prev) return prev;
                 return {
@@ -128,7 +122,6 @@ function ChequeoDetalle() {
     const fotoPrincipal = (v.fotos || []).find((f) => f.es_principal) || (v.fotos || [])[0];
     const config = CONFIG_ESTADO[chequeo.resultado_estado] || null;
 
-    // Agrupar respuestas del checklist por categoria
     const respuestasPorCategoria = (chequeo.respuestas_chequeo || []).reduce((acc, r) => {
         const catId = r.item?.categoria?.id;
         if (!catId) return acc;
@@ -147,7 +140,6 @@ function ChequeoDetalle() {
 
     return (
         <div className="cheqdet-pagina">
-            {/* Header SENA */}
             <header className="cheqdet-header-sena">
                 <div className="cheqdet-logo-wrapper">
                     <img src="/logoverde.png" alt="SENA" className="cheqdet-logo-img" />
@@ -164,7 +156,6 @@ function ChequeoDetalle() {
                 </div>
             </header>
 
-            {/* Barra de página */}
             <section className="cheqdet-barra-pagina">
                 <BotonVolver a="/admin/chequeos" texto="Volver al listado" />
                 <div className="cheqdet-barra-titulo">
@@ -180,7 +171,6 @@ function ChequeoDetalle() {
             </section>
 
             <main className="cheqdet-main">
-                {/* Sección 1: Resultado y resumen */}
                 <section className={`cheqdet-resultado-bloque cheqdet-resultado-${config?.clase || "sin"}`}>
                     <div className="cheqdet-resultado-cabecera">
                         <div className="cheqdet-resultado-titulo">
@@ -250,7 +240,6 @@ function ChequeoDetalle() {
                     </dl>
                 </section>
 
-                {/* Sección 2: Vehículo */}
                 <section className="cheqdet-tarjeta">
                     <h2 className="cheqdet-tarjeta-titulo">Vehículo</h2>
                     <div className="cheqdet-vehiculo-bloque">
@@ -290,7 +279,6 @@ function ChequeoDetalle() {
                     </div>
                 </section>
 
-                {/* Sección 3: Conductor */}
                 <section className="cheqdet-tarjeta">
                     <h2 className="cheqdet-tarjeta-titulo">Conductor</h2>
                     <div className="cheqdet-conductor-bloque">
@@ -329,7 +317,6 @@ function ChequeoDetalle() {
                     </div>
                 </section>
 
-                {/* Sección 4: Aptitud personal */}
                 <section className="cheqdet-tarjeta">
                     <h2 className="cheqdet-tarjeta-titulo">Aptitud personal del conductor</h2>
                     {(chequeo.respuestas_aptitud || []).length === 0 ? (
@@ -361,7 +348,6 @@ function ChequeoDetalle() {
                     )}
                 </section>
 
-                {/* Sección 5: Checklist por categoría */}
                 <section className="cheqdet-tarjeta">
                     <h2 className="cheqdet-tarjeta-titulo">
                         Checklist del vehículo
@@ -478,7 +464,6 @@ function ChequeoDetalle() {
                     )}
                 </section>
 
-                {/* Sección 6: Notas generales */}
                 {chequeo.notas_generales && (
                     <section className="cheqdet-tarjeta">
                         <h2 className="cheqdet-tarjeta-titulo">Notas generales del conductor</h2>

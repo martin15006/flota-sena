@@ -1,5 +1,3 @@
-// Controllers de fotos de evidencia. El conductor sube/elimina las suyas, admin marca preservar_siempre.
-
 import {
     subirFotoEvidencia,
     eliminarFotoEvidencia,
@@ -7,7 +5,6 @@ import {
     listarFotosDeRespuesta,
 } from "../services/fotosChequeo.service.js";
 
-// POST /api/respuestas/:respuestaId/fotos (multipart/form-data, campo "foto")
 export const postFotoEvidencia = async (req, res) => {
     try {
         const { respuestaId } = req.params;
@@ -36,7 +33,6 @@ export const postFotoEvidencia = async (req, res) => {
     }
 };
 
-// DELETE /api/respuestas/fotos/:fotoId
 export const deleteFotoEvidencia = async (req, res) => {
     try {
         const { fotoId } = req.params;
@@ -54,8 +50,6 @@ export const deleteFotoEvidencia = async (req, res) => {
     }
 };
 
-// PATCH /api/respuestas/fotos/:fotoId/preservar (solo admin)
-// Body: { preservar: boolean }
 export const patchPreservarFoto = async (req, res) => {
     try {
         const { fotoId } = req.params;
@@ -81,7 +75,6 @@ export const patchPreservarFoto = async (req, res) => {
     }
 };
 
-// GET /api/respuestas/:respuestaId/fotos (para el conductor mientras edita)
 export const getFotosDeRespuesta = async (req, res) => {
     try {
         const { respuestaId } = req.params;

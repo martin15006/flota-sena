@@ -1,17 +1,6 @@
-// Servicio de notificaciones (Bloque C).
-//
-// Define el helper crearNotificacion(...) que se usa desde los controllers
-// de chequeos (cuando ocurre un evento como abandono, chequeo no operativo,
-// intento bloqueado, etc).
-//
-// Decision de diseño: la notificacion va a TODOS los admins activos del
-// centro afectado. Asi cualquiera de ellos puede atenderla sin que dependa
-// de uno solo. Cuando uno la marca como leida, se marca solo para ese.
-
 import { supabase } from '../config/supabase.js';
 import { poolsVigentesEnCentro } from './suplencias.service.js';
 
-// Roles que pueden recibir notificaciones administrativas (todos los niveles).
 const ROLES_DESTINATARIOS = [
     'admin',
     'admin_centro',
@@ -19,16 +8,6 @@ const ROLES_DESTINATARIOS = [
     'superadmin',
 ];
 
-// resolverDestinatariosCentro: devuelve los IDs de los usuarios que deben recibir
-// un aviso de un centro dado. Misma regla de scope que usa la campanita:
-//   - centro_id null             -> TODOS los admins activos
-//   - admin SIN centro (global)  -> recibe todo
-//   - admin CON centro           -> solo si coincide con el del evento
-//   - + pool con suplencia VIGENTE en ese centro (actua como Coordinador)
-// Se usa para la campanita Y para los correos de avisos importantes.
-//
-// Nota: usamos .neq('rol', 'conductor') (no .in(roles)) porque rol es un ENUM en BD;
-// "todos los que no son conductor" = todos los admins, robusto ante cambios del enum.
 export const resolverDestinatariosCentro = async (centro_id = null, { soloCentro = false } = {}) => {
     const { data: todosAdmins, error } = await supabase
         .from('usuarios')
@@ -42,8 +21,6 @@ export const resolverDestinatariosCentro = async (centro_id = null, { soloCentro
     const ids = (todosAdmins || [])
         .filter((u) => {
             if (!centro_id) return true;
-            // soloCentro: UNICAMENTE los admins de ese centro (Coordinador de Flota).
-            // Por defecto tambien reciben los globales/departamentales (sin centro).
             if (soloCentro) return u.centro_id === centro_id;
             return !u.centro_id || u.centro_id === centro_id;
         })
@@ -59,24 +36,6 @@ export const resolverDestinatariosCentro = async (centro_id = null, { soloCentro
     return ids;
 };
 
-// crearNotificacion: crea una entrada de notificacion para cada admin que aplique.
-//
-// Parametros:
-//   tipo         — uno de los valores permitidos en el CHECK constraint de la tabla
-//   titulo       — texto corto que aparece en la lista
-//   mensaje      — descripcion mas larga
-//   url_destino  — a donde llevar al admin si hace clic (opcional)
-//   centro_id    — si esta dado, solo notifica a admins de ese centro (multi-tenant)
-//                  si es null, notifica a todos los admins activos
-//   contexto     — { chequeo_id?, vehiculo_id?, conductor_id? }
-//
-// Devuelve { cantidadCreada: N } o lanza error si algo falla.
-//
-// Limite de frecuencia (opcional): si se pasan dedupeHoras + maxPorVentana,
-// solo se permite crear hasta `maxPorVentana` notificaciones del mismo tipo para
-// el mismo conductor dentro de esa ventana de horas. Asi el admin recibe el aviso
-// varias veces (para que no se le pase) pero sin saturarse.
-// Ej: dedupeHoras=24, maxPorVentana=5 -> hasta 5 avisos por dia por conductor.
 export const crearNotificacion = async ({
     tipo,
     titulo,
@@ -94,9 +53,6 @@ export const crearNotificacion = async ({
         throw new Error('tipo, titulo y mensaje son obligatorios');
     }
 
-    // Control de frecuencia: contar cuantas notificaciones del mismo tipo para el
-    // mismo conductor O vehiculo existen en la ventana. Si ya se alcanzo el maximo,
-    // no crear. (Sirve para no repetir a diario los avisos de vencimiento.)
     if (dedupeHoras && (conductor_id || vehiculo_id)) {
         const desde = new Date(Date.now() - dedupeHoras * 60 * 60 * 1000).toISOString();
         let q = supabase
@@ -115,11 +71,9 @@ export const crearNotificacion = async ({
     const destinatarioIds = await resolverDestinatariosCentro(centro_id, { soloCentro });
 
     if (destinatarioIds.length === 0) {
-        // No hay a quien notificar — no es un error, solo no se crea nada
         return { cantidadCreada: 0 };
     }
 
-    // Construir una fila por destinatario
     const filas = destinatarioIds.map((id) => ({
         destinatario_id: id,
         tipo,
@@ -144,9 +98,6 @@ export const crearNotificacion = async ({
 };
 
 
-// crearNotificacionDirecta: crea una notificacion para destinatarios ESPECIFICOS
-// (no broadcast por centro). La usa el escalado de informes para avisarle al
-// superior puntual.
 export const crearNotificacionDirecta = async ({ destinatarioIds, tipo, titulo, mensaje, url_destino = null }) => {
     const ids = [...new Set((destinatarioIds || []).filter(Boolean))];
     if (!tipo || !titulo || !mensaje) throw new Error('tipo, titulo y mensaje son obligatorios');
@@ -161,7 +112,6 @@ export const crearNotificacionDirecta = async ({ destinatarioIds, tipo, titulo, 
 };
 
 
-// listarMisNotificaciones: lista paginada para el admin logueado.
 export const listarMisNotificaciones = async ({
     destinatarioId,
     pagina = 1,
@@ -194,7 +144,6 @@ export const listarMisNotificaciones = async ({
 };
 
 
-// contarNoLeidas: solo el numero (para el badge de la campanita).
 export const contarNoLeidas = async (destinatarioId) => {
     const { count, error } = await supabase
         .from('notificaciones')
@@ -207,7 +156,6 @@ export const contarNoLeidas = async (destinatarioId) => {
 };
 
 
-// marcarLeida: marca una notificacion como leida (solo si es del usuario).
 export const marcarLeida = async (notifId, usuarioId) => {
     const ahora = new Date().toISOString();
     const { data, error } = await supabase
@@ -220,7 +168,6 @@ export const marcarLeida = async (notifId, usuarioId) => {
 
     if (error) {
         if (error.code === 'PGRST116') {
-            // No encontrada (o no es del usuario)
             return null;
         }
         throw error;
@@ -229,7 +176,6 @@ export const marcarLeida = async (notifId, usuarioId) => {
 };
 
 
-// marcarTodasLeidas: marca TODAS las del usuario como leidas.
 export const marcarTodasLeidas = async (usuarioId) => {
     const ahora = new Date().toISOString();
     const { error } = await supabase

@@ -2,7 +2,6 @@ import { useEffect } from "react";
 import './Modal.css';
 
 function Modal({ abierto, onCerrar, titulo, children, ancho = 'mediano' }) {
-    // Cerrar con la tecla Esc 
     useEffect(() => {
         if (!abierto) return;
         const handler = (e) => {
@@ -12,7 +11,6 @@ function Modal({ abierto, onCerrar, titulo, children, ancho = 'mediano' }) {
         return () => window.removeEventListener('keydown', handler);
     }, [abierto, onCerrar]);
 
-    // Bloquear el scroll del body cuando el modal permanece abierto 
     useEffect(() => {
         if (abierto) {
             document.body.style.overflow = 'hidden';

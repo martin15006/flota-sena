@@ -1,14 +1,5 @@
 import { supabase } from '../config/supabase.js';
 
-// IMPORTANTE: este helper NO debe filtrar por activo=true.
-// Antes filtrabamos por activo=true aqui, pero eso provocaba que los conductores
-// desactivados que intentaban entrar con su cedula vieran "Credenciales invalidas"
-// (porque no se resolvia el email), en lugar del mensaje correcto "Cuenta desactivada".
-//
-// El chequeo de activo se hace despues en el controller, *despues* de validar
-// que la contraseña sea correcta. Esto evita filtrar la existencia de cuentas
-// a atacantes externos (account enumeration) y a la vez le da un mensaje claro
-// al usuario legitimo que si conoce su contraseña.
 export const buscarEmailPorCedula = async (cedula) => {
     const { data: usuario, error } = await supabase
         .from('usuarios')
@@ -37,7 +28,6 @@ export const resolverIdentificador = async (identificador) => {
 
 
 export const obtenerPerfil = async (userId) => {
-    // Join con centros_formacion para tener centro_nombre disponible en una sola query
     const { data, error } = await supabase
         .from('usuarios')
         .select(`
@@ -51,7 +41,6 @@ export const obtenerPerfil = async (userId) => {
         .single();
 
     if (error) throw error;
-    // Aplanar el join: exponer solo centro_nombre como campo plano
     if (data) {
         data.centro_nombre = data.centros_formacion?.nombre || null;
         delete data.centros_formacion;

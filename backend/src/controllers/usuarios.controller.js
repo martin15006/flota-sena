@@ -5,8 +5,6 @@ import { puedeCrearRol, puedeGestionarRol, ETIQUETA_ROL, rolEfectivo as rolEfect
 import { mapaSuplenciasVigentes, suplenciaVigenteDePool } from '../services/suplencias.service.js';
 
 
-// Helper: indexa los emails de auth.users por id para hacer merge con la tabla usuarios.
-// El email vive en auth.users (no en usuarios) porque Supabase Auth gestiona credenciales.
 const obtenerMapaDeEmails = async () => {
     const { data, error } = await supabase.auth.admin.listUsers({ perPage: 1000 });
     if (error) {
@@ -18,13 +16,6 @@ const obtenerMapaDeEmails = async () => {
     return mapa;
 };
 
-// Helper multinivel (#102): verifica que el admin pueda actuar sobre el usuario
-// objetivo. Comprueba dos cosas:
-//   1) scope territorial: el objetivo esta dentro del area del admin.
-//   2) jerarquia (opcional): el objetivo es de rango inferior (para acciones que
-//      modifican; en acciones de solo-lectura basta el scope -> exigirRango:false).
-// Devuelve { ok:true, usuario } o { ok:false, status, error }. Sobre uno mismo
-// siempre permite (el frontend tiene endpoints propios para el perfil propio).
 const verificarAccesoUsuarioObjetivo = async (req, idObjetivo, { exigirRango = true } = {}) => {
     if (idObjetivo === req.usuario.id) return { ok: true, usuario: null };
 
@@ -52,20 +43,11 @@ const verificarAccesoUsuarioObjetivo = async (req, idObjetivo, { exigirRango = t
     return { ok: true, usuario: objetivo };
 };
 
-// Construye un "ambito" legible para mostrar en la tabla (#102 mejora): de donde
-// es / que administra cada usuario, segun su rol. Usa los nombres ya unidos por
-// el JOIN (centro/ciudad/departamento/region).
-//   - conductor / admin_centro / admin con centro -> su centro (+ ciudad)
-//   - admin_departamental -> su departamento (Director Regional)
-//   - superadmin          -> nacional
-// Devuelve { nivel, etiqueta, ciudad } — ciudad sirve tambien para el filtro.
 const construirAmbito = (u) => {
     const rol = u.rol;
     if (rol === 'superadmin') return { nivel: 'nacional', etiqueta: 'Nacional', ciudad: null };
     if (rol === 'admin_departamental') return { nivel: 'departamento', etiqueta: u.departamento?.nombre || '—', ciudad: null };
-    // conductor / admin_centro / alias 'admin' con centro
     if (u.centro) return { nivel: 'centro', etiqueta: u.centro.nombre, ciudad: u.centro.ciudad?.nombre || null };
-    // alias 'admin' sin centro (admin general previo al multinivel)
     if (rol === 'admin') return { nivel: 'nacional', etiqueta: 'General', ciudad: null };
     return { nivel: null, etiqueta: '—', ciudad: null };
 };
@@ -96,20 +78,10 @@ export const listarUsuarios = async (req, res) => {
 
         if (error) throw error;
 
-        // Filtro multinivel (#102): un admin solo ve a los usuarios dentro de su
-        // scope territorial. Lo hacemos en JS porque un usuario puede ser otro
-        // administrador cuyo territorio es mas amplio que un centro (ciudad,
-        // departamento, region), y un simple .in('centro_id', ...) los dejaria
-        // fuera. El superadmin (scope global) ve a todos. El admin siempre se ve
-        // a si mismo. (A esta escala — decenas de usuarios — filtrar en memoria
-        // es simple y suficiente.)
         const visibles = (data || []).filter(
             (u) => u.id === req.usuario.id || usuarioEnScope(scope, u)
         );
 
-        // Mergeamos el email de auth.users y el ambito legible. Quitamos los
-        // objetos crudos del JOIN (centro/ciudad/...) para no inflar la respuesta;
-        // el frontend usa `ambito` para mostrar y filtrar.
         const usuariosConEmail = visibles.map((u) => {
             const { centro, ciudad, departamento, region, ...resto } = u;
             return {
@@ -119,8 +91,6 @@ export const listarUsuarios = async (req, res) => {
             };
         });
 
-        // Pool · Paso 2: marcar quien tiene una suplencia VIGENTE ahora mismo, para
-        // mostrar el indicador "Supliendo" en la tabla.
         const poolIds = usuariosConEmail
             .filter((u) => u.rol === 'conductor' && u.es_pool)
             .map((u) => u.id);
@@ -146,7 +116,6 @@ export const obtenerUsuario = async (req, res) => {
     try {
         const { id } = req.params;
 
-        // Multinivel (#102): solo se puede ver a usuarios dentro del area propia.
         const acceso = await verificarAccesoUsuarioObjetivo(req, id, { exigirRango: false });
         if (!acceso.ok) {
             return res.status(acceso.status).json({ error: acceso.error });
@@ -162,7 +131,6 @@ export const obtenerUsuario = async (req, res) => {
             return res.status(404).json({ error: 'Usuario no encontrado' });
         }
 
-        // Traer el email de auth.users por separado
         let email = null;
         try {
             const { data: authUser } = await supabase.auth.admin.getUserById(id);
@@ -178,14 +146,8 @@ export const obtenerUsuario = async (req, res) => {
 };
 
 
-// Roles que requieren tener un centro de formacion asignado obligatoriamente.
-// Conductor y admin_centro operan a nivel de un centro especifico, asi que sin
-// centro asignado quedarian en estado invalido.
 const ROLES_REQUIEREN_CENTRO = ['conductor', 'admin_centro'];
 
-// Conductor requiere datos adicionales por ley colombiana: licencia vigente
-// (legalidad para conducir) y seguridad social (cobertura ante accidente
-// conduciendo el vehiculo institucional del SENA).
 const validarRequisitosConductor = ({
     rol,
     licencia_numero,
@@ -230,19 +192,12 @@ export const crearUsuario = async (req, res) => {
                 .json({ error: 'cedula, nombre_completo y email son obligatorios' });
         }
 
-        // Jerarquia (#111): solo se pueden crear usuarios de rango ESTRICTAMENTE
-        // inferior al propio. Un admin_centro crea conductores; un superadmin
-        // crea cualquier admin pero no otro superadmin.
         if (!puedeCrearRol(rolEfectivoActor(req.usuario), rol)) {
             return res.status(403).json({
                 error: `No tienes permiso para crear usuarios con el rol "${ETIQUETA_ROL[rol] || rol}". Solo puedes crear roles inferiores al tuyo.`,
             });
         }
 
-        // Scope territorial: el area asignada (centro/ciudad/departamento/region
-        // segun el rol) debe estar dentro del area del admin. El superadmin no
-        // tiene limite. El frontend ya ofrece solo opciones validas; esto es la
-        // verificacion de seguridad en el servidor.
         const scopeActor = await obtenerScope(req.usuario);
         if (scopeActor.tipo !== 'global') {
             const fueraDeArea =
@@ -257,14 +212,12 @@ export const crearUsuario = async (req, res) => {
             }
         }
 
-        // Para conductor y admin_centro, el centro de formacion es obligatorio
         if (ROLES_REQUIEREN_CENTRO.includes(rol) && !centro_id) {
             return res.status(400).json({
                 error: `El centro de formacion es obligatorio para el rol '${rol}'`,
             });
         }
 
-        // Para conductor: licencia + seguridad social obligatorias
         const errorConductor = validarRequisitosConductor({
             rol,
             licencia_numero,
@@ -291,7 +244,6 @@ export const crearUsuario = async (req, res) => {
 
         const passwordTemporal = generarPasswordTemporal();
 
-        // crear en supabase auth 
         const { data: authData, error: errAuth } =
             await supabase.auth.admin.createUser({
                 email,
@@ -321,8 +273,6 @@ export const crearUsuario = async (req, res) => {
                 licencia_vencimiento,
                 eps,
                 arl,
-                // Conductor del pool (ver docs/diseno-pool-vip.md): solo lo marcan
-                // los Directores, y solo aplica al rol conductor.
                 es_pool:
                     rol === 'conductor' &&
                     ['superadmin', 'admin_departamental'].includes(req.usuario.rol)
@@ -374,7 +324,6 @@ export const actualizarUsuario = async (req, res) => {
             arl,
         } = req.body;
 
-        // Traemos los datos actuales del usuario para validar contra el rol real
         const { data: usuarioActual } = await supabase
             .from('usuarios')
             .select('rol, licencia_numero, licencia_categoria, licencia_vencimiento, eps, arl, centro_id, ciudad_id, departamento_id, region_id')
@@ -387,8 +336,6 @@ export const actualizarUsuario = async (req, res) => {
 
         const scopeActor = await obtenerScope(req.usuario);
 
-        // Multinivel (#102 / #112): solo puedes editar a alguien de tu area y de
-        // rango inferior. (Editar el propio perfil va por otro endpoint: /mi-perfil.)
         if (id !== req.usuario.id) {
             if (!usuarioEnScope(scopeActor, usuarioActual)) {
                 return res
@@ -402,14 +349,8 @@ export const actualizarUsuario = async (req, res) => {
             }
         }
 
-        // CAMBIO DE ROL (#102/#111 aplicado a edicion): se permite reasignar el rol,
-        // pero solo a rangos ESTRICTAMENTE inferiores al del admin que edita (igual
-        // que al crear). Nadie se asciende a si mismo ni asciende a otro a su nivel.
         const rolNuevo = rol && rol !== usuarioActual.rol ? rol : null;
         if (rolNuevo && id === req.usuario.id) {
-            // Anti-accidente: nadie se cambia su propio rol (evita p.ej. que el
-            // unico superadmin se degrade a si mismo y el sistema quede sin nadie
-            // por encima).
             return res.status(400).json({ error: 'No puedes cambiar tu propio rol.' });
         }
         if (rolNuevo && !puedeCrearRol(rolEfectivoActor(req.usuario), rolNuevo)) {
@@ -417,11 +358,8 @@ export const actualizarUsuario = async (req, res) => {
                 error: `No puedes asignar el rol "${ETIQUETA_ROL[rolNuevo] || rolNuevo}". Solo puedes asignar roles inferiores al tuyo.`,
             });
         }
-        // Rol con el que el usuario QUEDARA tras este update (para las validaciones)
         const rolEfectivo = rolNuevo || usuarioActual.rol;
 
-        // El centro es obligatorio para los roles que operan a nivel de centro
-        // (validado contra el rol con el que queda, no el que tenia).
         if (ROLES_REQUIEREN_CENTRO.includes(rolEfectivo)) {
             const centroFinal = centro_id !== undefined ? centro_id : usuarioActual.centro_id;
             if (!centroFinal) {
@@ -431,8 +369,6 @@ export const actualizarUsuario = async (req, res) => {
             }
         }
 
-        // Scope territorial: el area asignada debe estar dentro del area del admin
-        // que edita (mismo control que al crear).
         if (scopeActor.tipo !== 'global') {
             const fueraDeArea =
                 (centro_id && !scopeActor.centroIds.includes(centro_id)) ||
@@ -446,9 +382,6 @@ export const actualizarUsuario = async (req, res) => {
             }
         }
 
-        // Validar requisitos del conductor: tomamos los valores que vienen en el body,
-        // o si no vienen, los actuales del usuario en BD. Asi cubrimos updates parciales.
-        // (Contra el rol con el que queda: si lo degradan a conductor, debe traer licencia.)
         if (rolEfectivo === 'conductor') {
             const errorConductor = validarRequisitosConductor({
                 rol: 'conductor',
@@ -463,8 +396,6 @@ export const actualizarUsuario = async (req, res) => {
             }
         }
 
-        // Solo incluir cada campo de territorio si vino en el body (puede ser null
-        // si explicitamente se quiere quitar, p.ej. al cambiar de nivel).
         const cambios = {
             nombre_completo,
             telefono,
@@ -481,8 +412,6 @@ export const actualizarUsuario = async (req, res) => {
         if (departamento_id !== undefined) cambios.departamento_id = departamento_id || null;
         if (region_id !== undefined) cambios.region_id = region_id || null;
 
-        // Conductor del pool: solo lo cambian los Directores. Si el usuario deja de
-        // ser conductor (rolEfectivo distinto), se apaga la marca por coherencia.
         const actorEsDirector = ['superadmin', 'admin_departamental'].includes(req.usuario.rol);
         if (rolEfectivo !== 'conductor') {
             cambios.es_pool = false;
@@ -490,7 +419,6 @@ export const actualizarUsuario = async (req, res) => {
             cambios.es_pool = req.body.es_pool === true;
         }
 
-        // Si deja de ser pool, cerrar sus suplencias activas (ya no puede suplir).
         if (cambios.es_pool === false) {
             await supabase
                 .from('suplencias')
@@ -547,7 +475,6 @@ export const desactivarUsuario = async (req, res) => {
             return res.status(404).json({ error: 'Usuario no encontrado' });
         }
 
-        // Multinivel (#102): solo puedes desactivar a alguien dentro de tu area...
         const scope = await obtenerScope(req.usuario);
         if (!usuarioEnScope(scope, usuario)) {
             return res
@@ -555,8 +482,6 @@ export const desactivarUsuario = async (req, res) => {
                 .json({ error: 'Ese usuario no pertenece a tu area.' });
         }
 
-        // ...y de rango ESTRICTAMENTE inferior al tuyo (#112): nunca a un admin
-        // de tu mismo rango ni superior.
         if (!puedeGestionarRol(rolEfectivoActor(req.usuario), usuario.rol)) {
             return res.status(403).json({
                 error: `No puedes desactivar a un "${ETIQUETA_ROL[usuario.rol] || usuario.rol}". Solo puedes gestionar usuarios de rango inferior al tuyo.`,
@@ -606,7 +531,6 @@ export const reactivarUsuario = async (req, res) => {
             return res.status(404).json({ error: 'Usuario no encontrado' });
         }
 
-        // Multinivel (#102 / #112): solo sobre usuarios de tu area y de rango inferior.
         const scope = await obtenerScope(req.usuario);
         if (!usuarioEnScope(scope, usuario)) {
             return res
@@ -659,7 +583,6 @@ export const eliminarUsuario = async (req, res) => {
             return res.status(404).json({ error: 'Usuario no encontrado' });
         }
 
-        // Multinivel (#102): solo puedes eliminar a alguien dentro de tu area...
         const scope = await obtenerScope(req.usuario);
         if (!usuarioEnScope(scope, usuario)) {
             return res
@@ -667,8 +590,6 @@ export const eliminarUsuario = async (req, res) => {
                 .json({ error: 'Ese usuario no pertenece a tu area.' });
         }
 
-        // ...y de rango ESTRICTAMENTE inferior (#112): por seguridad, nadie puede
-        // eliminar a un admin de su mismo rango ni superior.
         if (!puedeGestionarRol(rolEfectivoActor(req.usuario), usuario.rol)) {
             return res.status(403).json({
                 error: `No puedes eliminar a un "${ETIQUETA_ROL[usuario.rol] || usuario.rol}". Solo puedes gestionar usuarios de rango inferior al tuyo.`,
@@ -707,16 +628,12 @@ export const resetearPassword = async (req, res) => {
     try {
         const { id } = req.params;
 
-        // Seguridad (suplencia): un suplente (pool actuando como Coordinador) NO puede
-        // resetear contrasenas — ni la propia ni la de nadie. Es una accion sensible
-        // reservada al Coordinador titular y a los niveles superiores.
         if (req.usuario.suplencia) {
             return res.status(403).json({
                 error: 'Como suplente no puedes resetear contrasenas. Eso lo hace el Coordinador titular.',
             });
         }
 
-        // Multinivel (#102 / #112): solo sobre usuarios de tu area y rango inferior.
         const acceso = await verificarAccesoUsuarioObjetivo(req, id);
         if (!acceso.ok) {
             return res.status(acceso.status).json({ error: acceso.error });
@@ -756,24 +673,17 @@ export const resetearPassword = async (req, res) => {
     }
 };
 
-// -- Cambios sensibles con verificacion del admin --
-
-// Verifica la contrasena del admin logueado. Devuelve true si es correcta.
-// Para esto creamos un cliente "anon" temporal y hacemos signInWithPassword.
-// Si funciona, la password es correcta; en cualquier otro caso, no.
 const verificarPasswordAdmin = async (req, passwordRecibida) => {
     if (!passwordRecibida || !passwordRecibida.trim()) {
         return { ok: false, mensaje: 'Debes ingresar tu contrasena de administrador' };
     }
 
-    // Necesitamos el email del admin para hacer signIn
     const { data: authAdmin } = await supabase.auth.admin.getUserById(req.usuario.id);
     const emailAdmin = authAdmin?.user?.email;
     if (!emailAdmin) {
         return { ok: false, mensaje: 'No se pudo identificar al administrador' };
     }
 
-    // signInWithPassword va contra Supabase Auth. No necesitamos persistir la sesion.
     const { data, error } = await supabase.auth.signInWithPassword({
         email: emailAdmin,
         password: passwordRecibida,
@@ -785,8 +695,6 @@ const verificarPasswordAdmin = async (req, passwordRecibida) => {
     return { ok: true };
 };
 
-// POST /api/usuarios/:id/cambiar-correo
-// Body: { password_admin, nuevo_correo }
 export const cambiarCorreo = async (req, res) => {
     try {
         const { id } = req.params;
@@ -795,12 +703,10 @@ export const cambiarCorreo = async (req, res) => {
         if (!nuevo_correo || !nuevo_correo.trim()) {
             return res.status(400).json({ error: 'El nuevo correo es obligatorio' });
         }
-        // Validacion basica de formato (Supabase tambien lo valida)
         if (!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(nuevo_correo.trim())) {
             return res.status(400).json({ error: 'El correo no tiene un formato valido' });
         }
 
-        // Multinivel (#102 / #112): solo sobre usuarios de tu area y rango inferior.
         const acceso = await verificarAccesoUsuarioObjetivo(req, id);
         if (!acceso.ok) {
             return res.status(acceso.status).json({ error: acceso.error });
@@ -811,7 +717,6 @@ export const cambiarCorreo = async (req, res) => {
             return res.status(403).json({ error: verif.mensaje });
         }
 
-        // Aplicar el cambio en Supabase Auth
         const { data: actualizado, error: errUpdate } = await supabase.auth.admin.updateUserById(
             id,
             { email: nuevo_correo.trim() }
@@ -821,7 +726,6 @@ export const cambiarCorreo = async (req, res) => {
             return res.status(400).json({ error: errUpdate.message });
         }
 
-        // Auditar el cambio
         await registrarAuditoria({
             usuarioAfectadoId: id,
             accionPorId: req.usuario.id,
@@ -839,8 +743,6 @@ export const cambiarCorreo = async (req, res) => {
     }
 };
 
-// POST /api/usuarios/:id/cambiar-cedula
-// Body: { password_admin, nueva_cedula }
 export const cambiarCedula = async (req, res) => {
     try {
         const { id } = req.params;
@@ -854,7 +756,6 @@ export const cambiarCedula = async (req, res) => {
             return res.status(400).json({ error: 'La cedula debe tener al menos 5 digitos' });
         }
 
-        // Multinivel (#102 / #112): solo sobre usuarios de tu area y rango inferior.
         const acceso = await verificarAccesoUsuarioObjetivo(req, id);
         if (!acceso.ok) {
             return res.status(acceso.status).json({ error: acceso.error });
@@ -865,7 +766,6 @@ export const cambiarCedula = async (req, res) => {
             return res.status(403).json({ error: verif.mensaje });
         }
 
-        // Verificar que la nueva cedula no este ya en uso por otro usuario
         const { data: existente } = await supabase
             .from('usuarios')
             .select('id')
@@ -879,7 +779,6 @@ export const cambiarCedula = async (req, res) => {
             });
         }
 
-        // Aplicar el cambio
         const { data: actualizado, error: errUpdate } = await supabase
             .from('usuarios')
             .update({ cedula: cedulaLimpia })
@@ -891,7 +790,6 @@ export const cambiarCedula = async (req, res) => {
             return res.status(500).json({ error: errUpdate.message });
         }
 
-        // Auditar
         await registrarAuditoria({
             usuarioAfectadoId: id,
             accionPorId: req.usuario.id,
@@ -910,29 +808,15 @@ export const cambiarCedula = async (req, res) => {
 };
 
 
-// =============================================================================
-// GET /api/usuarios/:id/perfil-detalle
-// =============================================================================
-// Vista de "ficha completa" del usuario para el admin (Tarea #46).
-// Trae en una sola respuesta todo lo necesario para la pagina de perfil:
-//   - Datos personales del usuario (mismo formato que obtenerUsuario)
-//   - Nombre del centro de formacion (join con centros_formacion)
-//   - Si es conductor: contadores y resumen del ultimo chequeo
-//   - Actividad reciente (ultimas 10 entradas de auditoria_usuarios)
-//
-// Se hace TODO en el backend en lugar de varias llamadas desde el frontend
-// para no abrir varios round-trips de red ni filtrar/joinear en el cliente.
 export const obtenerPerfilDetalle = async (req, res) => {
     try {
         const { id } = req.params;
 
-        // Multinivel (#102): solo se puede ver la ficha de usuarios del area propia.
         const acceso = await verificarAccesoUsuarioObjetivo(req, id, { exigirRango: false });
         if (!acceso.ok) {
             return res.status(acceso.status).json({ error: acceso.error });
         }
 
-        // 1) Datos del usuario + centro (join). Si el centro es null no rompe.
         const { data: usuario, error: errUsuario } = await supabase
             .from('usuarios')
             .select(`
@@ -950,7 +834,6 @@ export const obtenerPerfilDetalle = async (req, res) => {
             return res.status(404).json({ error: 'Usuario no encontrado' });
         }
 
-        // 2) Email vive en auth.users (separado de la tabla usuarios)
         let email = null;
         try {
             const { data: authUser } = await supabase.auth.admin.getUserById(id);
@@ -959,8 +842,6 @@ export const obtenerPerfilDetalle = async (req, res) => {
             console.warn('[perfil-detalle] no se pudo leer email:', e.message);
         }
 
-        // 3) Si es conductor, traer contadores y ultimo chequeo en paralelo.
-        // Si NO es conductor, dejamos las metricas en null (la UI no las mostrara).
         let chequeosResumen = null;
         if (usuario.rol === 'conductor') {
             const [
@@ -1011,8 +892,6 @@ export const obtenerPerfilDetalle = async (req, res) => {
             };
         }
 
-        // 4) Actividad reciente: ultimas 10 entradas de auditoria sobre este usuario.
-        // Resolvemos el nombre del admin que ejecuto cada accion mediante un map.
         const { data: auditoriaRaw } = await supabase
             .from('auditoria_usuarios')
             .select('id, accion, detalles, created_at, accion_por_id')
@@ -1042,13 +921,11 @@ export const obtenerPerfilDetalle = async (req, res) => {
             actor_nombre: mapaAdmins[a.accion_por_id] || 'Sistema',
         }));
 
-        // Pool · suplencia: marcar si este usuario (pool) esta supliendo ahora mismo.
         let supliendo = false;
         if (usuario.rol === 'conductor' && usuario.es_pool && usuario.centro_id) {
             supliendo = !!(await suplenciaVigenteDePool(usuario.id));
         }
 
-        // 5) Respuesta unica con todo lo anterior
         const { centros_formacion, ...usuarioSinJoin } = usuario;
         res.json({
             usuario: {

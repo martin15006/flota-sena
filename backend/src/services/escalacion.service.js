@@ -1,9 +1,3 @@
-// Escalado de informes (Opción C): un admin envía a su SUPERIOR inmediato un
-// informe manual (nota + resumen opcional de su área). Le llega por correo y
-// como notificación en la campanita.
-//
-// Cadena de mando: Coordinador de Flota → Director Regional de su departamento;
-// Director Regional → Dirección Nacional (superadmin). El Nacional no tiene superior.
 import { supabase } from '../config/supabase.js';
 import { rolEfectivo } from './jerarquia.service.js';
 import { obtenerScope, aplicarScope } from './scope.service.js';
@@ -16,7 +10,6 @@ const idsActivos = async (filtro) => {
     return (data || []).map((u) => u.id);
 };
 
-// Devuelve { ids, etiqueta, sinSuperior? } del superior inmediato.
 export const resolverSuperior = async (usuario) => {
     const rol = rolEfectivo(usuario);
     if (rol === 'superadmin') return { ids: [], etiqueta: null, sinSuperior: true };
@@ -25,15 +18,12 @@ export const resolverSuperior = async (usuario) => {
         supabase.from('usuarios').select('id').eq('rol', 'superadmin').eq('activo', true)
     );
 
-    // Director Regional -> Dirección Nacional
     if (rol === 'admin_departamental') {
         return { ids: await superadmins(), etiqueta: 'la Dirección Nacional' };
     }
 
-    // Coordinador / admin con centro / suplente -> Director Regional de su departamento
     const centroId = usuario.centroActivo || usuario.centro_id;
     if (!centroId) {
-        // Admin general sin centro: su superior es el Nacional
         return { ids: await superadmins(), etiqueta: 'la Dirección Nacional' };
     }
     const { data: centro } = await supabase
@@ -48,11 +38,9 @@ export const resolverSuperior = async (usuario) => {
         );
         if (ids.length > 0) return { ids, etiqueta: `el Director Regional de ${depto.nombre}` };
     }
-    // Sin Regional en ese departamento: sube directo al Nacional para que no se pierda
     return { ids: await superadmins(), etiqueta: 'la Dirección Nacional' };
 };
 
-// Etiqueta del área del remitente (centro o regional) para el encabezado del informe.
 const areaDelUsuario = async (usuario) => {
     const centroId = usuario.centroActivo || usuario.centro_id;
     if (centroId) return (await cabeceraDeCentro(centroId)).centroNombre;
@@ -63,7 +51,6 @@ const areaDelUsuario = async (usuario) => {
     return '';
 };
 
-// Conteos del área del admin (respeta su scope) para el resumen opcional.
 export const resumenDeArea = async (usuario) => {
     const scope = await obtenerScope(usuario);
     const hoy = new Date(); hoy.setHours(0, 0, 0, 0);
@@ -83,7 +70,6 @@ export const resumenDeArea = async (usuario) => {
     };
 };
 
-// Envía el informe: campanita + correo al superior. Devuelve { ok, ... }.
 export const enviarInforme = async ({ usuario, asunto, mensaje, incluirResumen }) => {
     if (!mensaje || !mensaje.trim()) {
         return { ok: false, status: 400, error: 'El mensaje es obligatorio.' };
@@ -101,8 +87,6 @@ export const enviarInforme = async ({ usuario, asunto, mensaje, incluirResumen }
     const cargo = etiquetaCargo(usuario.rol, usuario.es_pool);
     const area = await areaDelUsuario(usuario);
 
-    // 1) Correo al superior (a prueba de fallos: si está deshabilitado o falla,
-    //    seguimos con la campanita igual; solo cambia la nota que mostramos).
     let correoEnviado = false;
     try {
         const para = await emailsDeUsuarios(superior.ids);
@@ -113,9 +97,6 @@ export const enviarInforme = async ({ usuario, asunto, mensaje, incluirResumen }
         correoEnviado = false;
     }
 
-    // 2) Campanita al superior (SIEMPRE, aunque el correo esté deshabilitado).
-    //    Si el correo sí salió, lo avisamos para que el superior sepa que también
-    //    le llegó ahí y no quede buscando "¿me envió un informe pero a dónde?".
     const notaCorreo = correoEnviado
         ? ' · 📧 También te llegó una copia a tu correo.'
         : '';

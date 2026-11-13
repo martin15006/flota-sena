@@ -1,15 +1,9 @@
-/* =================================================================
-   AdminLayout — layout reutilizable de todas las paginas admin.
-   Sigue convencion seccion 17: bordes 2px+, sombras md+, texto gris-900.
-   ================================================================= */
-
 .admin-layout {
     min-height: 100vh;
     display: flex;
     background: var(--superficie-sutil);
 }
 
-/* ===== Sidebar siempre tiene un ancho fijo en escritorio ===== */
 .admin-layout.sidebar-abierto .sidebar {
     width: 260px;
 }
@@ -20,21 +14,18 @@
     border-right-width: 0;
 }
 
-/* ===== Backdrop para movil cuando el sidebar esta abierto ===== */
 .admin-layout-backdrop {
     display: none;
 }
 
-/* ===== Area principal a la derecha del sidebar ===== */
 .admin-layout-main {
     flex: 1;
     display: flex;
     flex-direction: column;
-    min-width: 0;  /* evita overflow del contenido en flexbox */
+    min-width: 0;
     min-height: 100vh;
 }
 
-/* ===== Header de la pagina ===== */
 .admin-layout-header {
     background: var(--superficie);
     border-bottom: 2px solid var(--color-gris-300);
@@ -80,7 +71,6 @@
     font-weight: var(--peso-bold);
     color: var(--color-gris-900);
     flex: 1;
-    /* Truncar si el titulo es muy largo */
     overflow: hidden;
     text-overflow: ellipsis;
     white-space: nowrap;
@@ -102,9 +92,6 @@
     cursor: pointer;
     transition: all var(--velocidad-rapida) var(--suavizado);
     font-family: inherit;
-    /* Al entrar, el cuadro "respira" en verde 2 veces (mismo look del hover,
-       apareciendo y desvaneciendose suave) y luego queda quieto. Asi el rol se
-       nota solo, sin depender de pasar el mouse. */
     animation: perfil-pulso 1.7s ease-in-out 2;
 }
 
@@ -138,8 +125,6 @@
     line-height: 1.2;
 }
 
-/* Badge del nivel del admin: visible de un vistazo en todas las paginas
-   (antes era texto gris chiquito y se perdia). */
 .admin-layout-perfil-rol {
     display: inline-block;
     margin-top: 3px;
@@ -152,19 +137,16 @@
     line-height: 1.4;
 }
 
-/* Pool supliendo al Coordinador: badge en morado (coherente con el resto del pool) */
 .admin-layout-perfil-rol-suplencia {
     background: var(--suplencia-solido);
 }
 
-/* Accesibilidad: si el usuario tiene "reducir movimiento" activado, sin pulso */
 @media (prefers-reduced-motion: reduce) {
     .admin-layout-perfil {
         animation: none;
     }
 }
 
-/* ===== Contenido principal de la pagina ===== */
 .admin-layout-contenido {
     flex: 1;
     padding: var(--espacio-xl);
@@ -172,9 +154,6 @@
     overflow-x: hidden;
 }
 
-/* =================================================================
-   RESPONSIVE — pantallas chicas: sidebar es overlay con backdrop.
-   ================================================================= */
 @media (max-width: 900px) {
     .admin-layout .sidebar {
         position: fixed;
@@ -185,7 +164,6 @@
         transition: transform var(--velocidad-media) var(--suavizado);
     }
 
-    /* En movil el sidebar ocupa hasta 280px o 80% (lo que sea menor) */
     .admin-layout.sidebar-abierto .sidebar {
         width: min(280px, 80vw);
         transform: translateX(0);
@@ -198,7 +176,6 @@
         border-right-width: 2px;
     }
 
-    /* Backdrop solo aparece en movil */
     .admin-layout.sidebar-abierto .admin-layout-backdrop {
         display: block;
         position: fixed;
@@ -219,12 +196,10 @@
         padding: var(--espacio-sm) var(--espacio-md);
     }
 
-    /* En movil ocultamos el rol bajo el nombre para ahorrar espacio */
     .admin-layout-perfil-rol {
         display: none;
     }
 
-    /* Y si el ancho es muy chico, ocultamos el nombre tambien */
     @media (max-width: 480px) {
         .admin-layout-perfil {
             display: none;
@@ -237,7 +212,6 @@
     to { opacity: 1; }
 }
 
-/* Barra de suplencia: muestra BIEN VISIBLE en qué centro está gestionando el pool */
 .admin-layout-suplencia-bar {
     display: flex;
     align-items: center;

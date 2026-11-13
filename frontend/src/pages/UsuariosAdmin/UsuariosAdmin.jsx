@@ -12,7 +12,6 @@ import ModalCrearUsuario from "./components/ModalCrearUsuario.jsx";
 import ModalEditarUsuario from "./components/ModalEditarUsuario.jsx";
 import ModalSuplencia from "./components/ModalSuplencia.jsx";
 
-// Texto secundario (gris) que describe el NIVEL del ámbito en la tabla.
 const descriptorAmbito = (ambito) => {
   switch (ambito.nivel) {
     case "centro":
@@ -39,20 +38,14 @@ function UsuariosAdmin() {
   const [modalPassword, setModalPassword] = useState(null);
   const [modalCrearAbierto, setModalCrearAbierto] = useState(false);
   const [usuarioAEditar, setUsuarioAeditar] = useState(null);
-  const [suplenciaDe, setSuplenciaDe] = useState(null); // conductor del pool o null
+  const [suplenciaDe, setSuplenciaDe] = useState(null);
   const [toast, setToast] = useState(null);
 
-  // Helper para mostrar toast con tipo determinado (exito | error | advertencia | info)
   const mostrarToast = (mensaje, tipo = "exito") => setToast({ mensaje, tipo });
 
-  // Seguridad del SUPLENTE (pool actuando como Coordinador): tiene poderes acotados.
-  //   - No puede resetear contrasenas (de nadie).
-  //   - No puede editar/desactivar/eliminar a otros admins (incluido el Coordinador
-  //     titular): solo gestiona conductores.
-  // El backend tambien lo impone; esto es para no mostrar botones que igual fallarian.
   const soySuplente = enSuplencia(usuario);
   const suplenteNoTocaAdmin = (u) => soySuplente && esAdmin(u.rol);
-  const esMiFila = (u) => u.id === usuario?.id; // nadie se desactiva/elimina a si mismo
+  const esMiFila = (u) => u.id === usuario?.id;
 
   const cargarUsuarios = async () => {
     setCargando(true);
@@ -68,23 +61,15 @@ function UsuariosAdmin() {
   };
 
   useEffect(() => {
-    // Cargar para CUALQUIER admin (todos los niveles + el alias 'admin') Y para el
-    // pool con suplencia vigente (admin efectivo). Si usaramos esAdmin(rol) a secas,
-    // el suplente (rol real 'conductor') nunca cargaria y quedaria en spinner infinito.
     if (usuario && esAdminEfectivo(usuario)) cargarUsuarios();
   }, [usuario]);
 
 
-  // Ciudades presentes en la lista visible (para el filtro auto-llenado). Solo
-  // mostramos el filtro si hay mas de una ciudad — para un admin de un solo centro
-  // no tiene sentido. (#102 mejora)
   const ciudadesDisponibles = [
     ...new Set(usuarios.map((u) => u.ambito?.ciudad).filter(Boolean)),
   ].sort((a, b) => a.localeCompare(b));
 
-  // Filtros aplicados sobre la lista cruda
   const usuariosFiltrados = usuarios.filter((u) => {
-    // "admin" agrupa a TODOS los niveles administrativos (no solo el rol literal)
     if (filtroRol === "admin" && !esAdmin(u.rol)) return false;
     if (filtroRol === "conductor" && u.rol !== "conductor") return false;
     if (filtroEstado === "activos" && !u.activo) return false;
@@ -100,7 +85,6 @@ function UsuariosAdmin() {
     return true;
   });
 
-  // Acciones
   const desactivar = async (id, nombre) => {
     if (!confirm(`¿Desactivar al usuario ${nombre}?`)) return;
     try {
@@ -243,7 +227,6 @@ function UsuariosAdmin() {
 
         {!cargando && !error && usuariosFiltrados.length > 0 && (
           <div className="usuarios-admin-tabla-wrapper animar-fade-in">
-            {/* Cierre del bloque cuando termina la tabla */}
             <table className="usuarios-admin-tabla">
               <thead>
                 <tr>
@@ -387,7 +370,6 @@ function UsuariosAdmin() {
                           />
                         </div>
                       )}
-                      {/* Acciones propias del Pool de transporte, separadas del resto */}
                       {u.rol === "conductor" && u.es_pool && (
                         <div className="usuarios-admin-acciones-pool">
                           <button
@@ -435,8 +417,6 @@ function UsuariosAdmin() {
         onCerrar={() => setUsuarioAeditar(null)}
         usuario={usuarioAEditar}
         onEditado={(nombre, mensajePersonalizado) => {
-          // Si viene un mensaje del backend (cambio de correo/cedula) lo usamos
-          // tal cual; si no, mostramos el genérico de "Cambios guardados".
           const mensaje = mensajePersonalizado
             ? mensajePersonalizado
             : `Cambios guardados${nombre ? ` para ${nombre}` : ""}`;
@@ -450,14 +430,11 @@ function UsuariosAdmin() {
         usuario={suplenciaDe}
         onHecho={async (mensaje) => {
           mostrarToast(mensaje, "exito");
-          // Si el suplente finalizó SU PROPIA suplencia, ya dejó de ser admin:
-          // refrescamos la sesión y lo mandamos a su panel de conductor, sin que
-          // tenga que reiniciar ni quede atascado en un panel que ya no le aplica.
           if (suplenciaDe?.id === usuario?.id) {
             try {
               const data = await api("/auth/me");
               actualizarUsuario(data.usuario);
-            } catch { /* si /me falla, igual lo redirigimos */ }
+            } catch {  }
             navigate("/conductor");
             return;
           }

@@ -1,29 +1,22 @@
-// Modal reutilizable para cambiar campos sensibles del usuario (correo y cedula).
-// Pide el nuevo valor + la contrasena del admin actual antes de aplicar el cambio.
-// Usa el mismo patron para ambos casos cambiando solo la configuracion.
-
 import { useEffect, useRef, useState } from "react";
 import Modal from "../../../components/Modal/Modal.jsx";
 import InputPassword from "../../../components/InputPassword/InputPassword.jsx";
 import { api } from "../../../lib/api.js";
 import "./ModalVerificacionAdmin.css";
 
-// Mantener los filtros del lado del cliente para que solo se pueda escribir lo valido.
 const soloDigitos = (texto) => (texto || "").replace(/\D/g, "");
 
 function ModalVerificacionAdmin({
     abierto,
     onCerrar,
-    tipo,             // "correo" | "cedula"
-    usuario,          // { id, nombre_completo, email, cedula }
-    onCambiado,       // callback(mensaje, nuevoValor) al exito
+    tipo,
+    usuario,
+    onCambiado,
 }) {
     const [nuevoValor, setNuevoValor] = useState("");
     const [passwordAdmin, setPasswordAdmin] = useState("");
     const [enviando, setEnviando] = useState(false);
     const [error, setError] = useState(null);
-    // Aviso temporal cuando se intenta escribir un caracter no permitido (mismo
-    // patron que ModalCrear/Editar Usuario). Solo aplica al cambio de cedula.
     const [aviso, setAviso] = useState(null);
     const timerAviso = useRef(null);
 
@@ -36,7 +29,6 @@ function ModalVerificacionAdmin({
         }, 2500);
     };
 
-    // Resetear al abrir/cerrar
     useEffect(() => {
         if (abierto) {
             setNuevoValor("");
@@ -52,7 +44,6 @@ function ModalVerificacionAdmin({
 
     if (!usuario) return null;
 
-    // Configuracion segun el tipo de cambio
     const config = tipo === "correo"
         ? {
             titulo: "Cambiar correo electrónico",
@@ -104,8 +95,6 @@ function ModalVerificacionAdmin({
                     password_admin: passwordAdmin,
                 },
             });
-            // Devolvemos tambien el valor nuevo para que el modal padre pueda
-            // refrescar el campo en pantalla sin esperar a cerrarse y reabrirse.
             onCambiado(resp.mensaje || "Cambio aplicado correctamente", valorLimpio);
             onCerrar();
         } catch (err) {
@@ -157,8 +146,6 @@ function ModalVerificacionAdmin({
                         onChange={(e) => {
                             const valorRaw = e.target.value;
                             const valorFiltrado = config.filtrar(valorRaw);
-                            // Si el filtro eliminó caracteres, mostramos un aviso temporal
-                            // para que el usuario entienda por qué no se escribió lo que tipeó.
                             if (valorFiltrado.length < valorRaw.length && tipo === "cedula") {
                                 mostrarAviso("Solo se permiten números");
                             }

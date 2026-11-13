@@ -9,7 +9,6 @@ function Login() {
     const [identificador, setIdentificador] = useState('');
     const [password, setPassword] = useState('');
     const [error, setError] = useState(null);
-    // tipoError: "credenciales" (rojo, error de validacion) | "cuenta_desactivada" (naranja, asunto admin)
     const [tipoError, setTipoError] = useState("credenciales");
     const [cargando, setCargando] = useState(false);
     const [toast, setToast] = useState(null);
@@ -45,9 +44,6 @@ function Login() {
             }
 
         } catch (err) {
-            // 403 → cuenta desactivada; 429 → bloqueada por intentos fallidos.
-            // Ambos son "asunto de seguridad", no un typo: estilo de advertencia
-            // (naranja con candado) en vez del error rojo de credenciales.
             if (err.status === 403 || err.status === 429) {
                 setTipoError("cuenta_desactivada");
             } else {

@@ -3,7 +3,6 @@ import dotenv from 'dotenv';
 
 dotenv.config();
 
-// validaciones
 const { SUPABASE_URL, SUPABASE_SERVICE_ROLE_KEY } = process.env;
 
 if (!SUPABASE_URL || !SUPABASE_SERVICE_ROLE_KEY) {
@@ -12,7 +11,6 @@ if (!SUPABASE_URL || !SUPABASE_SERVICE_ROLE_KEY) {
     );
 }
 
-// cliente de supabase 
 export const supabase = createClient(SUPABASE_URL, SUPABASE_SERVICE_ROLE_KEY, {
     auth: {
         autoRefreshToken: false,

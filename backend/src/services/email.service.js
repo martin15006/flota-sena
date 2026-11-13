@@ -1,7 +1,3 @@
-// Servicio de envio de correos + plantillas HTML con branding SENA.
-//
-// enviarCorreo() nunca tumba el flujo principal: si no hay credenciales (correo
-// deshabilitado) o el envio falla, loguea y devuelve { enviado:false } sin lanzar.
 import { transporter, correoHabilitado, REMITENTE } from '../config/email.js';
 import { supabase } from '../config/supabase.js';
 import { LOGO_PATH, COLORES, fechaLarga, lineaOrigen, cabeceraDeCentro } from './export/branding.js';
@@ -9,7 +5,6 @@ import { resolverDestinatariosCentro } from './notificaciones.service.js';
 
 const APP_URL = process.env.CORS_ORIGIN || '';
 
-// Envia un correo. `para` puede ser un email o un array de emails.
 export const enviarCorreo = async ({ para, asunto, html }) => {
     const destinos = (Array.isArray(para) ? para : [para]).filter(Boolean);
     if (!correoHabilitado) {
@@ -34,14 +29,10 @@ export const enviarCorreo = async ({ para, asunto, html }) => {
     }
 };
 
-// Mapa id -> email de TODOS los usuarios de Supabase Auth (los emails viven en
-// Auth, no en la tabla usuarios). Pagina hasta traerlos todos (no se queda en la
-// primera pagina). Reutilizable por el correo de falla critica y el digest.
 export const obtenerMapaEmails = async () => {
     const mapa = new Map();
     const perPage = 1000;
     let page = 1;
-    // Tope de seguridad por si la API no devuelve menos de perPage nunca.
     for (let i = 0; i < 50; i++) {
         const { data, error } = await supabase.auth.admin.listUsers({ page, perPage });
         if (error) {
@@ -56,7 +47,6 @@ export const obtenerMapaEmails = async () => {
     return mapa;
 };
 
-// Resuelve los correos de una lista de IDs de usuario.
 export const emailsDeUsuarios = async (ids) => {
     const set = new Set((ids || []).filter(Boolean));
     if (set.size === 0) return [];
@@ -64,8 +54,6 @@ export const emailsDeUsuarios = async (ids) => {
     return [...set].map((id) => mapa.get(id)).filter(Boolean);
 };
 
-// Verifica las credenciales de Gmail al arrancar y lo dice claro en consola
-// (fail loud): asi no pasa desapercibido que el correo quedo mal configurado.
 export const verificarCorreo = async () => {
     if (!correoHabilitado) {
         console.log('[correo] deshabilitado (sin GMAIL_USER / GMAIL_APP_PASSWORD) — la app funciona, pero no envia correos.');
@@ -80,8 +68,6 @@ export const verificarCorreo = async () => {
         return false;
     }
 };
-
-// ---- Plantillas HTML (estilos inline: los clientes de correo no leen <style>) ----
 
 const layout = (titulo, cuerpoHtml) => `
 <div style="margin:0;padding:0;background:#f1efe8;font-family:Arial,Helvetica,sans-serif;color:#1a1a1a;">
@@ -103,7 +89,6 @@ const boton = (texto, url) => url
     ? `<a href="${url}" style="display:inline-block;margin-top:16px;background:${COLORES.verde};color:#fff;text-decoration:none;padding:10px 22px;border-radius:8px;font-weight:bold;">${texto}</a>`
     : '';
 
-// Correo inmediato de falla critica (vehiculo no operativo).
 export const plantillaFallaCritica = ({ placa, conductor, criticidad, fecha, chequeoId, origen }) => {
     const url = chequeoId && APP_URL ? `${APP_URL}/admin/chequeos/${chequeoId}` : '';
     const cuerpo = `
@@ -123,7 +108,6 @@ export const plantillaFallaCritica = ({ placa, conductor, criticidad, fecha, che
     return layout('Falla critica en un vehiculo', cuerpo);
 };
 
-// Correo-resumen diario de documentos por vencer (un correo por admin).
 export const plantillaDigestVencimientos = ({ items, centroNombre }) => {
     const filas = items.map((it) => {
         const color = it.dias <= 0 ? COLORES.critico : it.dias <= 7 ? COLORES.critico : it.dias <= 15 ? COLORES.alerta : '#1a1a1a';
@@ -150,7 +134,6 @@ export const plantillaDigestVencimientos = ({ items, centroNombre }) => {
     return layout('Documentos por vencer', cuerpo);
 };
 
-// Informe escalado de un admin a su superior (nota + resumen opcional del area).
 export const plantillaInforme = ({ deQuien, cargo, area, asunto, mensaje, resumen }) => {
     const filaResumen = (etiqueta, valor, color) => `
       <td style="padding:10px 14px;text-align:center;background:#fafafa;border:1px solid #eee;">
@@ -173,9 +156,6 @@ export const plantillaInforme = ({ deQuien, cargo, area, asunto, mensaje, resume
     return layout('Informe de un administrador', cuerpo);
 };
 
-// ---- Orquestadores (resuelven destinatarios + arman el correo) ----
-
-// Correo inmediato de falla critica a los admins del centro afectado.
 export const enviarCorreoFallaCritica = async ({ centroId, placa, conductor, criticidad, fecha, chequeoId }) => {
     const para = await emailsDeUsuarios(await resolverDestinatariosCentro(centroId));
     if (para.length === 0) return { enviado: false, sinDestinatarios: true };

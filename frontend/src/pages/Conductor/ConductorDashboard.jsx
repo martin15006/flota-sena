@@ -1,11 +1,3 @@
-// Dashboard del conductor — rediseñado en Tarea #103 con el ConductorLayout.
-// Estructura:
-//   1) Hero: foto del conductor + saludo + fecha + rol
-//   2) Los 2 circulos centrales (Preoperacional + Post-operacional) intactos
-//   3) Card con info de licencia (categoria, numero, vencimiento)
-//
-// Cualquier cambio en el layout general (header/footer) vive en ConductorLayout.
-
 import { useState, useEffect } from "react";
 import { useNavigate, useLocation } from "react-router-dom";
 import { useAuth } from "../../hooks/useAuth.js";
@@ -15,7 +7,6 @@ import ConductorLayout from "../../components/ConductorLayout/ConductorLayout.js
 import Toast from "../../components/Toast/Toast.jsx";
 import "./ConductorDashboard.css";
 
-// Helper: fecha tipo "viernes 5 de junio de 2026"
 const formatearFechaHoy = () => {
     const ahora = new Date();
     return ahora.toLocaleDateString("es-CO", {
@@ -26,8 +17,6 @@ const formatearFechaHoy = () => {
     });
 };
 
-// Helper: texto humano para "tiempo hasta el vencimiento" de la licencia.
-// Umbrales: <0=vencido, <=15=critico (rojo), <=30=urgente (naranja), >30=normal (verde).
 const tiempoHasta = (iso) => {
     if (!iso) return null;
     const ahora = new Date();
@@ -52,18 +41,14 @@ function ConductorDashboard() {
     const navigate = useNavigate();
     const location = useLocation();
     const [toast, setToast] = useState(null);
-    // Qué círculo está verificando disponibilidad de vehículos (null = ninguno).
-    // Sirve para deshabilitar los botones y mostrar "Verificando…" en el clicado.
     const [verificandoTipo, setVerificandoTipo] = useState(null);
 
-    // Si llegó acá porque le finalizaron la suplencia, avisarle (mensaje neutro).
     useEffect(() => {
         if (location.state?.suplenciaTerminada) {
             setToast({
                 mensaje: "Tu suplencia terminó. Volviste a tu panel de conductor.",
                 tipo: "info",
             });
-            // Limpiar el state para que no se repita al refrescar/navegar.
             navigate(location.pathname, { replace: true, state: {} });
         }
     }, [location, navigate]);
@@ -72,10 +57,8 @@ function ConductorDashboard() {
 
     const primerNombre = usuario.nombre_completo?.split(" ")[0] || "Conductor";
     const vencimiento = tiempoHasta(usuario.licencia_vencimiento);
-    // Inicial del nombre para el placeholder cuando no hay foto
     const inicial = usuario.nombre_completo?.charAt(0).toUpperCase() || "C";
 
-    // ¿La licencia esta vencida? (Tarea #106). Comparamos solo fechas.
     const licenciaVencida = (() => {
         if (!usuario.licencia_vencimiento) return false;
         const hoy = new Date();
@@ -85,14 +68,6 @@ function ConductorDashboard() {
         return v < hoy;
     })();
 
-    // Maneja el clic en un circulo. Antes de mandar al conductor a la aptitud
-    // hacemos DOS validaciones tempranas para no hacerle perder tiempo:
-    //   1) Licencia vigente (si esta vencida, avisa y no avanza).
-    //   2) Que HAYA vehiculos disponibles para el en su centro. Asi no completa
-    //      toda la aptitud para descubrir recien en el Paso 2 que no hay vehiculos.
-    //      El endpoint ya respeta la matriz pool/VIP (pool -> solo VIP; normal ->
-    //      solo no-VIP), asi que sirve igual para los conductores del pool.
-    // (El backend igual valida todo; esto es solo para mejor experiencia.)
     const iniciarChequeo = async (tipo) => {
         if (licenciaVencida) {
             const v = new Date(usuario.licencia_vencimiento);
@@ -135,17 +110,13 @@ function ConductorDashboard() {
         }
     };
 
-    // Hay una verificación en curso (cualquiera de los dos círculos).
     const verificando = verificandoTipo !== null;
 
-    // Suplencia (Pool · Paso 2): si está supliendo al Coordinador, mostramos un
-    // aviso con acceso al panel admin (que ya tiene habilitado por rol efectivo).
     const supliendo = enSuplencia(usuario);
     const hastaSuplencia = usuario?.suplencia?.hasta
         ? new Date(usuario.suplencia.hasta).toLocaleDateString("es-CO")
         : null;
     const variosCentros = cubreVariosCentros(usuario);
-    // Texto de a quién/qué está supliendo: una regional entera o un solo centro.
     const fraseSuplencia = usuario?.suplencia?.departamento?.nombre
         ? `Estás supliendo a los Coordinadores de Flota de la Regional ${usuario.suplencia.departamento.nombre}`
         : `Estás supliendo al Coordinador de Flota${usuario?.suplencia?.centro?.nombre || usuario?.centro_nombre
@@ -153,11 +124,8 @@ function ConductorDashboard() {
 
     return (
         <ConductorLayout>
-            {/* Contenedor principal que agrupa hero + circulos + licencia
-                en un solo "card" visual grande. */}
             <div className="cond-contenedor animar-fade-in-up">
 
-            {/* ===== Hero: foto + saludo + fecha ===== */}
             <section className="cond-hero">
                 {usuario.foto_url ? (
                     <img
@@ -170,8 +138,6 @@ function ConductorDashboard() {
                 )}
                 <div className="cond-hero-saludo">Hola,</div>
                 <h1 className="cond-hero-nombre">{primerNombre}</h1>
-                {/* Tipo de conductor: normal (flota general) o pool (vehículos
-                    especiales/VIP). El pool se resalta con una pastilla morada. */}
                 <div className={`cond-hero-rol${usuario.es_pool ? " cond-hero-rol-pool" : ""}`}>
                     {usuario.es_pool ? "⭐ Pool de transporte · vehículos VIP" : "Conductor SENA"}
                 </div>
@@ -203,7 +169,6 @@ function ConductorDashboard() {
                 <div className="cond-hero-fecha">{formatearFechaHoy()}</div>
             </section>
 
-            {/* Aviso de suplencia: el pool está reemplazando al Coordinador */}
             {supliendo && (
                 <section className="cond-suplencia-banner">
                     <div className="cond-suplencia-texto">
@@ -219,7 +184,6 @@ function ConductorDashboard() {
                 </section>
             )}
 
-            {/* Aviso fijo si la licencia esta vencida */}
             {licenciaVencida && (
                 <div className="cond-licencia-bloqueo">
                     ⚠ Tu licencia de conducción está vencida. No puedes iniciar
@@ -227,7 +191,6 @@ function ConductorDashboard() {
                 </div>
             )}
 
-            {/* ===== Los 2 circulos al centro ===== */}
             <section className="cond-circulos">
                 <button
                     className={`cond-circulo cond-circulo-pre ${licenciaVencida ? "cond-circulo-bloqueado" : ""}`}
@@ -256,7 +219,6 @@ function ConductorDashboard() {
                 </button>
             </section>
 
-            {/* ===== Card con info de licencia ===== */}
             {(usuario.licencia_numero || usuario.licencia_categoria || usuario.licencia_vencimiento) && (
                 <section className="cond-licencia">
                     <div className="cond-licencia-encabezado">

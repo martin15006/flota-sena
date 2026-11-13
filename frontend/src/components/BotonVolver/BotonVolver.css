@@ -1,10 +1,3 @@
-/* =================================================================
-   BotonVolver — boton prominente para paginas de detalle.
-   Siguiendo convencion seccion 17: bordes 2px+, sombras md+,
-   coloreado verde SENA para que destaque como "accion principal de
-   navegacion" en una pagina que no tiene sidebar.
-   ================================================================= */
-
 .boton-volver {
     display: inline-flex;
     align-items: center;

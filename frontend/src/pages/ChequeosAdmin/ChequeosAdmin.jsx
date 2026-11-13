@@ -1,5 +1,3 @@
-// Lista de chequeos para el admin: filtros por fecha, placa, estado, oficial/cerrado, paginacion.
-
 import { useCallback, useEffect, useState } from "react";
 import { useNavigate } from "react-router-dom";
 import { api } from "../../lib/api.js";
@@ -32,20 +30,15 @@ const formatearFecha = (iso) => {
     });
 };
 
-// El input acepta espacios y cualquier formato; la normalizacion (quitar espacios)
-// se hace en el backend con normalizarPlaca para que ABC123 y ABC 123 matcheen igual.
-
 function ChequeosAdmin() {
     const navigate = useNavigate();
     const { usuario } = useAuth();
 
-    // Datos
     const [chequeos, setChequeos] = useState([]);
     const [total, setTotal] = useState(0);
     const [cargando, setCargando] = useState(true);
     const [toast, setToast] = useState(null);
 
-    // Filtros
     const [fechaDesde, setFechaDesde] = useState("");
     const [fechaHasta, setFechaHasta] = useState("");
     const [placa, setPlaca] = useState("");
@@ -53,7 +46,6 @@ function ChequeosAdmin() {
     const [soloOficiales, setSoloOficiales] = useState(false);
     const [soloCerrados, setSoloCerrados] = useState(false);
 
-    // Paginacion
     const [pagina, setPagina] = useState(1);
 
     const cargarChequeos = useCallback(async () => {
@@ -97,7 +89,6 @@ function ChequeosAdmin() {
 
     const totalPaginas = Math.max(1, Math.ceil(total / LIMITE_POR_PAGINA));
 
-    // Reporte: misma cara de filtros que la lista (sin paginación → trae todo lo visible).
     const baseReporte = (() => {
         const p = new URLSearchParams();
         if (fechaDesde) p.append("fecha_desde", fechaDesde);
@@ -112,7 +103,6 @@ function ChequeosAdmin() {
 
     return (
         <AdminLayout titulo="Chequeos preoperacionales">
-            {/* Barra de página (sin botones de navegacion — el sidebar los cubre) */}
             <section className="cheqadmin-barra-pagina">
                 <div className="cheqadmin-barra-titulo">
                     <h1>Chequeos preoperacionales</h1>
@@ -123,7 +113,6 @@ function ChequeosAdmin() {
                 </div>
             </section>
 
-            {/* Filtros */}
             <section className="cheqadmin-filtros">
                 <div className="cheqadmin-filtro">
                     <label>Fecha desde</label>
@@ -194,7 +183,6 @@ function ChequeosAdmin() {
                 </div>
             </section>
 
-            {/* Lista */}
             <main className="cheqadmin-main">
                 {cargando && <div className="cheqadmin-cargando">Cargando chequeos...</div>}
 
@@ -295,7 +283,6 @@ function ChequeosAdmin() {
                     </div>
                 )}
 
-                {/* Paginacion */}
                 {!cargando && totalPaginas > 1 && (
                     <div className="cheqadmin-paginacion">
                         <button

@@ -1,8 +1,3 @@
-/* =================================================================
-   Campanita de notificaciones en el header del admin.
-   Bloque C paso 3: dropdown interactivo con lista de notificaciones.
-   ================================================================= */
-
 .campanita-wrapper {
     position: relative;
 }
@@ -38,7 +33,6 @@
     display: block;
 }
 
-/* Punto rojo con contador. Ahora muestra el numero (o "9+" si hay mas de 9). */
 .campanita-punto {
     position: absolute;
     top: -4px;
@@ -64,7 +58,6 @@
     50% { transform: scale(1.12); }
 }
 
-/* ===== Dropdown ===== */
 .campanita-dropdown {
     position: absolute;
     top: calc(100% + 8px);
@@ -178,7 +171,6 @@
     border: 2px solid rgba(0, 0, 0, 0.25);
 }
 
-/* Colores del icono segun el tipo de notificacion (semaforo del sistema) */
 .campanita-icono-verde    { background: var(--color-verde-sena); }
 .campanita-icono-azul     { background: var(--estado-info-solido); }
 .campanita-icono-amarillo { background: #F9A825; color: #1A1A1A; }
@@ -212,14 +204,10 @@
     font-style: italic;
 }
 
-/* === Modo oscuro === */
-/* El hover de la no-leida usaba un verde claro quemado (#C5E1A5) que en oscuro
-   choca; lo bajamos a un tint verde translucido coherente con --verde-suave. */
 [data-tema="oscuro"] .campanita-item-no-leida:hover {
     background: rgba(57, 169, 0, 0.22);
 }
 
-/* Responsive: dropdown ocupa casi todo el ancho en movil */
 @media (max-width: 480px) {
     .campanita-dropdown {
         position: fixed;

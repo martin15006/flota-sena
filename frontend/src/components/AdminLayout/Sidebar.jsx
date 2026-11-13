@@ -1,16 +1,7 @@
-// Sidebar del AdminLayout. Lista los modulos del admin con NavLink para que
-// React Router marque el item activo automaticamente.
-//
-// Si el usuario es admin_centro (no admin global) algunos modulos pueden
-// ocultarse en el futuro — por ahora mostramos todos porque todos los modulos
-// que tenemos pertenecen al ambito del admin.
-
 import { NavLink, useNavigate } from "react-router-dom";
 import { ETIQUETA_ROL, enSuplencia, cubreVariosCentros } from "../../lib/roles.js";
 import "./Sidebar.css";
 
-// SVGs inline para iconos del menu — todos siguen el mismo estilo "stroke" para
-// que se vean coherentes entre si y con el resto del proyecto.
 const Icono = {
     dashboard: (
         <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" aria-hidden="true">
@@ -89,15 +80,6 @@ const Icono = {
     ),
 };
 
-// Items del menu, diferenciados por NIVEL del admin (#102/#116):
-//   - El admin de CENTRO (alias 'admin') es el rol operativo: catalogo,
-//     chequeos e intentos viven en su menu del dia a dia.
-//   - Los niveles superiores (ciudad/departamental/regional/superadmin) son
-//     gestores de personas y estructura: usuarios, vehiculos y dashboard.
-//     Chequeos/intentos los supervisan desde las cajas del dashboard (las
-//     rutas siguen accesibles; solo se ocultan del menu).
-//   - La geografia (ciudades/centros) es exclusiva del superadmin.
-// `roles` ausente = visible para todos los admins.
 const SOLO_CENTRO = ["admin", "admin_centro"];
 
 const ITEMS = [
@@ -115,12 +97,9 @@ const ITEMS = [
 
 function Sidebar({ abierto, onCerrar, usuario, onLogout }) {
     const navigate = useNavigate();
-    // El suplente (conductor del pool con suplencia vigente) ve el menú de un
-    // Coordinador de Flota (admin_centro) de su centro.
     const suplente = enSuplencia(usuario);
     const rolUI = suplente ? "admin_centro" : usuario.rol;
     const variosCentros = cubreVariosCentros(usuario);
-    // Nombre del centro que está gestionando ahora (centro activo del selector).
     const centroActivoNombre = suplente
         ? (usuario.suplencia_centros?.find((c) => c.id === usuario.centro_activo)?.nombre
             || usuario.suplencia?.centro?.nombre
@@ -128,7 +107,6 @@ function Sidebar({ abierto, onCerrar, usuario, onLogout }) {
         : "";
     return (
         <aside className={`sidebar ${abierto ? "sidebar--abierto" : "sidebar--cerrado"}`}>
-            {/* Cabecera con logo y datos del SENA */}
             <div className="sidebar-cabecera">
                 <img
                     src="/logoverde.png"
@@ -141,7 +119,6 @@ function Sidebar({ abierto, onCerrar, usuario, onLogout }) {
                 </div>
             </div>
 
-            {/* Lista de items de navegacion (filtrada por el nivel del admin) */}
             <nav className="sidebar-nav">
                 <ul className="sidebar-lista">
                     {ITEMS.filter(
@@ -155,7 +132,6 @@ function Sidebar({ abierto, onCerrar, usuario, onLogout }) {
                                     `sidebar-item ${isActive ? "sidebar-item--activo" : ""}`
                                 }
                                 onClick={() => {
-                                    // En movil cerramos el sidebar al hacer clic en un item
                                     if (window.innerWidth <= 900) onCerrar();
                                 }}
                             >
@@ -167,7 +143,6 @@ function Sidebar({ abierto, onCerrar, usuario, onLogout }) {
                 </ul>
             </nav>
 
-            {/* Pie: usuario actual + cerrar sesion */}
             <div className="sidebar-pie">
                 <div className="sidebar-usuario">
                     <div className="sidebar-usuario-nombre">{usuario.nombre_completo}</div>
@@ -175,8 +150,6 @@ function Sidebar({ abierto, onCerrar, usuario, onLogout }) {
                         {suplente
                             ? "Coordinador de Flota · suplencia"
                             : ETIQUETA_ROL[usuario.rol] || usuario.rol}
-                        {/* Area: el suplente muestra el centro que CUBRE; el superadmin
-                            "Nacional"; los roles de centro su propio centro. */}
                         {suplente
                             ? ` · ${centroActivoNombre}`
                             : usuario.rol === "superadmin"
@@ -187,7 +160,6 @@ function Sidebar({ abierto, onCerrar, usuario, onLogout }) {
                             : ""}
                     </div>
                 </div>
-                {/* Suplente multi-centro: cambiar a qué centro está gestionando. */}
                 {suplente && variosCentros && (
                     <button
                         type="button"
@@ -199,8 +171,6 @@ function Sidebar({ abierto, onCerrar, usuario, onLogout }) {
                         <span className="sidebar-item-etiqueta">Cambiar de centro</span>
                     </button>
                 )}
-                {/* El suplente sigue siendo conductor: este boton lo lleva a su panel
-                    de conductor para usar un vehiculo y hacer los chequeos. */}
                 {suplente && (
                     <button
                         type="button"

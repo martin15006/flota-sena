@@ -37,9 +37,6 @@ const latido = async () => {
     }
 };
 
-// Bloqueante en el arranque: espera el primer latido antes de declarar el servidor listo
-// Esto evita que la primera peticion del cliente pegue con la conexion Supabase fria
-// (BUG-001: el cliente devuelve arrays vacios sin error cuando la conexion no esta caliente)
 export const iniciarKeepAlive = async () => {
     if (intervaloId) return;
     console.log("[KEEP-ALIVE] Calentando conexion Supabase...");

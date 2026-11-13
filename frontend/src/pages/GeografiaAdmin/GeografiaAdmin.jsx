@@ -1,14 +1,3 @@
-// Gestión de geografía (Tarea #116) — SOLO SUPERADMIN.
-//
-// Permite administrar la estructura territorial sin tocar SQL:
-//   - CENTROS de formación: crear, editar (nombre/dirección) y activar/desactivar.
-//     No hay borrado: un centro con historial (vehículos, chequeos) se desactiva.
-//   - CIUDADES / municipios: crear (cuelgan de su departamento).
-//   - Regiones y departamentos son la división fija de Colombia: solo lectura.
-//
-// El backend protege la escritura con requiereRol('superadmin'); esta página
-// además redirige a cualquier otro rol que entre por URL directa.
-
 import { useEffect, useMemo, useState } from "react";
 import { Navigate } from "react-router-dom";
 import { useAuth } from "../../hooks/useAuth.js";
@@ -24,19 +13,17 @@ const FORM_CIUDAD_VACIO = { nombre: "", departamento_id: "" };
 function GeografiaAdmin() {
     const { usuario } = useAuth();
 
-    const [vista, setVista] = useState("centros"); // 'centros' | 'ciudades'
+    const [vista, setVista] = useState("centros");
     const [departamentos, setDepartamentos] = useState([]);
     const [ciudades, setCiudades] = useState([]);
     const [centros, setCentros] = useState([]);
     const [cargando, setCargando] = useState(true);
     const [toast, setToast] = useState(null);
 
-    // Filtros de las tablas
     const [filtroDepto, setFiltroDepto] = useState("todos");
     const [filtroCiudad, setFiltroCiudad] = useState("todos");
     const [verInactivos, setVerInactivos] = useState(false);
 
-    // Formularios (null = cerrado)
     const [formCentro, setFormCentro] = useState(null);
     const [formCiudad, setFormCiudad] = useState(null);
     const [guardando, setGuardando] = useState(false);
@@ -66,20 +53,16 @@ function GeografiaAdmin() {
         // eslint-disable-next-line react-hooks/exhaustive-deps
     }, []);
 
-    // Mapa id->nombre de departamentos (para mostrar el depto de cada ciudad)
     const nombreDepto = useMemo(() => {
         const m = {};
         departamentos.forEach((d) => { m[d.id] = d.nombre; });
         return m;
     }, [departamentos]);
 
-    // Ciudades del departamento elegido en el FORM de centro (cascada).
-    // Listas pequeñas (~34): derivar en cada render es suficiente, sin memo.
     const ciudadesDelFormCentro = formCentro?.departamento_id
         ? ciudades.filter((c) => c.departamento_id === formCentro.departamento_id)
         : [];
 
-    // ===== Tabla de centros (filtrada) =====
     const ciudadesDelFiltro =
         filtroDepto === "todos"
             ? ciudades
@@ -95,7 +78,6 @@ function GeografiaAdmin() {
         return true;
     });
 
-    // ===== Tabla de ciudades (filtrada) =====
     const ciudadesFiltradas = ciudades.filter(
         (c) => filtroDepto === "todos" || c.departamento_id === filtroDepto
     );
@@ -103,7 +85,6 @@ function GeografiaAdmin() {
     const contarCentros = (ciudadId) =>
         centros.filter((c) => c.ciudad_id === ciudadId).length;
 
-    // ===== Acciones de centros =====
     const guardarCentro = async (e) => {
         e.preventDefault();
         setGuardando(true);
@@ -161,7 +142,6 @@ function GeografiaAdmin() {
         }
     };
 
-    // ===== Acciones de ciudades =====
     const guardarCiudad = async (e) => {
         e.preventDefault();
         setGuardando(true);
@@ -180,9 +160,6 @@ function GeografiaAdmin() {
         }
     };
 
-    // Gestionan geografía el Director Nacional (todo el país) y el Director
-    // Regional (solo su departamento). El backend además valida el scope por
-    // endpoint. Los demás cargos no entran.
     if (usuario && usuario.rol !== "superadmin" && usuario.rol !== "admin_departamental") {
         return <Navigate to="/dashboard" replace />;
     }
@@ -205,7 +182,6 @@ function GeografiaAdmin() {
                     </div>
                 </div>
 
-                {/* Tabs */}
                 <div className="geografia-tabs">
                     <button
                         type="button"
@@ -223,7 +199,6 @@ function GeografiaAdmin() {
                     </button>
                 </div>
 
-                {/* ===== Filtros + botón crear ===== */}
                 <div className="geografia-barra">
                     <select
                         className="geografia-select"
@@ -268,7 +243,6 @@ function GeografiaAdmin() {
                             onClick={() =>
                                 setFormCentro({
                                     ...FORM_CENTRO_VACIO,
-                                    // Si solo hay un departamento en scope (el Regional), pre-seleccionarlo
                                     departamento_id: departamentos.length === 1 ? departamentos[0].id : "",
                                 })
                             }
@@ -291,7 +265,6 @@ function GeografiaAdmin() {
                     )}
                 </div>
 
-                {/* ===== Modal: crear / editar centro ===== */}
                 <Modal
                     abierto={!!formCentro}
                     onCerrar={() => setFormCentro(null)}
@@ -312,8 +285,6 @@ function GeografiaAdmin() {
                                     disabled={guardando}
                                 />
                             </div>
-                            {/* Al editar no se cambia la ciudad (el centro pertenece a su ciudad);
-                                si un centro quedo mal ubicado, se desactiva y se crea bien. */}
                             {!formCentro.id && (
                                 <>
                                     <div className="geografia-campo">
@@ -388,7 +359,6 @@ function GeografiaAdmin() {
                     )}
                 </Modal>
 
-                {/* ===== Modal: crear ciudad ===== */}
                 <Modal
                     abierto={!!formCiudad}
                     onCerrar={() => setFormCiudad(null)}
@@ -442,7 +412,6 @@ function GeografiaAdmin() {
                     )}
                 </Modal>
 
-                {/* ===== Contenido ===== */}
                 {cargando ? (
                     <div className="geografia-estado">Cargando geografía...</div>
                 ) : vista === "centros" ? (

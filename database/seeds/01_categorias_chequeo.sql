@@ -1,9 +1,3 @@
--- ==
--- Seed: 5 categorías del checklist preoperacional
--- ==
--- Orden de ejecución: 01 (antes de items y preguntas)
--- Idempotente: usa ON CONFLICT para no duplicar
-
 INSERT INTO categorias_chequeo (nombre, descripcion, icono, orden) VALUES
     ('NIVELES',        'Fluidos del vehículo',                      '💧', 1),
     ('PEDALES',        'Acelerador, embrague y freno',              '🦶', 2),

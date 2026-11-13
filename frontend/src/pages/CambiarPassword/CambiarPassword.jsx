@@ -16,10 +16,8 @@ function CambiarPassword() {
   const [exito, setExito] = useState(false);
   const [enviando, setEnviando] = useState(false);
 
-  // Mientras AuthContext valida
   if (cargando) return null;
 
-  // Si no esta autenticado, al login
   if (!usuario) return <Navigate to="/login" replace />;
 
   const esPrimerLogin = usuario.debe_cambiar_password === true;
@@ -43,13 +41,9 @@ function CambiarPassword() {
         body,
       });
 
-      // IMPORTANTE: Supabase Auth invalida el token actual al cambiar la contraseña.
-      // El backend devuelve un nuevo token (signInWithPassword con la clave nueva)
-      // para que el usuario siga la navegacion sin tener que volver al login.
       if (resp.token) {
         localStorage.setItem("token", resp.token);
       } else if (resp.requiere_relogin) {
-        // Edge case raro: el cambio funciono pero no se pudo emitir token nuevo
         localStorage.removeItem("token");
         setExito(true);
         setTimeout(() => navigate("/login"), 1500);
@@ -57,8 +51,6 @@ function CambiarPassword() {
       }
 
       setExito(true);
-      // Esperar 1.5s para que el usuario vea el mensaje y luego redirigir
-      // Conductor va a /conductor, todos los admins a /dashboard
       const destino = usuario.rol === "conductor" ? "/conductor" : "/dashboard";
       setTimeout(() => navigate(destino), 1500);
     } catch (err) {
@@ -164,8 +156,6 @@ function CambiarPassword() {
               {enviando ? "Cambiando..." : "Cambiar contraseña"}
             </button>
 
-            {/* En el cambio FORZADO (primer login) no hay vuelta atras; en el
-                cambio voluntario desde Mi perfil, si: boton para cancelar/volver. */}
             {!esPrimerLogin && (
               <button
                 type="button"

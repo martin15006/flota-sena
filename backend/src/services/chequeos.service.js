@@ -1,8 +1,6 @@
 import { supabase } from "../config/supabase.js";
 import { obtenerScope } from "./scope.service.js";
 
-// Trae todas las preguntas de aptitud activas indexadas por id para evaluacion rapida
-// Incluye el texto de la pregunta para devolver mensajes claros al frontend
 const obtenerMapaPreguntas = async () => {
     const { data, error } = await supabase
         .from("preguntas_aptitud")
@@ -15,8 +13,6 @@ const obtenerMapaPreguntas = async () => {
     }, {});
 };
 
-// Evalua si las 5 respuestas del conductor lo califican como apto
-// Devuelve fallas con info completa: id, texto, respuesta dada y esperada
 const evaluarAptitud = async (respuestas) => {
     const mapa = await obtenerMapaPreguntas();
     const fallas = [];
@@ -43,9 +39,6 @@ const evaluarAptitud = async (respuestas) => {
     return { apto: fallas.length === 0, fallas, mapa };
 };
 
-// Registra un intento de chequeo que el sistema bloqueo (para auditoria y notificacion al admin).
-// Si el vehiculo_id no existe en BD (viola FK), reintenta con null para que el intento
-// quede registrado de todas formas. Asi nunca se pierde un evento de auditoria.
 export const registrarIntentoBloqueado = async ({
     conductorId,
     vehiculoId,
@@ -64,7 +57,6 @@ export const registrarIntentoBloqueado = async ({
     const { error } = await supabase.from("intentos_chequeo_bloqueado").insert(payload);
     if (!error) return;
 
-    // Si la falla fue por la FK del vehiculo, reintentamos sin vehiculo_id
     const esFKVehiculo = error.message?.includes("vehiculo_id") || error.code === "23503";
     if (esFKVehiculo && payload.vehiculo_id !== null) {
         console.warn(
@@ -81,7 +73,6 @@ export const registrarIntentoBloqueado = async ({
     console.error("Error registrando intento bloqueado:", error.message);
 };
 
-// Valida que el vehiculo exista, este activo y pertenezca al centro del conductor
 const verificarVehiculoParaChequeo = async (vehiculoId, centroDelConductor, esPool = false) => {
     const { data: vehiculo, error } = await supabase
         .from("vehiculos")
@@ -93,13 +84,8 @@ const verificarVehiculoParaChequeo = async (vehiculoId, centroDelConductor, esPo
         return { valido: false, razon: "vehiculo_no_existe", detalle: "Vehiculo no encontrado" };
     }
     if (vehiculo.centro_id !== centroDelConductor) {
-        // No revelamos que existe en otro centro por seguridad
         return { valido: false, razon: "vehiculo_no_existe", detalle: "El vehiculo no pertenece a tu centro" };
     }
-    // Regla del pool (docs/diseno-pool-vip.md): un vehiculo VIP solo lo opera un
-    // conductor del pool, y un conductor del pool solo opera vehiculos VIP. Si no
-    // coinciden, se trata como "no existe" para no revelar los vehiculos VIP a un
-    // conductor normal (misma logica de seguridad que el centro ajeno).
     if (vehiculo.es_vip !== (esPool === true)) {
         return { valido: false, razon: "vehiculo_no_existe", detalle: "El vehiculo no esta disponible para ti" };
     }
@@ -114,8 +100,6 @@ const verificarVehiculoParaChequeo = async (vehiculoId, centroDelConductor, esPo
     return { valido: true, vehiculo };
 };
 
-// Documentos legales del vehiculo que, vencidos, impiden circular. Devuelve el
-// PRIMERO vencido { nombre, fechaLegible } o null si estan todos al dia.
 const primerDocumentoVencido = (vehiculo) => {
     const hoy = new Date();
     hoy.setHours(0, 0, 0, 0);
@@ -138,7 +122,6 @@ const primerDocumentoVencido = (vehiculo) => {
     return null;
 };
 
-// Decide si este chequeo cuenta como "oficial" del dia (el primer preoperacional del dia para el vehiculo)
 const esPrimerChequeoDelDia = async (vehiculoId, tipo) => {
     if (tipo !== "preoperacional") return false;
 
@@ -162,8 +145,6 @@ const esPrimerChequeoDelDia = async (vehiculoId, tipo) => {
     return count === 0;
 };
 
-// Inicia un chequeo: valida aptitud, valida vehiculo, crea cabecera + respuestas de aptitud
-// Devuelve { exito, status, ... } para que el controller decida la respuesta HTTP
 export const iniciarChequeo = async ({
     conductor,
     vehiculoId,
@@ -171,12 +152,7 @@ export const iniciarChequeo = async ({
     kilometraje,
     respuestasAptitud,
 }) => {
-    // 0. Validar licencia vigente (Tarea #106).
-    // Una licencia vencida es un bloqueo legal absoluto: el conductor no puede
-    // operar el vehiculo aunque este apto y el vehiculo este disponible.
-    // Se evalua primero por ser el impedimento mas fundamental.
     if (conductor.licencia_vencimiento) {
-        // Comparar solo fechas (sin hora) para que "vence hoy" todavia sea valido.
         const hoy = new Date();
         hoy.setHours(0, 0, 0, 0);
         const vencimiento = new Date(conductor.licencia_vencimiento);
@@ -185,7 +161,7 @@ export const iniciarChequeo = async ({
         if (vencimiento < hoy) {
             await registrarIntentoBloqueado({
                 conductorId: conductor.id,
-                vehiculoId: null, // aun no validamos el vehiculo
+                vehiculoId: null,
                 centroId: conductor.centro_id,
                 razon: "licencia_vencida",
                 detalle: `Licencia vencida el ${conductor.licencia_vencimiento}`,
@@ -204,7 +180,6 @@ export const iniciarChequeo = async ({
         }
     }
 
-    // 1. Evaluar aptitud
     const evaluacion = await evaluarAptitud(respuestasAptitud);
     if (!evaluacion.apto) {
         const idsFallidos = evaluacion.fallas.map((f) => f.pregunta_id);
@@ -228,11 +203,8 @@ export const iniciarChequeo = async ({
         };
     }
 
-    // 2. Verificar vehiculo
     const verif = await verificarVehiculoParaChequeo(vehiculoId, conductor.centro_id, conductor.es_pool === true);
     if (!verif.valido) {
-        // Si el vehiculo no existe en BD, pasamos null para no violar la FK del log.
-        // Si existe pero esta desactivado o es de otro centro, guardamos su ID.
         await registrarIntentoBloqueado({
             conductorId: conductor.id,
             vehiculoId: verif.vehiculo?.id || null,
@@ -248,11 +220,6 @@ export const iniciarChequeo = async ({
         };
     }
 
-    // 2.5 Documentos del vehiculo vencidos (SOAT/RTM/extintor): bloquean el
-    // PREOPERACIONAL — legalmente no puede circular. No bloquea el postoperacional
-    // porque el recorrido ya ocurrio y hay que poder registrar el cierre.
-    // Sin aviso al admin: el Coordinador ya se entera por el aviso diario de
-    // vencimientos; aqui solo se le impide salir al conductor.
     if (tipo === "preoperacional") {
         const doc = primerDocumentoVencido(verif.vehiculo);
         if (doc) {
@@ -265,10 +232,8 @@ export const iniciarChequeo = async ({
         }
     }
 
-    // 3. Calcular es_oficial
     const esOficial = await esPrimerChequeoDelDia(vehiculoId, tipo);
 
-    // 4. Crear la cabecera del chequeo
     const { data: chequeo, error: errChequeo } = await supabase
         .from("chequeos_preoperacionales")
         .insert({
@@ -286,7 +251,6 @@ export const iniciarChequeo = async ({
         throw new Error(`Error creando chequeo: ${errChequeo.message}`);
     }
 
-    // 5. Guardar respuestas de aptitud (con rollback manual si falla)
     const respuestasInsert = respuestasAptitud.map((r) => ({
         chequeo_id: chequeo.id,
         pregunta_id: r.pregunta_id,
@@ -299,7 +263,6 @@ export const iniciarChequeo = async ({
         .insert(respuestasInsert);
 
     if (errAptitud) {
-        // Rollback: si fallo guardar aptitud, borrar la cabecera del chequeo
         await supabase
             .from("chequeos_preoperacionales")
             .delete()
@@ -314,8 +277,6 @@ export const iniciarChequeo = async ({
     };
 };
 
-// Valida que el chequeo exista, sea del conductor, y este abierto (no cerrado)
-// Devuelve el chequeo o un error apropiado
 const obtenerChequeoEditable = async (chequeoId, conductorId) => {
     const { data: chequeo, error } = await supabase
         .from("chequeos_preoperacionales")
@@ -335,13 +296,10 @@ const obtenerChequeoEditable = async (chequeoId, conductorId) => {
     return { chequeo };
 };
 
-// Guarda respuestas del chequeo. Permite envios parciales (1 a 39 respuestas)
-// Hace upsert por (chequeo_id, item_id) para que se puedan ir guardando progresivamente
 export const guardarRespuestasChequeo = async ({ chequeoId, conductorId, respuestas }) => {
     const verificacion = await obtenerChequeoEditable(chequeoId, conductorId);
     if (verificacion.error) return verificacion;
 
-    // Construir filas para upsert
     const filas = respuestas.map((r) => ({
         chequeo_id: chequeoId,
         item_id: r.item_id,
@@ -358,7 +316,6 @@ export const guardarRespuestasChequeo = async ({ chequeoId, conductorId, respues
         return { error: { status: 500, mensaje: `Error guardando respuestas: ${error.message}` } };
     }
 
-    // Contar el total acumulado de respuestas del chequeo
     const { count } = await supabase
         .from("respuestas_chequeo")
         .select("id", { count: "exact", head: true })
@@ -371,7 +328,6 @@ export const guardarRespuestasChequeo = async ({ chequeoId, conductorId, respues
     };
 };
 
-// Orden de severidad de los estados para comparar resultados
 const NIVEL_ESTADO = {
     operativo: 1,
     observacion: 2,
@@ -380,7 +336,6 @@ const NIVEL_ESTADO = {
     no_operativo: 5,
 };
 
-// Calcula el resultado final del chequeo a partir de las respuestas
 const calcularResultado = (respuestas, itemsCriticosSet) => {
     let cumple = 0;
     let noCumple = 0;
@@ -427,15 +382,11 @@ const calcularResultado = (respuestas, itemsCriticosSet) => {
     };
 };
 
-// Cierra un chequeo: valida que tenga las 39 respuestas, calcula el resultado,
-// guarda los counts, y actualiza el estado del vehiculo si el resultado es peor.
-// Si el resultado es mejor que el estado actual, devuelve una sugerencia para el admin.
 export const cerrarChequeo = async ({ chequeoId, conductorId, notasGenerales }) => {
     const verificacion = await obtenerChequeoEditable(chequeoId, conductorId);
     if (verificacion.error) return verificacion;
     const { chequeo } = verificacion;
 
-    // Obtener respuestas del chequeo
     const { data: respuestas, error: errRes } = await supabase
         .from("respuestas_chequeo")
         .select("item_id, estado")
@@ -445,7 +396,6 @@ export const cerrarChequeo = async ({ chequeoId, conductorId, notasGenerales }) 
         return { error: { status: 500, mensaje: `Error obteniendo respuestas: ${errRes.message}` } };
     }
 
-    // Verificar que esten las 39 respuestas (o el numero aplicable segun excepciones del vehiculo)
     const { data: excepciones } = await supabase
         .from("excepciones_items_vehiculo")
         .select("item_id")
@@ -463,7 +413,6 @@ export const cerrarChequeo = async ({ chequeoId, conductorId, notasGenerales }) 
         };
     }
 
-    // Traer ids de items criticos para calcular falla critica
     const { data: itemsCriticos } = await supabase
         .from("items_chequeo")
         .select("id")
@@ -471,15 +420,12 @@ export const cerrarChequeo = async ({ chequeoId, conductorId, notasGenerales }) 
 
     const setCriticos = new Set((itemsCriticos || []).map((i) => i.id));
 
-    // Calcular el resultado final
     const resultado = calcularResultado(respuestas, setCriticos);
 
-    // Contar criticos que quedaron en NO CUMPLE (para mostrarselo al conductor)
     const itemsCriticosNoCumple = respuestas.filter(
         (r) => r.estado === "no_cumple" && setCriticos.has(r.item_id)
     ).length;
 
-    // Cerrar el chequeo con el resultado calculado
     const { data: chequeoCerrado, error: errCierre } = await supabase
         .from("chequeos_preoperacionales")
         .update({
@@ -496,7 +442,6 @@ export const cerrarChequeo = async ({ chequeoId, conductorId, notasGenerales }) 
         return { error: { status: 500, mensaje: `Error cerrando chequeo: ${errCierre.message}` } };
     }
 
-    // Comparar con estado actual del vehiculo
     const { data: vehiculo } = await supabase
         .from("vehiculos")
         .select("id, placa, estado, nivel_criticidad")
@@ -510,7 +455,6 @@ export const cerrarChequeo = async ({ chequeoId, conductorId, notasGenerales }) 
     let sugerenciaAdmin = null;
 
     if (nivelNuevo > nivelActual) {
-        // El chequeo da un resultado PEOR → actualizar vehiculo automaticamente
         await supabase
             .from("vehiculos")
             .update({
@@ -526,7 +470,6 @@ export const cerrarChequeo = async ({ chequeoId, conductorId, notasGenerales }) 
             criticidad_nueva: resultado.resultado_criticidad,
         };
     } else if (nivelNuevo < nivelActual) {
-        // El chequeo da un resultado MEJOR → NO actualizar, sugerir al admin
         sugerenciaAdmin = {
             mensaje: `El chequeo del vehículo ${vehiculo.placa} sugiere mejorar el estado de ${vehiculo.estado} a ${resultado.resultado_estado}. Revisa y decide si aplicar el cambio.`,
             estado_actual: vehiculo.estado,
@@ -548,17 +491,11 @@ export const cerrarChequeo = async ({ chequeoId, conductorId, notasGenerales }) 
     };
 };
 
-// Dado un admin, devuelve los centro_id que tiene permitido ver segun su rol.
-// Delega en el helper compartido scope.service.js (una sola fuente de verdad para
-// todo el sistema). Mantiene el contrato historico de esta funcion:
-//   - null  = sin filtro (superadmin, ve todos los centros)
-//   - array = lista de centro_id que puede ver
 const obtenerCentrosVisiblesParaAdmin = async (usuario) => {
     const scope = await obtenerScope(usuario);
     return scope.tipo === "global" ? null : scope.centroIds;
 };
 
-// Lista chequeos visibles para el admin segun su scope, con filtros opcionales
 export const listarChequeosParaAdmin = async ({
     usuario,
     fechaDesde,
@@ -605,9 +542,6 @@ export const listarChequeosParaAdmin = async ({
     const { data, error, count } = await query;
     if (error) throw error;
 
-    // Filtro por placa post-query (es un campo dentro del join).
-    // Tolerante: ignora espacios, mayusculas y caracteres no alfanumericos
-    // (ej: "ABC 123" y "ABC123" matchean igual)
     let chequeos = data;
     const filtroPlaca = normalizarPlaca(placa);
     if (filtroPlaca) {
@@ -619,11 +553,9 @@ export const listarChequeosParaAdmin = async ({
     return { chequeos, total: count, pagina, limite };
 };
 
-// Devuelve un chequeo con TODO: cabecera, respuestas con items, aptitud con preguntas, fotos
 export const obtenerChequeoCompleto = async (chequeoId, usuario) => {
     const centrosVisibles = await obtenerCentrosVisiblesParaAdmin(usuario);
 
-    // Cabecera con joins basicos
     let query = supabase
         .from("chequeos_preoperacionales")
         .select(`
@@ -640,7 +572,6 @@ export const obtenerChequeoCompleto = async (chequeoId, usuario) => {
         `)
         .eq("id", chequeoId);
 
-    // Scope: si no es superadmin, solo puede ver chequeos de sus centros
     if (centrosVisibles !== null) {
         if (centrosVisibles.length === 0) {
             return { error: { status: 404, mensaje: "Chequeo no encontrado" } };
@@ -653,7 +584,6 @@ export const obtenerChequeoCompleto = async (chequeoId, usuario) => {
         return { error: { status: 404, mensaje: "Chequeo no encontrado" } };
     }
 
-    // Respuestas de aptitud con texto de la pregunta
     const { data: respuestasAptitud } = await supabase
         .from("respuestas_aptitud")
         .select(`
@@ -662,7 +592,6 @@ export const obtenerChequeoCompleto = async (chequeoId, usuario) => {
         `)
         .eq("chequeo_id", chequeoId);
 
-    // Respuestas del checklist con item + categoria + fotos
     const { data: respuestasChequeo } = await supabase
         .from("respuestas_chequeo")
         .select(`
@@ -675,7 +604,6 @@ export const obtenerChequeoCompleto = async (chequeoId, usuario) => {
         `)
         .eq("chequeo_id", chequeoId);
 
-    // Ordenar respuestas por orden del item
     const respuestasOrdenadas = (respuestasChequeo || []).sort(
         (a, b) => (a.item?.orden || 0) - (b.item?.orden || 0)
     );
@@ -692,7 +620,6 @@ export const obtenerChequeoCompleto = async (chequeoId, usuario) => {
     };
 };
 
-// Lista intentos de chequeo bloqueados visibles para el admin
 export const listarIntentosBloqueados = async ({
     usuario,
     fechaDesde,
@@ -735,8 +662,6 @@ export const listarIntentosBloqueados = async ({
     return { intentos: data, total: count, pagina, limite };
 };
 
-// Registra un intento bloqueado cuando el conductor responde no apto en la pantalla de aptitud
-// (todavia no ha seleccionado vehiculo, asi que vehiculo_id queda null)
 export const registrarIntentoNoApto = async ({ conductor, respuestasAptitud }) => {
     const evaluacion = await evaluarAptitud(respuestasAptitud);
 
@@ -756,7 +681,6 @@ export const registrarIntentoNoApto = async ({ conductor, respuestasAptitud }) =
     return { apto: false, fallas: evaluacion.fallas };
 };
 
-// Lista los chequeos del propio conductor logueado (para el dashboard del conductor)
 export const obtenerChequeosDelConductor = async (conductorId, limite = 10) => {
     const { data, error } = await supabase
         .from("chequeos_preoperacionales")
@@ -774,12 +698,6 @@ export const obtenerChequeosDelConductor = async (conductorId, limite = 10) => {
     return data;
 };
 
-// Lista los vehiculos activos del centro del conductor para que pueda seleccionar
-// La busqueda por placa es tolerante: ignora espacios, mayusculas y caracteres no alfanumericos
-// (ej: "ABC 123", "ABC123", "abc-123" todos matchean con la placa "ABC 123")
-// esPool = ¿el conductor es del pool? Regla de manejo (ver docs/diseno-pool-vip.md):
-//   - pool          -> SOLO vehiculos VIP (especiales / de direccion)
-//   - conductor norm -> SOLO vehiculos no-VIP (la flota normal)
 export const obtenerVehiculosDisponibles = async (centroId, busqueda = "", esPool = false) => {
     if (!centroId) {
         throw new Error("El conductor no tiene centro asignado");
@@ -799,21 +717,16 @@ export const obtenerVehiculosDisponibles = async (centroId, busqueda = "", esPoo
 
     if (error) throw error;
 
-    // Si no hay busqueda, devolver todo
     const filtro = normalizarPlaca(busqueda);
     if (!filtro) return data;
 
-    // Filtrar en JS normalizando ambos lados (la lista del centro es corta)
     return data.filter((v) => normalizarPlaca(v.placa).includes(filtro));
 };
 
-// Helper: deja solo letras y numeros, en mayusculas (para comparar placas)
 const normalizarPlaca = (texto = "") => {
     return String(texto).toUpperCase().replace(/[^A-Z0-9]/g, "");
 };
 
-// Devuelve el catalogo completo: categorias con sus items + preguntas de aptitud
-// En una sola llamada para que el frontend lo cargue de una vez
 export const obtenerCatalogoCompleto = async () => {
     const [resCategorias, resItems, resPreguntas] = await Promise.all([
         supabase
@@ -837,7 +750,6 @@ export const obtenerCatalogoCompleto = async () => {
     if (resItems.error) throw resItems.error;
     if (resPreguntas.error) throw resPreguntas.error;
 
-    // Agrupar items por categoria_id
     const itemsPorCategoria = resItems.data.reduce((acc, item) => {
         if (!acc[item.categoria_id]) acc[item.categoria_id] = [];
         acc[item.categoria_id].push({

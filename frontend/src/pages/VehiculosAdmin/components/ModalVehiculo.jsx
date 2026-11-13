@@ -62,15 +62,12 @@ function ModalVehiculo({ abierto, onCerrar, onGuardado, vehiculo = null, mostrar
     const esEdicion = !!vehiculo;
     const { usuario } = useAuth();
 
-    // Cascada de centro (multinivel #116): a que centro pertenece el vehiculo.
-    // Solo aplica al CREAR (al editar no se cambia el centro del vehiculo).
     const [centros, setCentros] = useState([]);
     const [departamentos, setDepartamentos] = useState([]);
     const [filtroDepto, setFiltroDepto] = useState("");
     const rolActor = usuario?.rol;
     const actorEsNacional = rolActor === "superadmin";
     const actorEsCoordinador = rolActor === "admin_centro" || rolActor === "admin";
-    // El Coordinador (o alias 'admin' con centro) hereda SU centro, sin elegir.
     const centroAutoAsignado = actorEsCoordinador && !!usuario?.centro_id;
     const centrosDisponibles =
         actorEsNacional && filtroDepto
@@ -123,7 +120,6 @@ function ModalVehiculo({ abierto, onCerrar, onGuardado, vehiculo = null, mostrar
         setPaso("");
     }, [abierto, vehiculo]);
 
-    // Cargar geografia (scopeada) al abrir en modo CREAR, para el selector de centro.
     useEffect(() => {
         if (!abierto || esEdicion) return;
         const cargar = (ruta, set) =>
@@ -279,8 +275,6 @@ function ModalVehiculo({ abierto, onCerrar, onGuardado, vehiculo = null, mostrar
         e.preventDefault();
         setError(null);
 
-        // Al crear, el centro es obligatorio (lo hereda el Coordinador o lo elige
-        // el Director Regional/Nacional). Al editar no se toca.
         if (!esEdicion) {
             const centroFinal = centroAutoAsignado ? usuario?.centro_id : form.centro_id;
             if (!centroFinal) {
@@ -294,7 +288,6 @@ function ModalVehiculo({ abierto, onCerrar, onGuardado, vehiculo = null, mostrar
         try {
             setPaso(esEdicion ? "Guardando cambios..." : "Creando vehículo...");
             const datos = { ...form };
-            // El Coordinador hereda su centro automaticamente (no eligio nada).
             if (!esEdicion && centroAutoAsignado) datos.centro_id = usuario.centro_id;
             Object.keys(datos).forEach((k) => {
                 if (datos[k] === "") delete datos[k];
@@ -381,8 +374,6 @@ function ModalVehiculo({ abierto, onCerrar, onGuardado, vehiculo = null, mostrar
                 <div className="form-vehiculo-seccion">
                     <h3 className="form-vehiculo-seccion-titulo">Datos básicos</h3>
                     <div className="form-vehiculo-grid">
-                        {/* Centro al que pertenece el vehiculo (cascada multinivel #116).
-                            Solo al CREAR; al editar el centro no se cambia. */}
                         {!esEdicion && centroAutoAsignado && (
                             <div className="form-vehiculo-campo">
                                 <label className="form-vehiculo-label">Centro de formación</label>
@@ -441,8 +432,6 @@ function ModalVehiculo({ abierto, onCerrar, onGuardado, vehiculo = null, mostrar
                                 </select>
                             </div>
                         )}
-                        {/* Vehiculo especial / de direccion (VIP). Solo los Directores
-                            lo marcan; lo manejan los conductores del pool. */}
                         {esDirector(usuario?.rol) && (
                             <div className="form-vehiculo-campo form-vehiculo-campo-ancho">
                                 <label className="form-vehiculo-checkbox">

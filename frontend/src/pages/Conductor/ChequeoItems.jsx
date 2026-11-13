@@ -1,6 +1,3 @@
-// Pantalla del checklist (39 items en 5 categorias).
-// Las categorias e items se administran desde Panel Admin -> Catalogo del chequeo.
-
 import { useEffect, useMemo, useRef, useState } from "react";
 import { useNavigate } from "react-router-dom";
 import { api, API_URL } from "../../lib/api.js";
@@ -15,16 +12,10 @@ import "./ChequeoItems.css";
 
 const MAX_FOTOS_POR_ITEM = 3;
 const TAMANO_MAX_FOTO = 5 * 1024 * 1024;
-// Para que aparezca el botón de adjuntar foto, primero debe haber una obs razonable.
 const MIN_OBSERVACION_PARA_FOTOS = 5;
 
-// Misma base que api.js: VITE_API_URL en produccion, hostname:3001 en dev/LAN.
 const API_URL_BASE = API_URL;
 
-// Comprime una imagen del lado del cliente antes de subirla. Las cámaras de celular
-// modernas producen fotos de 4-8 MB, demasiado para evidencia de chequeo. Reducimos a
-// max 1600px (lado largo) en JPEG 0.85, lo cual mantiene calidad suficiente para
-// identificar el problema reportado y reduce típicamente 5 MB → 500 KB-1 MB.
 const comprimirImagen = (file, maxLado = 1600, calidad = 0.85) => {
     return new Promise((resolve, reject) => {
         const lector = new FileReader();
@@ -34,7 +25,6 @@ const comprimirImagen = (file, maxLado = 1600, calidad = 0.85) => {
             img.onerror = () => reject(new Error("La imagen no se pudo procesar"));
             img.onload = () => {
                 let { width, height } = img;
-                // Solo redimensionar si excede el max (no agrandar imágenes pequeñas)
                 if (width > maxLado || height > maxLado) {
                     const ratio = Math.min(maxLado / width, maxLado / height);
                     width = Math.round(width * ratio);
@@ -64,7 +54,6 @@ const comprimirImagen = (file, maxLado = 1600, calidad = 0.85) => {
     });
 };
 
-// Sube una foto al backend usando multipart/form-data (api.js solo maneja JSON)
 const subirFotoAlBackend = async (respuestaId, file) => {
     const token = localStorage.getItem("token");
     const formData = new FormData();
@@ -83,30 +72,19 @@ const subirFotoAlBackend = async (respuestaId, file) => {
 function ChequeoItems() {
     const navigate = useNavigate();
 
-    // Estado base
     const [chequeoEnCurso, setChequeoEnCurso] = useState(null);
     const [categorias, setCategorias] = useState([]);
     const [cargando, setCargando] = useState(true);
     const [error, setError] = useState(null);
 
-    // Tarea #104: detectar abandono por inactividad (2 min) o cierre de pestaña.
-    // Si el chequeo se desmonta porque el conductor lo cierra normalmente, el hook
-    // limpia el timer por su cuenta gracias al cleanup del useEffect.
     useTimeoutAbandono(chequeoEnCurso?.chequeo_id);
 
-    // Indice de la categoria actual + respuestas acumuladas
     const [indiceCategoria, setIndiceCategoria] = useState(0);
     const [respuestasPorItem, setRespuestasPorItem] = useState({});
-    // ^ { [item_id]: { estado: 'cumple'|'no_cumple'|'no_aplica', observacion: string } }
 
-    // IDs reales de las respuestas (que viven en BD) por item_id.
-    // Se llenan al guardar (PUT). Son necesarios para asociar fotos.
     const [idsRespuestaPorItem, setIdsRespuestaPorItem] = useState({});
-    // Fotos subidas por item_id: { [item_id]: [{ id, url, descripcion }] }
     const [fotosPorItem, setFotosPorItem] = useState({});
-    // Estado de carga de foto por item (para deshabilitar el botón mientras sube)
     const [subiendoFoto, setSubiendoFoto] = useState({});
-    // Refs a los inputs file: uno para galería (sin capture), otro para cámara (capture)
     const inputGaleriaRefs = useRef({});
     const inputCamaraRefs = useRef({});
 
@@ -116,7 +94,6 @@ function ChequeoItems() {
     const [cerrando, setCerrando] = useState(false);
     const [toast, setToast] = useState(null);
 
-    // === Cargar el chequeo en curso al montar ===
     useEffect(() => {
         const enCurso = obtenerChequeoEnCurso();
         if (!enCurso || !enCurso.chequeo_id) {
@@ -138,13 +115,11 @@ function ChequeoItems() {
         }
     }, [navigate]);
 
-    // === Cargar el catalogo (solo categorias + items, ignoramos aptitud) ===
     useEffect(() => {
         if (!chequeoEnCurso) return;
         api("/chequeos/catalogo")
             .then((data) => {
                 const cats = (data.categorias || []).sort((a, b) => a.orden - b.orden);
-                // Ordenar items dentro de cada categoria
                 cats.forEach((c) => {
                     c.items = (c.items || []).sort((a, b) => a.orden - b.orden);
                 });
@@ -156,7 +131,6 @@ function ChequeoItems() {
             .finally(() => setCargando(false));
     }, [chequeoEnCurso]);
 
-    // === Persistir respuestas + IDs + fotos en sessionStorage cada vez que cambian ===
     useEffect(() => {
         if (!chequeoEnCurso) return;
         actualizarChequeoEnCurso({
@@ -171,7 +145,6 @@ function ChequeoItems() {
     const totalCategorias = categorias.length;
     const esUltimaCategoria = indiceCategoria === totalCategorias - 1;
 
-    // Items de la categoria actual con su respuesta acumulada
     const itemsConRespuesta = useMemo(() => {
         if (!categoriaActual) return [];
         return categoriaActual.items.map((item) => ({
@@ -184,9 +157,7 @@ function ChequeoItems() {
         (i) => i.respuesta?.estado
     ).length;
 
-    // === Acciones del usuario ===
     const setEstado = async (itemId, estado) => {
-        // Si tenía fotos y cambia a un estado distinto de no_cumple, hay que borrarlas
         const fotosActuales = fotosPorItem[itemId] || [];
         const estabaEnNoCumple = respuestasPorItem[itemId]?.estado === "no_cumple";
 
@@ -196,7 +167,6 @@ function ChequeoItems() {
             );
             if (!confirma) return;
 
-            // Borrar todas las fotos en backend
             for (const foto of fotosActuales) {
                 try {
                     await api(`/respuestas/fotos/${foto.id}`, { method: "DELETE" });
@@ -224,8 +194,6 @@ function ChequeoItems() {
         setErrorCategoria(null);
     };
 
-    // Guarda una respuesta individual al backend para obtener su ID real
-    // (necesario antes de poder subir fotos a ese item).
     const obtenerOIniciarRespuestaId = async (itemId) => {
         const yaTiene = idsRespuestaPorItem[itemId];
         if (yaTiene) return yaTiene;
@@ -267,8 +235,6 @@ function ChequeoItems() {
     };
 
     const subirFoto = async (itemId, file) => {
-        // Validar tipo. La cámara del celular usa accept="image/*" así que aceptamos cualquier imagen
-        // y la convertiremos a JPEG durante la compresión.
         if (!file.type.startsWith("image/")) {
             setToast({ mensaje: "El archivo no es una imagen válida", tipo: "error" });
             return;
@@ -276,8 +242,6 @@ function ChequeoItems() {
 
         setSubiendoFoto((prev) => ({ ...prev, [itemId]: true }));
         try {
-            // Comprimir antes de subir. Una foto de cámara de 5 MB queda en ~500 KB-1 MB
-            // sin perder calidad útil para evidencia.
             let fileFinal;
             try {
                 fileFinal = await comprimirImagen(file);
@@ -286,7 +250,6 @@ function ChequeoItems() {
                 return;
             }
 
-            // Última defensa: si aún supera 5 MB (imagen rarísima), rechazar.
             if (fileFinal.size > TAMANO_MAX_FOTO) {
                 setToast({
                     mensaje: "La foto sigue siendo demasiado grande después de procesarla. Intenta con otra.",
@@ -356,7 +319,6 @@ function ChequeoItems() {
     };
 
     const guardarRespuestasCategoria = async () => {
-        // Enviar al backend las respuestas de la categoria actual
         const payload = itemsConRespuesta.map((i) => ({
             item_id: i.id,
             estado: i.respuesta.estado,
@@ -366,7 +328,6 @@ function ChequeoItems() {
             method: "PUT",
             body: { respuestas: payload },
         });
-        // Capturar los IDs reales de respuestas (necesarios para fotos en futuras categorias)
         const nuevosIds = {};
         (resp.respuestas_guardadas || []).forEach((r) => {
             if (r.id && r.item_id) nuevosIds[r.item_id] = r.id;
@@ -407,14 +368,11 @@ function ChequeoItems() {
     const cerrarChequeo = async () => {
         setCerrando(true);
         try {
-            // Guardar la ultima categoria
             await guardarRespuestasCategoria();
-            // Cerrar el chequeo (sin notas generales por ahora)
             const resp = await api(`/chequeos/${chequeoEnCurso.chequeo_id}/cerrar`, {
                 method: "POST",
                 body: {},
             });
-            // Guardar el resultado en sessionStorage para la pantalla de resultado
             actualizarChequeoEnCurso({
                 paso: "resultado",
                 resultado: resp,
@@ -439,7 +397,6 @@ function ChequeoItems() {
         }
     };
 
-    // === Renders ===
     if (cargando) {
         return (
             <div className="items-pagina">
@@ -467,7 +424,6 @@ function ChequeoItems() {
 
     return (
         <div className="items-pagina">
-            {/* Header */}
             <header className="items-header">
                 <button className="items-volver-chip" onClick={cancelarTodo}>
                     ← Cancelar
@@ -483,7 +439,6 @@ function ChequeoItems() {
                 </div>
             </header>
 
-            {/* Barra de progreso de categorias */}
             <div className="items-progreso-categorias">
                 {categorias.map((_, i) => (
                     <div
@@ -498,7 +453,6 @@ function ChequeoItems() {
             </div>
 
             <main className="items-main">
-                {/* Encabezado de la categoria actual */}
                 <section className="items-cat-encabezado">
                     {categoriaActual.icono && (
                         <div className="items-cat-icono">{categoriaActual.icono}</div>
@@ -514,7 +468,6 @@ function ChequeoItems() {
                     </div>
                 </section>
 
-                {/* Lista de items */}
                 <section className="items-lista">
                     {itemsConRespuesta.map((item) => (
                         <article key={item.id} className="items-card">
@@ -576,7 +529,6 @@ function ChequeoItems() {
                                         />
                                     </div>
 
-                                    {/* Evidencia fotográfica (siempre visible en NO CUMPLE) */}
                                     {(() => {
                                         const fotosActuales = fotosPorItem[item.id] || [];
                                         const obsCount = item.respuesta.observacion?.trim().length || 0;
@@ -623,7 +575,6 @@ function ChequeoItems() {
 
                                                 {!lleno && (
                                                     <>
-                                                        {/* Input invisible para CÁMARA (capture en móvil) */}
                                                         <input
                                                             ref={(el) => { inputCamaraRefs.current[item.id] = el; }}
                                                             type="file"
@@ -636,7 +587,6 @@ function ChequeoItems() {
                                                                 e.target.value = "";
                                                             }}
                                                         />
-                                                        {/* Input invisible para GALERÍA */}
                                                         <input
                                                             ref={(el) => { inputGaleriaRefs.current[item.id] = el; }}
                                                             type="file"
@@ -686,7 +636,6 @@ function ChequeoItems() {
                     <div className="items-error-categoria">{errorCategoria}</div>
                 )}
 
-                {/* Botones inferiores */}
                 <section className="items-nav-botones">
                     <button
                         className="items-nav-boton items-nav-boton-atras"
@@ -716,7 +665,6 @@ function ChequeoItems() {
                 </section>
             </main>
 
-            {/* Modal de confirmacion de cierre */}
             {confirmarCierre && (
                 <div className="items-modal-overlay">
                     <div className="items-modal">

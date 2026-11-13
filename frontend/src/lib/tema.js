@@ -1,6 +1,3 @@
-// Gestion del tema (claro / oscuro). Sin dependencias y desacoplado del login:
-// funciona en cualquier pantalla, incluida la de Login. Por defecto: CLARO
-// (no sorprendemos a nadie con oscuro; el que lo quiera lo activa en Ajustes).
 const CLAVE = "flota-tema";
 const EVENTO = "flota-tema-cambio";
 
@@ -22,15 +19,12 @@ export function guardarPreferencia(pref) {
   try {
     localStorage.setItem(CLAVE, pref);
   } catch {
-    /* modo privado / sin storage: solo se aplica en memoria */
   }
   const efectivo = aplicarTema(pref);
-  // Avisa a las demas instancias del hook (toggle del sidebar, pagina Ajustes).
   window.dispatchEvent(new CustomEvent(EVENTO, { detail: pref }));
   return efectivo;
 }
 
-// Suscribe a cambios hechos por OTRAS instancias del hook.
 export function suscribirCambio(cb) {
   const handler = (e) => cb(e.detail);
   window.addEventListener(EVENTO, handler);

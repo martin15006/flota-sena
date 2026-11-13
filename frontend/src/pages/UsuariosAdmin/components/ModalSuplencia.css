@@ -21,7 +21,6 @@
 .modal-suplencia-boton-fin { background: var(--estado-error-solido); color: var(--texto-inverso); }
 .modal-suplencia-acciones button:disabled { opacity: 0.6; cursor: progress; }
 
-/* Quien activo la suplencia + cuando + motivo */
 .modal-suplencia-meta {
     font-size: var(--tamano-xs);
     color: var(--color-gris-700);
@@ -31,7 +30,6 @@
     line-height: 1.5;
 }
 
-/* Selector de alcance (un centro / toda la regional) */
 .modal-suplencia-radios {
     display: flex;
     gap: var(--espacio-md);

@@ -8,8 +8,6 @@ export const AuthProvider = ({ children }) => {
     const [usuario, setUsuario] = useState(null);
     const [cargando, setCargando] = useState(true);
     const [sesionExpirada, setSesionExpirada] = useState(false);
-    // Mensaje a mostrar en el login cuando la salida fue forzada (sesion expirada
-    // o cuenta desactivada). Lo consume el Login y se limpia.
     const [mensajeSalida, setMensajeSalida] = useState(null);
 
     useEffect(() => {
@@ -29,8 +27,6 @@ export const AuthProvider = ({ children }) => {
     }, []);
 
     useEffect(() => {
-        // Salida forzada: sesion expirada (401) o cuenta desactivada (403). Ambas
-        // cierran sesion y dejan un mensaje para mostrar en el login.
         const onForzarSalida = (e) => {
             localStorage.removeItem('token');
             clearCentroActivo();
@@ -63,9 +59,6 @@ export const AuthProvider = ({ children }) => {
         setUsuario(null);
     };
 
-    // Permite a paginas como MiPerfil o ModalEditarUsuario reemplazar el usuario
-    // global sin tener que cerrar y reabrir sesion. Asi el header y los demas
-    // componentes reflejan los cambios al instante.
     const actualizarUsuario = (nuevoUsuario) => {
         setUsuario(nuevoUsuario);
     };

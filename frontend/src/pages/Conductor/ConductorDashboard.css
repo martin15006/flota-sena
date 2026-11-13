@@ -1,9 +1,3 @@
-/* =================================================================
-   Dashboard del conductor — rediseño Tarea #103.
-   El header/footer vienen de ConductorLayout. Aqui solo el contenido.
-   ================================================================= */
-
-/* ===== Contenedor grande que agrupa hero + circulos + licencia ===== */
 .cond-contenedor {
     background: var(--superficie);
     border: 2px solid var(--color-gris-300);
@@ -15,7 +9,6 @@
     gap: var(--espacio-xl);
 }
 
-/* ===== HERO: foto + saludo (sin fondo propio porque va dentro del contenedor) ===== */
 .cond-hero {
     text-align: center;
     display: flex;
@@ -72,7 +65,6 @@
     margin-top: 6px;
 }
 
-/* Conductor del pool de transporte: pastilla morada (mismo color que el badge VIP) */
 .cond-hero-rol-pool {
     display: inline-flex;
     align-items: center;
@@ -85,7 +77,6 @@
     border-radius: var(--radio-xl);
 }
 
-/* Chip con el centro de formacion (icono + nombre) */
 .cond-hero-centro {
     display: inline-flex;
     align-items: center;
@@ -109,7 +100,6 @@
     margin-top: var(--espacio-sm);
 }
 
-/* Aviso de licencia vencida (Tarea #106): bloquea el inicio de chequeos */
 .cond-licencia-bloqueo {
     background: var(--color-rojo);
     color: var(--color-blanco);
@@ -123,7 +113,6 @@
     box-shadow: var(--sombra-md);
 }
 
-/* ===== CIRCULOS centrales (mantengo el diseño original, refinado) ===== */
 .cond-circulos {
     display: flex;
     gap: var(--espacio-xl);
@@ -131,7 +120,6 @@
     flex-wrap: wrap;
 }
 
-/* Circulo deshabilitado cuando la licencia esta vencida */
 .cond-circulo-bloqueado {
     opacity: 0.45;
     filter: grayscale(0.7);
@@ -143,7 +131,6 @@
     box-shadow: var(--sombra-md);
 }
 
-/* Mientras se verifica la disponibilidad de vehículos (antes de la aptitud) */
 .cond-circulo:disabled {
     opacity: 0.6;
     cursor: progress;
@@ -220,7 +207,6 @@
     letter-spacing: 0.6px;
 }
 
-/* ===== Bloque de licencia (sin fondo propio, dentro del contenedor) ===== */
 .cond-licencia {
     padding-top: var(--espacio-lg);
     border-top: 2px dashed var(--color-gris-200);
@@ -265,7 +251,6 @@
     color: var(--color-gris-900);
 }
 
-/* Vencimiento con color segun nivel de urgencia */
 .cond-licencia-vencimiento {
     display: inline-block;
     padding: 4px 12px;
@@ -302,7 +287,6 @@
     letter-spacing: 0.3px;
 }
 
-/* ===== Responsive ===== */
 @media (max-width: 480px) {
     .cond-hero-nombre {
         font-size: 26px;
@@ -325,7 +309,6 @@
     }
 }
 
-/* Banner de suplencia (Pool · Paso 2): el pool esta reemplazando al Coordinador */
 .cond-suplencia-banner {
     display: flex; align-items: center; justify-content: space-between; gap: var(--espacio-md);
     flex-wrap: wrap;
@@ -341,10 +324,6 @@
 }
 .cond-suplencia-boton:hover { background: var(--suplencia-fuerte); }
 
-/* === Modo oscuro === */
-/* El circulo "post-operacional" usa fondo --superficie (claro en claro, oscuro en oscuro).
-   En claro su texto #1A1A1A casi-negro va perfecto; en oscuro el fondo se vuelve oscuro
-   y ese texto se pierde -> lo subimos a --texto (claro en oscuro). */
 [data-tema="oscuro"] .cond-circulo-post {
     color: var(--texto);
 }

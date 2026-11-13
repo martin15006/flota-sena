@@ -16,8 +16,6 @@ import { supabase } from "../config/supabase.js";
 
 const ESTADOS_RESPUESTA_VALIDOS = ["cumple", "no_cumple", "no_aplica"];
 
-// GET /api/chequeos/catalogo
-// Devuelve categorias + items + preguntas de aptitud en una sola respuesta
 export const getCatalogo = async (req, res) => {
     try {
         const catalogo = await obtenerCatalogoCompleto();
@@ -28,8 +26,6 @@ export const getCatalogo = async (req, res) => {
     }
 };
 
-// GET /api/chequeos/vehiculos-disponibles?busqueda=OCJ
-// Lista vehiculos activos del centro del conductor con busqueda opcional por placa
 export const getVehiculosDisponibles = async (req, res) => {
     try {
         const { busqueda } = req.query;
@@ -45,9 +41,6 @@ export const getVehiculosDisponibles = async (req, res) => {
     }
 };
 
-// POST /api/chequeos/iniciar
-// Body: { vehiculo_id, tipo, kilometraje, respuestas_aptitud: [{pregunta_id, respuesta}, ...] }
-// Valida aptitud + vehiculo, crea cabecera del chequeo + guarda respuestas de aptitud
 export const postIniciarChequeo = async (req, res) => {
     try {
         const { vehiculo_id, tipo, kilometraje, respuestas_aptitud } = req.body;
@@ -81,8 +74,6 @@ export const postIniciarChequeo = async (req, res) => {
         });
 
         if (!resultado.exito) {
-            // Bloque C paso 2: notificar al admin del intento bloqueado.
-            // Razones: conductor_no_apto, vehiculo_desactivado, vehiculo_no_existe.
             try {
                 const razon = resultado.razon;
                 const nombreConductor = req.usuario.nombre_completo;
@@ -112,9 +103,6 @@ export const postIniciarChequeo = async (req, res) => {
                 }[razon];
 
                 if (config) {
-                    // La licencia vencida lleva al perfil del conductor (para
-                    // renovar/actualizar la fecha); los demas intentos llevan a la
-                    // pagina de intentos bloqueados.
                     const urlDestino = razon === 'licencia_vencida'
                         ? `/admin/usuarios/${req.usuario.id}`
                         : '/admin/chequeos/intentos-bloqueados';
@@ -126,7 +114,7 @@ export const postIniciarChequeo = async (req, res) => {
                         centro_id: centroId,
                         conductor_id: req.usuario.id,
                         vehiculo_id: vehiculo_id || null,
-                        soloCentro: true, // se queda en el centro; hacia arriba se escala a mano
+                        soloCentro: true,
                     });
                 }
             } catch (notifErr) {
@@ -156,9 +144,6 @@ export const postIniciarChequeo = async (req, res) => {
     }
 };
 
-// PUT /api/chequeos/:id/respuestas
-// Body: { respuestas: [{ item_id, estado, observacion }] }
-// Permite envios parciales (1 a 39 respuestas), hace upsert por (chequeo_id, item_id)
 export const putRespuestasChequeo = async (req, res) => {
     try {
         const { id } = req.params;
@@ -207,10 +192,6 @@ export const putRespuestasChequeo = async (req, res) => {
     }
 };
 
-// POST /api/chequeos/:id/cerrar
-// Body opcional: { notas_generales }
-// Calcula resultado, cierra el chequeo, actualiza estado del vehiculo si es peor,
-// o devuelve sugerencia al admin si el resultado es mejor
 export const postCerrarChequeo = async (req, res) => {
     try {
         const { id } = req.params;
@@ -226,16 +207,11 @@ export const postCerrarChequeo = async (req, res) => {
             return res.status(resultado.error.status).json({ error: resultado.error.mensaje });
         }
 
-        // Bloque C paso 2: notificar al admin de TODO chequeo completado.
-        // El tipo de notificacion lleva el estado del resultado (chequeo_operativo,
-        // chequeo_observacion, etc.) para que el frontend pueda colorear el icono
-        // segun el semaforo: verde/azul/amarillo/rojo/gris.
         try {
             const ch = resultado.chequeo;
             const veh = resultado.vehiculo;
             const estado = ch?.resultado_estado;
 
-            // Texto legible por estado
             const ESTADO_TEXTO = {
                 operativo: 'OPERATIVO',
                 observacion: 'EN OBSERVACIÓN',
@@ -250,7 +226,7 @@ export const postCerrarChequeo = async (req, res) => {
                 const tituloEstado = ESTADO_TEXTO[estado];
 
                 await crearNotificacion({
-                    tipo: `chequeo_${estado}`, // chequeo_operativo, chequeo_observacion, ...
+                    tipo: `chequeo_${estado}`,
                     titulo: `${nombreConductor} completó un chequeo`,
                     mensaje: `Vehículo ${placa} quedó ${tituloEstado}.`,
                     url_destino: `/admin/chequeos/${id}`,
@@ -258,11 +234,9 @@ export const postCerrarChequeo = async (req, res) => {
                     chequeo_id: id,
                     vehiculo_id: ch?.vehiculo_id,
                     conductor_id: ch?.conductor_id,
-                    soloCentro: true, // se queda en el centro; hacia arriba se escala a mano
+                    soloCentro: true,
                 });
 
-                // Falla critica (vehiculo NO OPERATIVO) -> correo inmediato a los
-                // admins del centro. Fire-and-forget: no demora la respuesta del cierre.
                 if (estado === 'no_operativo') {
                     enviarCorreoFallaCritica({
                         centroId: ch?.centro_id,
@@ -292,8 +266,6 @@ export const postCerrarChequeo = async (req, res) => {
     }
 };
 
-// GET /api/chequeos?fecha_desde=...&fecha_hasta=...&placa=...&resultado_estado=...&solo_oficiales=true&solo_cerrados=true&pagina=1&limite=20
-// Lista chequeos visibles segun el scope del admin
 export const getChequeos = async (req, res) => {
     try {
         const {
@@ -326,8 +298,6 @@ export const getChequeos = async (req, res) => {
     }
 };
 
-// GET /api/chequeos/:id
-// Devuelve el chequeo completo con cabecera + respuestas + aptitud + vehiculo + conductor + fotos
 export const getChequeoPorId = async (req, res) => {
     try {
         const { id } = req.params;
@@ -342,10 +312,6 @@ export const getChequeoPorId = async (req, res) => {
     }
 };
 
-// POST /api/chequeos/aptitud-no-apta
-// Body: { respuestas_aptitud: [{pregunta_id, respuesta}] }
-// Registra el intento bloqueado cuando el conductor responde no apto en la pantalla
-// de aptitud (antes de seleccionar vehiculo). Devuelve detalle de las preguntas fallidas.
 export const postAptitudNoApta = async (req, res) => {
     try {
         const { respuestas_aptitud } = req.body;
@@ -375,8 +341,6 @@ export const postAptitudNoApta = async (req, res) => {
     }
 };
 
-// GET /api/chequeos/mios?limite=10
-// Lista los chequeos del propio conductor logueado (para el dashboard del conductor)
 export const getMisChequeos = async (req, res) => {
     try {
         const limite = req.query.limite ? parseInt(req.query.limite, 10) : 10;
@@ -388,8 +352,6 @@ export const getMisChequeos = async (req, res) => {
     }
 };
 
-// GET /api/chequeos/intentos-bloqueados?fecha_desde=...&fecha_hasta=...&razon=...&solo_no_notificados=true&pagina=1&limite=20
-// Lista intentos de chequeo bloqueados (no apto, vehiculo desactivado, etc.) visibles para el admin
 export const getIntentosBloqueados = async (req, res) => {
     try {
         const {
@@ -418,20 +380,6 @@ export const getIntentosBloqueados = async (req, res) => {
     }
 };
 
-// POST /api/chequeos/:id/abandonar
-// Marca un chequeo en curso como abandonado por el conductor (Tarea #104).
-// Disparadores:
-//   - inactividad: el frontend detecto 2 minutos sin clicks/touch
-//   - cerro_pestana: onbeforeunload del navegador
-//   - cerro_sesion: el conductor pulso cerrar sesion (no aplica hoy porque
-//     las pantallas del flujo no tienen ese boton, pero queda preparado)
-//
-// Reglas:
-//   - Solo el dueño del chequeo (conductor) o un admin pueden marcarlo.
-//   - No se puede abandonar un chequeo ya cerrado.
-//   - Si ya estaba abandonado, devuelve 200 silencioso (idempotente).
-//
-// Al marcarlo, crea una notificacion para los admins del centro (Bloque C paso 2).
 export const postAbandonarChequeo = async (req, res) => {
     try {
         const { id } = req.params;
@@ -441,7 +389,6 @@ export const postAbandonarChequeo = async (req, res) => {
         const motivosValidos = ['inactividad', 'cerro_sesion', 'cerro_pestana', 'manual'];
         const motivoFinal = motivosValidos.includes(motivo) ? motivo : 'inactividad';
 
-        // Cargar el chequeo + datos para la notificacion en un solo query
         const { data: chequeo, error: errLoad } = await supabase
             .from('chequeos_preoperacionales')
             .select(`
@@ -487,9 +434,6 @@ export const postAbandonarChequeo = async (req, res) => {
             return res.status(500).json({ error: 'Error al marcar el chequeo' });
         }
 
-        // Crear notificacion para los admins del centro (Bloque C).
-        // Falla silenciosa: si la tabla notificaciones no existe todavia o falla la
-        // insercion, no rompemos el flujo principal del abandono.
         try {
             const nombreConductor = chequeo.conductor?.nombre_completo || 'Un conductor';
             const placa = chequeo.vehiculo?.placa || 'sin placa';

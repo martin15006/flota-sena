@@ -5,7 +5,6 @@ import { supabase } from '../../config/supabase.js';
 const __dirname = dirname(fileURLToPath(import.meta.url));
 export const LOGO_PATH = join(__dirname, 'assets', 'logoverde.png');
 
-// Paleta SENA para los documentos
 export const COLORES = {
     verde: '#39A900',
     verdeOscuro: '#2A7A00',
@@ -18,8 +17,6 @@ export const COLORES = {
     critico: '#A32D2D',
 };
 
-// Resuelve el centro de un documento a { centroNombre, departamentoNombre } para el
-// header dinamico "SENA · Regional {departamento} · {Centro}".
 export const cabeceraDeCentro = async (centroId) => {
     if (!centroId) return { centroNombre: '', departamentoNombre: '' };
     const { data } = await supabase
@@ -33,7 +30,6 @@ export const cabeceraDeCentro = async (centroId) => {
     };
 };
 
-// "SENA · Regional Tolima · Centro de Industria y Construccion"
 export const lineaOrigen = ({ centroNombre, departamentoNombre }) => {
     const partes = ['SENA'];
     if (departamentoNombre) partes.push(`Regional ${departamentoNombre}`);
@@ -54,16 +50,12 @@ export const fechaHora = (iso) => {
     });
 };
 
-// Etiquetas legibles (espejo de las del frontend) para los documentos.
 const TIPOS_VEHICULO = { camion: 'Camión', camioneta: 'Camioneta', tractocamion: 'Tractocamión', microbus: 'Microbús', buseta: 'Buseta', bus: 'Bus' };
 export const etiquetaTipo = (t) => TIPOS_VEHICULO[t] || t || '—';
 
 const ESTADOS_VEHICULO = { operativo: 'Operativo', observacion: 'Observación', alerta: 'Alerta', critico: 'Crítico', no_operativo: 'No operativo' };
 export const etiquetaEstado = (e) => ESTADOS_VEHICULO[e] || e || '—';
 
-// Origen de un REPORTE segun el scope del admin que lo genera (no hay un solo
-// centro): admin de centro -> su centro; Director Regional -> su departamento;
-// superadmin -> solo "SENA". El suplente usa el centro que esta cubriendo.
 export const origenDeUsuario = async (usuario) => {
     const centroId = usuario.centroActivo || usuario.centro_id;
     if (centroId) return cabeceraDeCentro(centroId);
@@ -78,19 +70,15 @@ export const origenDeUsuario = async (usuario) => {
     return { centroNombre: '', departamentoNombre: '' };
 };
 
-// Cargo legible (espejo de frontend/src/lib/roles.js). Un conductor del pool se
-// muestra como "Pool de transporte".
 const ETIQUETA_ROL = { superadmin: 'Director Nacional', admin_departamental: 'Director Regional', admin_centro: 'Coordinador de Flota', admin: 'Coordinador de Flota', conductor: 'Conductor' };
 export const etiquetaCargo = (rol, esPool) =>
     rol === 'conductor' && esPool ? 'Pool de transporte' : (ETIQUETA_ROL[rol] || rol || '—');
 
-// Color del estado (operativo/observacion/alerta/critico/no_operativo) para banderas y badges.
 export const colorDeEstado = (estado) =>
     estado === 'critico' || estado === 'no_operativo' ? COLORES.critico
         : estado === 'alerta' || estado === 'observacion' ? COLORES.alerta
             : COLORES.ok;
 
-// ¿La fecha (vencimiento) ya pasó? Devuelve false si no hay fecha.
 export const estaVencido = (fecha) => {
     if (!fecha) return false;
     const t = new Date(fecha).getTime();

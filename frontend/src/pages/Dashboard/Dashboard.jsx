@@ -1,12 +1,3 @@
-// Dashboard administrativo — version final con datos reales (Bloque B paso 4).
-// Consume /api/dashboard/stats y muestra:
-//   1) Saludo + fecha de hoy
-//   2) 4 cajas grandes de KPIs del dia
-//   3) Seccion "Necesita atencion" con 3 grupos de alertas linkeables
-//
-// Auto-refresh cada 60 segundos para que el admin vea los numeros del dia
-// actualizados sin tener que recargar manualmente.
-
 import { useEffect, useState } from "react";
 import { useNavigate } from "react-router-dom";
 import { useAuth } from "../../hooks/useAuth.js";
@@ -16,7 +7,6 @@ import Toast from "../../components/Toast/Toast.jsx";
 import ModalInformeSuperior from "./ModalInformeSuperior.jsx";
 import "./Dashboard.css";
 
-// Helper: formato de fecha tipo "viernes 5 de junio de 2026"
 const formatearFechaHoy = () => {
     const ahora = new Date();
     return ahora.toLocaleDateString("es-CO", {
@@ -27,16 +17,13 @@ const formatearFechaHoy = () => {
     });
 };
 
-// Helper: clasifica los dias restantes en niveles de urgencia.
-// Umbrales acordados con el usuario: <=15 dias = critico (rojo), <=30 dias = urgente (naranja)
 const nivelLicencia = (dias) => {
-    if (dias < 0) return "vencido";   // ya vencio (rojo invertido)
-    if (dias <= 15) return "critico"; // <= 15 dias (rojo)
-    if (dias <= 30) return "urgente"; // <= 30 dias (naranja)
-    return "normal";                  // > 30 dias (verde)
+    if (dias < 0) return "vencido";
+    if (dias <= 15) return "critico";
+    if (dias <= 30) return "urgente";
+    return "normal";
 };
 
-// Helper: texto humano para dias restantes
 const textoLicencia = (dias) => {
     if (dias < 0) return `vencida hace ${Math.abs(dias)} día${Math.abs(dias) === 1 ? "" : "s"}`;
     if (dias === 0) return "vence hoy";
@@ -71,7 +58,6 @@ function Dashboard() {
         // eslint-disable-next-line react-hooks/exhaustive-deps
     }, [usuario]);
 
-    // Auto-refresh cada 60s para mantener los numeros del dia actualizados
     useEffect(() => {
         if (!usuario) return;
         const interval = setInterval(cargarStats, 60000);
@@ -81,8 +67,6 @@ function Dashboard() {
 
     if (!usuario) return null;
 
-    // Conteo total de alertas para mostrar al usuario en el header de la seccion.
-    // chequeos_abandonados puede no venir en backends viejos -> uso optional chaining.
     const totalAlertas = stats
         ? stats.alertas.licencias_por_vencer.length +
           stats.alertas.vehiculos_sin_runt.length +
@@ -90,13 +74,10 @@ function Dashboard() {
           (stats.alertas.chequeos_abandonados?.length || 0)
         : 0;
 
-    // Flag de scope para mostrar texto contextual al admin.
-    // 'global' = superadmin (ve todo); cualquier otro = ve su area asignada.
     const esScopeLimitado = stats?.scope && stats.scope.tipo !== "global";
 
     return (
         <AdminLayout titulo="Dashboard">
-            {/* ===== Saludo ===== */}
             <div className="dashboard-bienvenida animar-fade-in-up">
                 <div>
                     <h2 className="dashboard-saludo">
@@ -109,7 +90,6 @@ function Dashboard() {
                         </p>
                     )}
                 </div>
-                {/* El Nacional no tiene superior a quién escalar -> no se le muestra */}
                 {usuario.rol !== "superadmin" && (
                     <button
                         className="dashboard-boton-informe"
@@ -121,7 +101,6 @@ function Dashboard() {
                 )}
             </div>
 
-            {/* ===== Estado de error ===== */}
             {error && (
                 <div className="dashboard-error animar-shake">
                     ⚠️ {error}
@@ -131,7 +110,6 @@ function Dashboard() {
                 </div>
             )}
 
-            {/* ===== KPIs del dia ===== */}
             <section className="dashboard-seccion animar-fade-in">
                 <h3 className="dashboard-seccion-titulo">Números de hoy</h3>
                 <div className="dashboard-kpis">
@@ -189,7 +167,6 @@ function Dashboard() {
                 </div>
             </section>
 
-            {/* ===== Necesita atencion ===== */}
             <section className="dashboard-seccion animar-fade-in">
                 <h3 className="dashboard-seccion-titulo">
                     Necesita atención
@@ -210,7 +187,6 @@ function Dashboard() {
 
                 {!cargando && totalAlertas > 0 && (
                     <div className="dashboard-alertas">
-                        {/* === Licencias por vencer === */}
                         {stats.alertas.licencias_por_vencer.length > 0 && (
                             <div className="dashboard-grupo-alerta">
                                 <div className="dashboard-grupo-titulo">
@@ -250,7 +226,6 @@ function Dashboard() {
                             </div>
                         )}
 
-                        {/* === Vehiculos sin RUNT === */}
                         {stats.alertas.vehiculos_sin_runt.length > 0 && (
                             <div className="dashboard-grupo-alerta">
                                 <div className="dashboard-grupo-titulo">
@@ -286,7 +261,6 @@ function Dashboard() {
                             </div>
                         )}
 
-                        {/* === Chequeos abandonados hoy (Tarea #104) === */}
                         {stats.alertas.chequeos_abandonados?.length > 0 && (
                             <div className="dashboard-grupo-alerta">
                                 <div className="dashboard-grupo-titulo">
@@ -323,7 +297,6 @@ function Dashboard() {
                             </div>
                         )}
 
-                        {/* === Vehiculos no operativos o bloqueados === */}
                         {stats.alertas.vehiculos_no_operativos.length > 0 && (
                             <div className="dashboard-grupo-alerta">
                                 <div className="dashboard-grupo-titulo">

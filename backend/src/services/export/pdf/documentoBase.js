@@ -5,8 +5,6 @@ import { COLORES, LOGO_PATH, lineaOrigen, fechaHora } from '../branding.js';
 
 const h = React.createElement;
 
-// El logo como data URI: @react-pdf lo embebe directo (un path local lo intenta
-// resolver con fetch y falla en Node). Se lee una sola vez al cargar el modulo.
 const LOGO_DATA_URI = 'data:image/png;base64,' + fs.readFileSync(LOGO_PATH).toString('base64');
 
 export const estilos = StyleSheet.create({
@@ -23,7 +21,6 @@ export const estilos = StyleSheet.create({
     footer: { position: 'absolute', bottom: 0, left: 0, right: 0, paddingHorizontal: 22, paddingVertical: 9, backgroundColor: '#fafafa', borderTop: `0.5pt solid ${COLORES.grisLinea}`, flexDirection: 'row', justifyContent: 'space-between', fontSize: 8, color: COLORES.grisSuave },
 });
 
-// Header comun: logo + titulo + "SENA · Regional X · Centro" + meta (numero/fecha).
 export const Header = ({ titulo, origen, meta }) =>
     h(View, { style: estilos.header }, [
         h(Image, { key: 'logo', style: estilos.headerLogo, src: LOGO_DATA_URI }),
@@ -35,7 +32,6 @@ export const Header = ({ titulo, origen, meta }) =>
             (meta || []).map((m, i) => h(Text, { key: i }, m))),
     ]);
 
-// Footer fijo con paginado.
 export const Footer = () =>
     h(View, { style: estilos.footer, fixed: true }, [
         h(Text, { key: 'l' }, `Generado el ${fechaHora(new Date().toISOString())} · Sistema de Gestion de Flota SENA`),

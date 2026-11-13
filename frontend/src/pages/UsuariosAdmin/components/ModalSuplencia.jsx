@@ -5,9 +5,6 @@ import { useAuth } from "../../../hooks/useAuth.js";
 import { esDirector } from "../../../lib/roles.js";
 import "./ModalSuplencia.css";
 
-// Activa o desactiva la suplencia de un conductor del pool. `usuario` es la fila
-// del conductor (debe tener rol 'conductor' y es_pool true). onHecho(mensaje) avisa
-// al padre para refrescar la lista y mostrar el toast.
 function ModalSuplencia({ abierto, onCerrar, usuario, onHecho }) {
     const { usuario: actor } = useAuth();
     const [suplenciaActiva, setSuplenciaActiva] = useState(null);
@@ -16,9 +13,7 @@ function ModalSuplencia({ abierto, onCerrar, usuario, onHecho }) {
     const [error, setError] = useState(null);
     const [cargando, setCargando] = useState(false);
     const [consultando, setConsultando] = useState(true);
-    // Alcance de la suplencia (Director): un centro (Fase A) o toda la regional /
-    // departamento (Fase B). El titular/coordinador solo cubre el centro del pool.
-    const [alcance, setAlcance] = useState("centro"); // 'centro' | 'departamento'
+    const [alcance, setAlcance] = useState("centro");
     const [centros, setCentros] = useState([]);
     const [centroSel, setCentroSel] = useState("");
     const [departamentos, setDepartamentos] = useState([]);
@@ -31,10 +26,9 @@ function ModalSuplencia({ abierto, onCerrar, usuario, onHecho }) {
         setHasta("");
         setMotivo("");
         setAlcance("centro");
-        setCentroSel(usuario.centro_id || ""); // por defecto, el centro propio del pool
+        setCentroSel(usuario.centro_id || "");
         setDeptoSel("");
         setConsultando(true);
-        // ¿Ya tiene una suplencia activa? (en el área del que consulta)
         api(`/suplencias?activa=true`)
             .then((data) => {
                 const mia = (data.suplencias || []).find((s) => s.pool_id === usuario.id);
@@ -42,7 +36,6 @@ function ModalSuplencia({ abierto, onCerrar, usuario, onHecho }) {
             })
             .catch((err) => { if (!err.sesionExpirada) setError(err.message); })
             .finally(() => setConsultando(false));
-        // Para Directores: listas de centros y departamentos de su área (ya scopeadas).
         if (esDirector(actor?.rol)) {
             api("/geo/centros")
                 .then((data) => setCentros(data.centros || []))

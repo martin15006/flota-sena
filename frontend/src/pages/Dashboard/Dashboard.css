@@ -1,10 +1,3 @@
-/* =================================================================
-   Dashboard administrativo — version final con KPIs reales + alertas.
-   Header/sidebar/footer vienen de AdminLayout.
-   Convencion §17: bordes 2px+, sombras md+, texto gris-900.
-   ================================================================= */
-
-/* ===== Bienvenida arriba ===== */
 .dashboard-bienvenida {
     background: var(--superficie);
     border: 2px solid var(--color-gris-300);
@@ -62,7 +55,6 @@
     font-style: italic;
 }
 
-/* ===== Error general ===== */
 .dashboard-error {
     background: var(--estado-error-fondo);
     color: var(--color-rojo);
@@ -96,7 +88,6 @@
     background: var(--estado-error-solido);
 }
 
-/* ===== Secciones genericas ===== */
 .dashboard-seccion {
     background: var(--superficie);
     border: 2px solid var(--color-gris-300);
@@ -130,7 +121,6 @@
     box-shadow: var(--sombra-sm);
 }
 
-/* ===== Cuadricula de KPIs ===== */
 .dashboard-kpis {
     display: grid;
     grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
@@ -147,7 +137,6 @@
     transition: all var(--velocidad-rapida) var(--suavizado);
 }
 
-/* Punto de estado (esquina): verde sano por defecto; respira en oscuro */
 .dashboard-kpi::after {
     content: "";
     position: absolute;
@@ -184,7 +173,6 @@
     background: var(--superficie);
 }
 
-/* KPI con valor distinto de cero en metricas "malas" (no operativos, bloqueados) */
 .dashboard-kpi-alerta {
     background: var(--estado-adv-fondo);
     border-color: var(--estado-adv-texto);
@@ -212,7 +200,6 @@
     line-height: 1;
 }
 
-/* Subrayado de acento bajo el numero */
 .dashboard-kpi-numero::after {
     content: "";
     display: block;
@@ -239,7 +226,6 @@
     font-weight: var(--peso-semibold);
 }
 
-/* ===== Estados vacios / cargando ===== */
 .dashboard-cargando {
     padding: var(--espacio-xl);
     text-align: center;
@@ -259,7 +245,6 @@
     font-weight: var(--peso-semibold);
 }
 
-/* ===== Necesita atencion ===== */
 .dashboard-alertas {
     display: grid;
     grid-template-columns: repeat(auto-fit, minmax(320px, 1fr));
@@ -336,7 +321,6 @@
     border-radius: var(--radio-md);
 }
 
-/* Estados de urgencia (color del .meta + borde izquierdo del item) */
 .dashboard-item-normal {
     border-left: 6px solid var(--color-verde-sena);
 }
@@ -385,7 +369,6 @@
     font-weight: var(--peso-bold);
 }
 
-/* Ver mas */
 .dashboard-ver-mas {
     margin-top: var(--espacio-md);
     background: none;
@@ -403,7 +386,6 @@
     color: var(--color-verde-sena);
 }
 
-/* ===== Responsive ===== */
 @media (max-width: 640px) {
     .dashboard-saludo {
         font-size: 22px;

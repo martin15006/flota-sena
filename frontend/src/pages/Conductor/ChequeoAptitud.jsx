@@ -1,6 +1,3 @@
-// Pantalla de Aptitud del conductor (5 preguntas, una por pantalla).
-// Las preguntas se administran desde Panel Admin -> Catalogo del chequeo.
-
 import { useEffect, useState } from "react";
 import { useNavigate, useSearchParams } from "react-router-dom";
 import { api } from "../../lib/api.js";
@@ -27,7 +24,6 @@ function ChequeoAptitud() {
     const [error, setError] = useState(null);
     const [enviando, setEnviando] = useState(false);
 
-    // Cargar las 5 preguntas del catalogo al inicio
     useEffect(() => {
         api("/chequeos/catalogo")
             .then((data) => {
@@ -61,20 +57,17 @@ function ChequeoAptitud() {
         setRespuestas(nuevasRespuestas);
         setRespuestaPendiente(null);
 
-        // Si quedan más preguntas, avanzar
         if (indiceActual + 1 < totalPreguntas) {
             setIndiceActual(indiceActual + 1);
             return;
         }
 
-        // Última pregunta respondida → evaluar si es apto
         const noAptas = nuevasRespuestas.filter((r) => {
             const p = preguntas.find((p) => p.id === r.pregunta_id);
             return p && r.respuesta !== p.respuesta_apta;
         });
 
         if (noAptas.length === 0) {
-            // Apto: guardar en sessionStorage y pasar a seleccionar vehiculo
             guardarChequeoEnCurso({
                 tipo,
                 paso: "vehiculo",
@@ -84,7 +77,6 @@ function ChequeoAptitud() {
             return;
         }
 
-        // No apto: registrar el intento en backend + mostrar pantalla de bloqueo
         setEnviando(true);
         try {
             const resp = await api("/chequeos/aptitud-no-apta", {
@@ -94,8 +86,6 @@ function ChequeoAptitud() {
             setPreguntasFallidas(resp.preguntas_fallidas || []);
         } catch (err) {
             if (!err.sesionExpirada) {
-                // Aún así mostramos la pantalla de bloqueo, pero con detalle
-                // de las preguntas calculado en frontend
                 const enriquecidas = noAptas.map((r) => {
                     const p = preguntas.find((p) => p.id === r.pregunta_id);
                     return {
@@ -118,8 +108,6 @@ function ChequeoAptitud() {
         limpiarChequeoEnCurso();
         navigate("/conductor");
     };
-
-    // === Renders ===
 
     if (cargando) {
         return (
@@ -189,7 +177,6 @@ function ChequeoAptitud() {
 
     return (
         <div className="aptitud-pagina">
-            {/* Header con progreso */}
             <header className="aptitud-header">
                 <button
                     className="aptitud-volver-chip"
@@ -236,7 +223,6 @@ function ChequeoAptitud() {
                 </div>
             </main>
 
-            {/* Modal de confirmación */}
             {respuestaPendiente && (
                 <div className="aptitud-modal-overlay">
                     <div className="aptitud-modal">

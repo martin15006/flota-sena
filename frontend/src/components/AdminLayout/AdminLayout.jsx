@@ -1,16 +1,3 @@
-// Layout reutilizable para todas las paginas del admin (Bloque B Fase 4).
-// Envuelve el contenido con:
-//   - Sidebar a la izquierda (siempre abierto en escritorio, colapsable con hamburguesa,
-//     overlay en movil)
-//   - Header arriba con: hamburguesa + titulo de la pagina + campanita + perfil del usuario
-//   - Contenido principal en el espacio restante
-//   - Footer abajo
-//
-// Para que cada pagina admin use este layout, simplemente envuelve su return:
-//   <AdminLayout titulo="Mi pagina">
-//     <div>contenido aqui</div>
-//   </AdminLayout>
-
 import { useEffect, useState } from "react";
 import { useAuth } from "../../hooks/useAuth.js";
 import { useNavigate, useLocation, Navigate } from "react-router-dom";
@@ -21,12 +8,8 @@ import Campanita from "./Campanita.jsx";
 import Footer from "../Footer/Footer.jsx";
 import "./AdminLayout.css";
 
-// Clave de localStorage para recordar si el sidebar quedo colapsado/expandido
-// en escritorio (en movil no se persiste, siempre arranca cerrado).
 const STORAGE_KEY = "flota_sena__sidebar_colapsado";
 
-// Detecta si la pantalla es chica (movil/tablet). El punto de corte tiene que
-// coincidir con el media query del CSS.
 const esMovil = () => window.innerWidth <= 900;
 
 function AdminLayout({ titulo, children }) {
@@ -34,11 +17,6 @@ function AdminLayout({ titulo, children }) {
     const navigate = useNavigate();
     const location = useLocation();
 
-    // Red de seguridad para el SUPLENTE: si mientras esta en el panel le finalizan la
-    // suplencia (el titular u otro superior), al navegar revalidamos contra /auth/me y,
-    // si ya no es admin efectivo, lo mandamos a su panel de conductor. Solo corre para
-    // suplentes — no carga /me a los admins normales. (La cuenta desactivada la maneja
-    // el helper api con el evento auth:desactivado.)
     useEffect(() => {
         if (!enSuplencia(usuario)) return;
         let cancelado = false;
@@ -53,22 +31,17 @@ function AdminLayout({ titulo, children }) {
                     });
                 }
             })
-            .catch(() => { /* desactivacion: la maneja el helper api */ });
+            .catch(() => {  });
         return () => { cancelado = true; };
         // eslint-disable-next-line react-hooks/exhaustive-deps
     }, [location.pathname]);
 
-    // sidebarAbierto:
-    //   - Escritorio: arranca abierto, salvo que el usuario haya colapsado antes
-    //   - Movil: siempre arranca cerrado
     const [sidebarAbierto, setSidebarAbierto] = useState(() => {
         if (typeof window === "undefined") return true;
         if (esMovil()) return false;
         return localStorage.getItem(STORAGE_KEY) !== "true";
     });
 
-    // Si el usuario cambia el tamaño de la ventana (rota el celular, etc),
-    // recalcular el estado por defecto.
     useEffect(() => {
         const onResize = () => {
             if (esMovil()) {
@@ -82,7 +55,6 @@ function AdminLayout({ titulo, children }) {
     const toggleSidebar = () => {
         setSidebarAbierto((abierto) => {
             const nuevo = !abierto;
-            // Solo persistir en escritorio (el movil siempre arranca cerrado)
             if (!esMovil()) {
                 localStorage.setItem(STORAGE_KEY, nuevo ? "false" : "true");
             }
@@ -97,14 +69,10 @@ function AdminLayout({ titulo, children }) {
 
     if (!usuario) return null;
 
-    // Suplente que cubre VARIOS centros y todavía no eligió cuál gestionar: lo mandamos
-    // al selector antes de dejarlo entrar al panel (sin centro activo no tendría scope).
     if (necesitaElegirCentro(usuario)) {
         return <Navigate to="/suplencia/centros" replace />;
     }
 
-    // Barra prominente: si está supliendo, mostrar BIEN VISIBLE qué centro está
-    // gestionando (y la regional si cubre varios), para no confundirse de centro.
     const suplente = enSuplencia(usuario);
     const variosCentros = cubreVariosCentros(usuario);
     const centroActivoNombre = usuario.suplencia_centros?.find((c) => c.id === usuario.centro_activo)?.nombre
@@ -115,7 +83,6 @@ function AdminLayout({ titulo, children }) {
 
     return (
         <div className={`admin-layout ${sidebarAbierto ? "sidebar-abierto" : "sidebar-cerrado"}`}>
-            {/* Sidebar a la izquierda */}
             <Sidebar
                 abierto={sidebarAbierto}
                 onCerrar={() => setSidebarAbierto(false)}
@@ -123,7 +90,6 @@ function AdminLayout({ titulo, children }) {
                 onLogout={cerrar}
             />
 
-            {/* Backdrop en movil cuando el sidebar esta abierto */}
             {sidebarAbierto && (
                 <div
                     className="admin-layout-backdrop"
@@ -132,7 +98,6 @@ function AdminLayout({ titulo, children }) {
                 />
             )}
 
-            {/* Area principal: header + contenido + footer */}
             <div className="admin-layout-main">
                 <header className="admin-layout-header">
                     <button
@@ -164,11 +129,7 @@ function AdminLayout({ titulo, children }) {
                     )}
 
                     <div className="admin-layout-acciones">
-                        {/* La campanita maneja su propio estado global (polling cada 30s).
-                            Por eso ya no necesita prop tieneNotificaciones — funciona igual
-                            en todas las paginas del admin, no solo en dashboard. */}
                         <Campanita />
-                        {/* Bloque del usuario es un boton: clic lleva a "Mi perfil" */}
                         <button
                             type="button"
                             className="admin-layout-perfil"
@@ -179,9 +140,6 @@ function AdminLayout({ titulo, children }) {
                             <div className="admin-layout-perfil-nombre">
                                 {usuario.nombre_completo}
                             </div>
-                            {/* Badge visible del nivel del admin (no el enum crudo).
-                                Si es un pool supliendo, lo mostramos como Coordinador
-                                en suplencia (en morado), no como "Conductor". */}
                             <span
                                 className={`admin-layout-perfil-rol${enSuplencia(usuario) ? " admin-layout-perfil-rol-suplencia" : ""}`}
                             >
@@ -193,7 +151,6 @@ function AdminLayout({ titulo, children }) {
                     </div>
                 </header>
 
-                {/* Barra de suplencia: BIEN VISIBLE en qué centro está trabajando el pool */}
                 {suplente && (
                     <div className="admin-layout-suplencia-bar">
                         <span className="admin-layout-suplencia-icono" aria-hidden="true">🏢</span>

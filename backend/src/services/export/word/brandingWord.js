@@ -5,15 +5,10 @@ import { LOGO_PATH, lineaOrigen, fechaHora } from '../branding.js';
 const VERDE = '39A900';
 const LOGO_DATA = fs.readFileSync(LOGO_PATH);
 
-// Ancho del contenido = ancho de pagina (12240) - margenes laterales (720 c/u = 0.5") = 10800 twips.
-// Las tablas usan este ancho + layout FIXED para ocupar la hoja completa (sin esto docx
-// hace "autofit" y encoge las tablas al contenido, que es lo que se veia pequeno).
 export const ANCHO_CONTENIDO = 10800;
 
-// Encabezado: logo + titulo + linea de origen, dentro de una "banda" verde simulada
-// con shading de celda (docx no tiene banner, usamos una tabla de 1 fila sin bordes).
 export const encabezadoDocx = (titulo, origen, meta, ancho = ANCHO_CONTENIDO) => {
-    const colTitulo = ancho - 1300 - 2700; // logo fijo + meta fija; el titulo toma el resto
+    const colTitulo = ancho - 1300 - 2700;
     const logo = new Paragraph({
         children: [new ImageRun({ type: 'png', data: LOGO_DATA, transformation: { width: 54, height: 54 } })],
     });
@@ -40,8 +35,6 @@ export const encabezadoDocx = (titulo, origen, meta, ancho = ANCHO_CONTENIDO) =>
 export const tituloSeccion = (texto) =>
     new Paragraph({ spacing: { before: 280, after: 120 }, children: [new TextRun({ text: texto, bold: true, size: 26, color: '2A7A00' })] });
 
-// Pie de pagina igual que en los PDF: izquierda "Generado el ... · Sistema de
-// Gestion de Flota SENA", derecha "Pagina X de Y" (con tab a la derecha del ancho).
 export const pieDocx = (ancho = ANCHO_CONTENIDO) => new Footer({
     children: [
         new Paragraph({
@@ -56,17 +49,12 @@ export const pieDocx = (ancho = ANCHO_CONTENIDO) => new Footer({
     ],
 });
 
-// Lineas en blanco que bajan el encabezado (se respetan en cualquier vista de Word,
-// incluida "Diseño web", que ignora el margen superior de pagina). Mismo valor en
-// las tres fichas para que el espacio de arriba quede igual.
 export const espaciadoresSuperior = (n = 0) =>
     Array.from({ length: n }, () => new Paragraph({ spacing: { after: 0 } }));
 
-// --- Helpers de tabla reutilizables (usados por las fichas) ---
 const BORDE = { style: BorderStyle.SINGLE, size: 2, color: 'E0DED6' };
 export const BORDES_TABLA = { top: BORDE, bottom: BORDE, left: BORDE, right: BORDE };
 
-// Celda de texto generica. opts: { width, bold, fill, size, color, align }.
 export const celdaTexto = (texto, { width, bold = false, fill = null, size = 22, color = null, align = null } = {}) =>
     new TableCell({
         ...(width ? { width: { size: width, type: WidthType.DXA } } : {}),
@@ -76,7 +64,6 @@ export const celdaTexto = (texto, { width, bold = false, fill = null, size = 22,
         children: [new Paragraph({ ...(align ? { alignment: align } : {}), children: [new TextRun({ text: texto == null || texto === '' ? '—' : String(texto), bold, size, ...(color ? { color } : {}) })] })],
     });
 
-// Fila etiqueta (gris, negrita) + valor.
 export const filaDato = (etiqueta, valor, colEtiqueta, colValor) =>
     new TableRow({ children: [
         celdaTexto(etiqueta, { width: colEtiqueta, bold: true, fill: 'F1EFE8' }),

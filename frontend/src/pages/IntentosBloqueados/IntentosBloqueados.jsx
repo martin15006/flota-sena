@@ -1,5 +1,3 @@
-// Lista de intentos de chequeo que el sistema bloqueo (conductor no apto, vehiculo desactivado, etc.)
-
 import { useCallback, useEffect, useState } from "react";
 import { useNavigate } from "react-router-dom";
 import { api } from "../../lib/api.js";
@@ -52,7 +50,6 @@ function IntentosBloqueados() {
     const [cargando, setCargando] = useState(true);
     const [toast, setToast] = useState(null);
 
-    // Filtros
     const [fechaDesde, setFechaDesde] = useState("");
     const [fechaHasta, setFechaHasta] = useState("");
     const [razon, setRazon] = useState("");
@@ -98,7 +95,6 @@ function IntentosBloqueados() {
 
     return (
         <AdminLayout titulo="Intentos bloqueados">
-            {/* Barra de página (sin botones de navegacion — el sidebar los cubre) */}
             <section className="bloq-barra-pagina">
                 <div className="bloq-barra-titulo">
                     <h1>Intentos bloqueados</h1>
@@ -106,7 +102,6 @@ function IntentosBloqueados() {
                 </div>
             </section>
 
-            {/* Aviso explicativo */}
             <section className="bloq-aviso">
                 <strong>¿Qué son los intentos bloqueados?</strong>
                 <p>
@@ -116,7 +111,6 @@ function IntentosBloqueados() {
                 </p>
             </section>
 
-            {/* Filtros */}
             <section className="bloq-filtros">
                 <div className="bloq-filtro">
                     <label>Fecha desde</label>
@@ -165,7 +159,6 @@ function IntentosBloqueados() {
                 </div>
             </section>
 
-            {/* Lista */}
             <main className="bloq-main">
                 {cargando && <div className="bloq-cargando">Cargando intentos...</div>}
 

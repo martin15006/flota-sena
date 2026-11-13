@@ -15,7 +15,6 @@ function ProtectedRoute({ children, soloAdmin = false }) {
         );
     }
 
-    // si no esta authenticado redirige al login 
     if (!usuario) {
         return <Navigate to='/login' replace />;
     }
@@ -24,7 +23,6 @@ function ProtectedRoute({ children, soloAdmin = false }) {
         return <Navigate to='/dashboard' replace />;
     }
 
-    // si todo esta bien muestra el contenido normal 
     return children;
 }
 

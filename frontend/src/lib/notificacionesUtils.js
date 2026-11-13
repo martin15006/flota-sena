@@ -1,7 +1,3 @@
-// Utilidades compartidas para mostrar notificaciones (campanita + pagina completa).
-// Centraliza el icono, el color y el tiempo relativo para no duplicar logica.
-
-// Icono por tipo (texto corto dentro del circulo)
 export const ICONOS_TIPO = {
     chequeo_operativo: "✓",
     chequeo_observacion: "i",
@@ -21,8 +17,6 @@ export const ICONOS_TIPO = {
     sistema: "•",
 };
 
-// Color del circulo segun el tipo. Para los chequeos sigue el semaforo del
-// sistema: verde/azul/amarillo/rojo/gris. Los demas usan colores semanticos.
 export const COLOR_TIPO = {
     chequeo_operativo: "verde",
     chequeo_observacion: "azul",
@@ -45,7 +39,6 @@ export const COLOR_TIPO = {
 export const iconoDe = (tipo) => ICONOS_TIPO[tipo] || "•";
 export const colorDe = (tipo) => COLOR_TIPO[tipo] || "verde";
 
-// "hace 5 min", "hace 2 horas", etc.
 export const tiempoRelativo = (iso) => {
     if (!iso) return "";
     const ahora = new Date();

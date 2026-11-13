@@ -1,5 +1,3 @@
-/* Pantalla admin del catalogo del chequeo */
-
 .catadmin-pagina {
     min-height: 100vh;
     background: var(--superficie-sutil);
@@ -7,7 +5,6 @@
     flex-direction: column;
 }
 
-/* Header con logo SENA */
 .catadmin-header-sena {
     background: var(--superficie);
     border-bottom: 2px solid var(--color-gris-300);
@@ -78,7 +75,6 @@
     color: var(--color-blanco);
 }
 
-/* Barra de página */
 .catadmin-barra-pagina {
     background: var(--superficie);
     border-bottom: 2px solid var(--color-gris-300);
@@ -128,7 +124,6 @@
     font-weight: var(--peso-semibold);
 }
 
-/* Tabs */
 .catadmin-tabs {
     display: flex;
     background: var(--superficie);
@@ -163,7 +158,6 @@
     font-weight: var(--peso-bold);
 }
 
-/* Main */
 .catadmin-main {
     flex: 1;
     max-width: 1100px;
@@ -181,7 +175,6 @@
     color: var(--color-gris-500);
 }
 
-/* Toolbar */
 .catadmin-toolbar {
     display: flex;
     justify-content: space-between;
@@ -225,7 +218,6 @@
     cursor: not-allowed;
 }
 
-/* Grupos (items agrupados por categoria) */
 .catadmin-grupo {
     margin-bottom: var(--espacio-md);
 }
@@ -248,7 +240,6 @@
     font-weight: var(--peso-medio);
 }
 
-/* Lista y filas */
 .catadmin-lista {
     display: flex;
     flex-direction: column;
@@ -381,7 +372,6 @@
     color: var(--color-blanco);
 }
 
-/* Formularios (dentro del modal) */
 .catadmin-form {
     display: flex;
     flex-direction: column;
@@ -445,7 +435,6 @@
     line-height: 1.4;
 }
 
-/* Selector de iconos */
 .catadmin-icono-actual {
     display: flex;
     align-items: center;
@@ -542,7 +531,6 @@
     box-shadow: 0 0 0 3px rgba(46, 125, 50, 0.25);
 }
 
-/* Checks */
 .catadmin-form-check {
     display: flex;
     align-items: center;
@@ -589,7 +577,6 @@
     gap: var(--espacio-xs);
 }
 
-/* Radio grupo (para respuesta_apta SI/NO) */
 .catadmin-radio-grupo {
     display: grid;
     grid-template-columns: 1fr 1fr;
@@ -635,7 +622,6 @@
     border-color: var(--color-rojo);
 }
 
-/* Modal acciones */
 .catadmin-modal-acciones {
     display: grid;
     grid-template-columns: 1fr 2fr;
@@ -692,7 +678,6 @@
     box-shadow: var(--sombra-md);
 }
 
-/* Confirmacion de borrado */
 .catadmin-confirm-texto {
     margin: 0;
     color: var(--color-gris-700);
@@ -719,7 +704,6 @@
     line-height: 1.4;
 }
 
-/* Responsive */
 @media (max-width: 640px) {
     .catadmin-emoji-grid {
         grid-template-columns: repeat(6, 1fr);

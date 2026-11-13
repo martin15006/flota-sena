@@ -1,8 +1,3 @@
-/* =================================================================
-   Mi perfil — pagina dedicada de auto-edicion (Tarea #100).
-   Convencion §17: bordes 2px+, sombras md+, texto gris-900.
-   ================================================================= */
-
 .mi-perfil-contenedor {
     max-width: 720px;
     margin: 0 auto;
@@ -16,7 +11,6 @@
     gap: var(--espacio-xl);
 }
 
-/* ===== Hero con foto + identidad ===== */
 .mi-perfil-hero {
     text-align: center;
     display: flex;
@@ -114,7 +108,6 @@
     font-style: italic;
 }
 
-/* ===== Form ===== */
 .mi-perfil-form {
     display: flex;
     flex-direction: column;
@@ -187,9 +180,6 @@
     border-color: var(--color-gris-300);
 }
 
-/* Aviso temporal cuando se intenta escribir un caracter no permitido.
-   Mismo peach + borde dorado que en ModalCrear/ModalEditar Usuario para
-   mantener consistencia visual en todo el proyecto. */
 .mi-perfil-aviso-validacion {
     display: block;
     margin-top: 6px;
@@ -233,7 +223,6 @@
     color: var(--color-gris-900);
 }
 
-/* ===== Mensajes ===== */
 .mi-perfil-error {
     background: var(--estado-error-fondo);
     color: var(--color-rojo);
@@ -254,7 +243,6 @@
     font-weight: var(--peso-semibold);
 }
 
-/* ===== Acciones ===== */
 .mi-perfil-acciones {
     display: flex;
     gap: var(--espacio-md);
@@ -313,7 +301,6 @@
     cursor: not-allowed;
 }
 
-/* ===== Responsive ===== */
 @media (max-width: 600px) {
     .mi-perfil-contenedor {
         padding: var(--espacio-md);
@@ -339,14 +326,9 @@
     }
 }
 
-/* === Modo oscuro === */
-/* El borde dorado del aviso peach se aclara de mas sobre el solido oscuro;
-   lo bajamos a un ambar mas apagado coherente con --estado-adv-solido oscuro. */
 [data-tema="oscuro"] .mi-perfil-aviso-validacion {
     border-color: #A65A14;
 }
-/* El aviso "bloqueado" tenia fondo crema claro, borde amarillo fuerte y texto
-   oscuro: en oscuro se convierte en tinte translucido + borde/texto de estado. */
 [data-tema="oscuro"] .mi-perfil-aviso-bloqueado {
     border-color: var(--estado-adv-borde);
     color: var(--estado-adv-texto);

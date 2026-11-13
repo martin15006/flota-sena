@@ -6,18 +6,16 @@ const borde = { style: BorderStyle.SINGLE, size: 2, color: 'E0DED6' };
 const bordes = { top: borde, bottom: borde, left: borde, right: borde };
 const textoResultado = (r) => r === 'cumple' ? 'Cumple' : r === 'no_cumple' ? 'No cumple' : 'N/A';
 
-// Tabla de datos: etiqueta (gris) + valor, a ancho completo.
 const COL_ETIQUETA = 2900;
-const COL_VALOR = ANCHO_CONTENIDO - COL_ETIQUETA; // 7180
+const COL_VALOR = ANCHO_CONTENIDO - COL_ETIQUETA;
 
 const filaInfo = (etiqueta, valor) => new TableRow({ children: [
     new TableCell({ width: { size: COL_ETIQUETA, type: WidthType.DXA }, borders: bordes, shading: { fill: 'F1EFE8', type: ShadingType.CLEAR }, margins: { top: 100, bottom: 100, left: 160, right: 120 }, children: [new Paragraph({ children: [new TextRun({ text: etiqueta, bold: true, size: 22 })] })] }),
     new TableCell({ width: { size: COL_VALOR, type: WidthType.DXA }, borders: bordes, margins: { top: 100, bottom: 100, left: 160, right: 120 }, children: [new Paragraph({ children: [new TextRun({ text: valor || '—', size: 22 })] })] }),
 ] });
 
-// Tabla del checklist: item + resultado, a ancho completo.
 const COL_RES = 2200;
-const COL_ITEM = ANCHO_CONTENIDO - COL_RES; // 7880
+const COL_ITEM = ANCHO_CONTENIDO - COL_RES;
 
 export const chequeoWordBuffer = async ({ chequeo, origen }) => {
     const v = chequeo.vehiculo || {};
@@ -50,8 +48,6 @@ export const chequeoWordBuffer = async ({ chequeo, origen }) => {
             properties: { page: { size: { width: 12240, height: 15840 }, margin: { top: 1440, right: 720, bottom: 1080, left: 720 } } },
             footers: { default: pieDocx() },
             children: [
-                // Espaciadores reales: bajan el encabezado en CUALQUIER vista de Word
-                // (incluida "Diseño web", que ignora el margen superior de pagina).
                 ...espaciadoresSuperior(),
                 encabezadoDocx('Chequeo preoperacional', origen, [`N.º ${(chequeo.id || '').slice(0, 8).toUpperCase()}`, fechaLarga(chequeo.fecha)]),
                 new Paragraph({ text: '' }),

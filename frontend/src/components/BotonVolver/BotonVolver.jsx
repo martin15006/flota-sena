@@ -1,10 +1,3 @@
-// Boton prominente de "Volver al listado" para paginas de detalle (Bloque B Fase 4).
-// Estas paginas (VehiculoDetalle, ChequeoDetalle, PerfilUsuario) NO tienen el sidebar
-// del AdminLayout — el botón es la unica forma rapida de volver al listado padre.
-//
-// Uso:
-//   <BotonVolver a="/admin/vehiculos" texto="Volver a vehículos" />
-
 import { useNavigate } from "react-router-dom";
 import "./BotonVolver.css";
 

@@ -1,5 +1,3 @@
-/* Lista de chequeos para el admin (siguiendo sección 17 de CONTEXTO_PROYECTO.md) */
-
 .cheqadmin-pagina {
     min-height: 100vh;
     background: var(--superficie-sutil);
@@ -7,7 +5,6 @@
     flex-direction: column;
 }
 
-/* Header con logo SENA (consistente con el resto del admin) */
 .cheqadmin-header-sena {
     background: var(--superficie);
     border-bottom: 2px solid var(--color-gris-300);
@@ -78,7 +75,6 @@
     color: var(--color-blanco);
 }
 
-/* Barra de página (debajo del header SENA) */
 .cheqadmin-barra-pagina {
     background: var(--superficie);
     border-bottom: 2px solid var(--color-gris-300);
@@ -150,7 +146,6 @@
     box-shadow: var(--sombra-md);
 }
 
-/* Filtros */
 .cheqadmin-filtros {
     background: var(--superficie);
     border: 2px solid var(--color-gris-300);
@@ -277,7 +272,6 @@
     box-shadow: var(--sombra-sm);
 }
 
-/* Main */
 .cheqadmin-main {
     flex: 1;
     max-width: 1100px;
@@ -301,14 +295,12 @@
     border-radius: var(--radio-md);
 }
 
-/* Lista */
 .cheqadmin-lista {
     display: grid;
     grid-template-columns: repeat(auto-fill, minmax(420px, 1fr));
     gap: var(--espacio-md);
 }
 
-/* Card */
 .cheqadmin-card {
     background: var(--superficie);
     border: 2px solid var(--color-gris-300);
@@ -402,7 +394,6 @@
     border: 1px solid var(--estado-adv-borde);
 }
 
-/* Badge ABANDONADO (Tarea #104): chequeo cancelado por inactividad o cierre del navegador */
 .cheqadmin-badge-abandonado {
     background: var(--estado-error-fondo);
     color: var(--estado-error-texto);
@@ -513,7 +504,6 @@
     letter-spacing: 1px;
 }
 
-/* Paginacion */
 .cheqadmin-paginacion {
     display: flex;
     justify-content: center;
@@ -553,7 +543,6 @@
     font-weight: var(--peso-bold);
 }
 
-/* Responsive */
 @media (max-width: 720px) {
     .cheqadmin-header-sena {
         flex-direction: column;
@@ -578,8 +567,6 @@
     }
 }
 
-/* === Modo oscuro === */
-/* Badge CERRADO (teal): categoria propia, se aclara en oscuro */
 [data-tema="oscuro"] .cheqadmin-badge-cerrado {
     background: rgba(29, 158, 117, 0.16);
     color: #5DCAA5;

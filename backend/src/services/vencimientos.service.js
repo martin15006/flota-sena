@@ -1,20 +1,12 @@
-// Servicio de vencimientos: arma la lista de documentos por vencer (o vencidos
-// hace poco) para que el job diario llene la campanita y mande el correo-resumen.
-//
-// Documentos vigilados:
-//   - Vehiculos: SOAT, RTM (revision tecnico-mecanica), Extintor
-//   - Conductores: Licencia de conduccion
 import { supabase } from '../config/supabase.js';
 
-export const DIAS_AVISO = 30;   // se avisa cuando faltan <= 30 dias
-const DIAS_PISO = -60;          // ...y hasta 60 dias despues de vencido (luego se asume fuera de servicio)
+export const DIAS_AVISO = 30;
+const DIAS_PISO = -60;
 
 const UN_DIA = 24 * 60 * 60 * 1000;
 const diasHasta = (fecha) => Math.ceil((new Date(fecha).getTime() - Date.now()) / UN_DIA);
 const enRango = (dias) => dias <= DIAS_AVISO && dias >= DIAS_PISO;
 
-// Devuelve una lista plana de items por vencer, ordenada por urgencia (dias asc).
-// Cada item: { categoria, tipo, vence, dias, sujeto, centro_id, vehiculo_id?, conductor_id? }
 export const obtenerVencimientos = async () => {
     const items = [];
 

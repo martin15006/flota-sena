@@ -1,6 +1,3 @@
-// Pool · Suplencia Fase B: cuando el pool cubre VARIOS centros (toda una regional),
-// elige acá a cuál entrar a gestionar (uno a la vez). Al elegir, guardamos el centro
-// activo, recargamos la sesión (/auth/me ya manda el header) y entramos al panel.
 import { useState } from "react";
 import { useNavigate } from "react-router-dom";
 import { useAuth } from "../../hooks/useAuth.js";
@@ -22,7 +19,7 @@ function SelectorCentroSuplencia() {
         setCargandoId(centro.id);
         setCentroActivo(centro.id);
         try {
-            const data = await api("/auth/me"); // ya manda X-Centro-Activo
+            const data = await api("/auth/me");
             actualizarUsuario(data.usuario);
             navigate("/dashboard");
         } catch {

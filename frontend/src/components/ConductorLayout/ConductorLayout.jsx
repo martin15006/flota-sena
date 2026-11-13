@@ -1,17 +1,3 @@
-// Layout reutilizable para las pantallas del conductor.
-// Mucho mas simple que el AdminLayout porque el conductor NO tiene sidebar:
-// su flujo es lineal y guiado (dashboard -> aptitud -> vehiculo -> checklist -> resultado).
-//
-// Lo que provee:
-//   - Header sticky con logo SENA + nombre del conductor + boton "Cerrar sesion"
-//   - Contenido principal con max-width controlado (legible en celular y desktop)
-//   - Footer institucional al final
-//
-// Uso:
-//   <ConductorLayout>
-//     <div>contenido de la pantalla</div>
-//   </ConductorLayout>
-
 import { useNavigate } from "react-router-dom";
 import { useAuth } from "../../hooks/useAuth.js";
 import { etiquetaCargoCorta } from "../../lib/roles.js";
@@ -48,7 +34,6 @@ function ConductorLayout({ children }) {
                         <div className="cond-layout-usuario-nombre">
                             {usuario.nombre_completo?.split(" ")[0]}
                         </div>
-                        {/* Tipo: "Pool" si es del pool de transporte, si no "Conductor". */}
                         <div className={`cond-layout-usuario-rol${usuario.es_pool ? " cond-layout-usuario-rol-pool" : ""}`}>
                             {etiquetaCargoCorta(usuario)}
                         </div>

@@ -1,46 +1,10 @@
--- ==
--- Sistema de Gestión de Flota Vehicular SENA — Schema completo
--- ==
 
--- Este archivo contiene el schema COMPLETO de la base de datos del proyecto,
--- organizado por fases y en orden de dependencia para que sea ejecutable
--- desde cero sobre una base de datos vacía de PostgreSQL / Supabase.
-
--- Estructura:
---   FASE 2 (geografía) 
---   FASE 1 (usuarios) 
---   FASE 2 (vehículos) 
---   FASE 3 (chequeo)
-
--- Convenciones:
---   - snake_case en español para tablas y columnas
---   - UUID con gen_random_uuid() para entidades de negocio
---   - SERIAL (INTEGER autoincremental) para catálogos pequeños
---   - TIMESTAMPTZ para todas las fechas
---   - CREATE IF NOT EXISTS para que sea re-ejecutable sin riesgo
---   - Soft delete con activo BOOLEAN en tablas que se editan mucho
-
--- Notas:
---   - La tabla `usuarios` referencia auth.users de Supabase Auth
---     (la maneja Supabase, no se crea aquí)
---   - Los seeds de catálogos y datos iniciales están en la carpeta seeds/
--- ==
-
-
--- ==
--- FASE 2 · ESTRUCTURA GEOGRÁFICA NACIONAL
--- ==
--- Permite escalar el sistema a nivel nacional sin migraciones futuras.
--- Jerarquía: Regiones → Departamentos → Ciudades → Centros de formación
-
--- 5 regiones del SENA (Andina, Caribe, Pacífica, Amazónica, Orinoquía)
 CREATE TABLE IF NOT EXISTS regiones (
     id          UUID PRIMARY KEY DEFAULT gen_random_uuid(),
     nombre      TEXT NOT NULL UNIQUE,
     created_at  TIMESTAMPTZ NOT NULL DEFAULT NOW()
 );
 
--- 32 departamentos de Colombia
 CREATE TABLE IF NOT EXISTS departamentos (
     id          UUID PRIMARY KEY DEFAULT gen_random_uuid(),
     nombre      TEXT NOT NULL,
@@ -49,7 +13,6 @@ CREATE TABLE IF NOT EXISTS departamentos (
     UNIQUE(nombre, region_id)
 );
 
--- Ciudades / municipios
 CREATE TABLE IF NOT EXISTS ciudades (
     id                UUID PRIMARY KEY DEFAULT gen_random_uuid(),
     nombre            TEXT NOT NULL,
@@ -58,7 +21,6 @@ CREATE TABLE IF NOT EXISTS ciudades (
     UNIQUE(nombre, departamento_id)
 );
 
--- Centros de formación del SENA
 CREATE TABLE IF NOT EXISTS centros_formacion (
     id          UUID PRIMARY KEY DEFAULT gen_random_uuid(),
     nombre      TEXT NOT NULL,
@@ -70,91 +32,56 @@ CREATE TABLE IF NOT EXISTS centros_formacion (
 );
 
 
--- ==
--- FASE 1 · AUTENTICACIÓN Y USUARIOS
--- ==
-
--- Usuarios del sistema (admins en sus niveles + conductores)
--- La columna id referencia a auth.users de Supabase Auth (gestión de password,
--- email, tokens, etc.) Las demás columnas son metadata específica del proyecto.
 CREATE TABLE IF NOT EXISTS usuarios (
     id                      UUID PRIMARY KEY REFERENCES auth.users(id) ON DELETE CASCADE,
 
-    -- Identificación
     cedula                  TEXT UNIQUE,
     nombre_completo         TEXT NOT NULL,
     telefono                TEXT,
     foto_url                TEXT,
 
-    -- Rol y multi-tenant. Roles vigentes tras aplanar la jerarquia (12 jun 2026):
-    -- el SENA no usa macro-region ni ciudad; una "Regional" del SENA equivale a un
-    -- departamento (Director Regional). Etiquetas visibles: superadmin = Director
-    -- Nacional, admin_departamental = Director Regional, admin_centro = Coordinador
-    -- de Flota. (En la BD viva quedaron dormidos admin_regional/admin_ciudad porque
-    -- Postgres no permite quitar valores de un enum en caliente; aqui ya no van.)
     rol                     TEXT NOT NULL CHECK (rol IN (
                                 'superadmin',
                                 'admin_departamental',
                                 'admin_centro',
-                                'admin',         -- alias histórico = admin_centro
+                                'admin',
                                 'conductor'
                             )),
-    -- Scope territorial del administrador (Fase 4 multinivel). Cada admin llena
-    -- SOLO la columna de su nivel; el superadmin no llena ninguna (alcance nacional):
-    --   admin_centro        -> centro_id
-    --   admin_departamental -> departamento_id (Director Regional)
-    -- El conductor usa centro_id (su centro de trabajo).
-    -- ciudad_id y region_id quedan OBSOLETAS desde el aplanamiento del 12 jun 2026
-    -- (solo las usaban los roles eliminados); se conservan por compatibilidad.
     centro_id               UUID REFERENCES centros_formacion(id) ON DELETE SET NULL,
     ciudad_id               UUID REFERENCES ciudades(id) ON DELETE SET NULL,
     departamento_id         UUID REFERENCES departamentos(id) ON DELETE SET NULL,
     region_id               UUID REFERENCES regiones(id) ON DELETE SET NULL,
 
-    -- Datos del conductor (solo si rol = 'conductor')
     licencia_numero         TEXT,
     licencia_categoria      TEXT,
     licencia_vencimiento    DATE,
 
-    -- Seguridad social (obligatoria para conductores, tarea #90)
     eps                     TEXT,
     arl                     TEXT,
 
-    -- Pool de transporte (Paso 1, ver docs/diseno-pool-vip.md): el conductor es
-    -- "del pool"; maneja los vehiculos VIP. (Paso 2: podra suplir al Coordinador.)
     es_pool                 BOOLEAN NOT NULL DEFAULT false,
 
-    -- Flujo de cambio obligatorio de password
     debe_cambiar_password   BOOLEAN NOT NULL DEFAULT false,
 
-    -- Estado
     activo                  BOOLEAN NOT NULL DEFAULT true,
 
-    -- Timestamps
     created_at              TIMESTAMPTZ NOT NULL DEFAULT NOW(),
     updated_at              TIMESTAMPTZ NOT NULL DEFAULT NOW()
 );
 
--- Auditoría de operaciones administrativas sobre usuarios
 CREATE TABLE IF NOT EXISTS auditoria_usuarios (
     id                      UUID PRIMARY KEY DEFAULT gen_random_uuid(),
     usuario_afectado_id     UUID REFERENCES usuarios(id) ON DELETE SET NULL,
     accion_por_id           UUID REFERENCES usuarios(id) ON DELETE SET NULL,
-    accion                  TEXT NOT NULL,    -- 'creado', 'editado', 'desactivado', 'reactivado', 'password_reseteado', 'eliminado'
+    accion                  TEXT NOT NULL,
     detalles                JSONB,
     created_at              TIMESTAMPTZ NOT NULL DEFAULT NOW()
 );
 
 
--- ==
--- FASE 2 · VEHÍCULOS DE LA FLOTA
--- ==
-
--- Vehículos institucionales del SENA
 CREATE TABLE IF NOT EXISTS vehiculos (
     id                      UUID PRIMARY KEY DEFAULT gen_random_uuid(),
 
-    -- Identificación
     placa                   TEXT NOT NULL UNIQUE,
     vin                     TEXT UNIQUE,
     marca                   TEXT NOT NULL,
@@ -167,37 +94,28 @@ CREATE TABLE IF NOT EXISTS vehiculos (
     color                   TEXT,
     kilometraje_actual      INTEGER,
 
-    -- Documentación y vencimientos
     soat_vencimiento        DATE,
     rtm_vencimiento         DATE,
     extintor_vencimiento    DATE,
     ultimo_cambio_aceite    DATE,
-    runt_url                TEXT,        -- PDF del RUNT en Cloudinary
+    runt_url                TEXT,
 
-    -- Estado operativo
     estado                  TEXT NOT NULL DEFAULT 'operativo' CHECK (estado IN (
                                 'operativo', 'observacion', 'alerta', 'critico', 'no_operativo'
                             )),
     nivel_criticidad        INTEGER NOT NULL DEFAULT 0 CHECK (nivel_criticidad BETWEEN 0 AND 100),
     notas                   TEXT,
 
-    -- Multi-tenant
     centro_id               UUID NOT NULL REFERENCES centros_formacion(id) ON DELETE RESTRICT,
 
-    -- Pool de transporte (Paso 1, ver docs/diseno-pool-vip.md): vehiculo "especial"
-    -- / de direccion (personal del Coordinador o exclusivo de un director). Solo lo
-    -- maneja un conductor del pool (usuarios.es_pool).
     es_vip                  BOOLEAN NOT NULL DEFAULT false,
 
-    -- Estado del registro
     activo                  BOOLEAN NOT NULL DEFAULT true,
 
-    -- Timestamps
     created_at              TIMESTAMPTZ NOT NULL DEFAULT NOW(),
     updated_at              TIMESTAMPTZ NOT NULL DEFAULT NOW()
 );
 
--- Galería de fotos del vehículo (sube el admin al registrarlo)
 CREATE TABLE IF NOT EXISTS fotos_vehiculo (
     id              UUID PRIMARY KEY DEFAULT gen_random_uuid(),
     vehiculo_id     UUID NOT NULL REFERENCES vehiculos(id) ON DELETE CASCADE,
@@ -208,22 +126,16 @@ CREATE TABLE IF NOT EXISTS fotos_vehiculo (
     created_at      TIMESTAMPTZ NOT NULL DEFAULT NOW()
 );
 
--- Auditoría de operaciones sobre vehículos
 CREATE TABLE IF NOT EXISTS auditoria_vehiculos (
     id              UUID PRIMARY KEY DEFAULT gen_random_uuid(),
     vehiculo_id     UUID REFERENCES vehiculos(id) ON DELETE SET NULL,
     accion_por_id   UUID REFERENCES usuarios(id) ON DELETE SET NULL,
-    accion          TEXT NOT NULL,    -- 'creado', 'actualizado', 'desactivado', 'reactivado', 'eliminado', 'runt_actualizado'
+    accion          TEXT NOT NULL,
     detalles        JSONB,
     created_at      TIMESTAMPTZ NOT NULL DEFAULT NOW()
 );
 
 
--- ==
--- FASE 3 · CHEQUEO PREOPERACIONAL — CATÁLOGOS
--- ==
-
--- Las 5 categorías del checklist preoperacional
 CREATE TABLE IF NOT EXISTS categorias_chequeo (
     id          SERIAL PRIMARY KEY,
     nombre      TEXT NOT NULL UNIQUE,
@@ -234,7 +146,6 @@ CREATE TABLE IF NOT EXISTS categorias_chequeo (
     created_at  TIMESTAMPTZ NOT NULL DEFAULT NOW()
 );
 
--- Los 39 ítems normativos del checklist
 CREATE TABLE IF NOT EXISTS items_chequeo (
     id                  SERIAL PRIMARY KEY,
     categoria_id        INTEGER NOT NULL REFERENCES categorias_chequeo(id),
@@ -242,12 +153,11 @@ CREATE TABLE IF NOT EXISTS items_chequeo (
     descripcion_larga   TEXT,
     orden               INTEGER NOT NULL,
     es_critico          BOOLEAN NOT NULL DEFAULT false,
-    aplica_a_tipos      TEXT[],                -- ['camion','camioneta',...] NULL = aplica a todos
+    aplica_a_tipos      TEXT[],
     activo              BOOLEAN NOT NULL DEFAULT true,
     created_at          TIMESTAMPTZ NOT NULL DEFAULT NOW()
 );
 
--- Las 5 preguntas de aptitud del conductor
 CREATE TABLE IF NOT EXISTS preguntas_aptitud (
     id              SERIAL PRIMARY KEY,
     pregunta        TEXT NOT NULL,
@@ -258,12 +168,6 @@ CREATE TABLE IF NOT EXISTS preguntas_aptitud (
 );
 
 
--- ==
--- FASE 3 · EXCEPCIONES POR VEHÍCULO
--- ==
-
--- Ítems del checklist que NO aplican a un vehículo específico
--- (excepción puntual más allá del filtro general por tipo)
 CREATE TABLE IF NOT EXISTS excepciones_items_vehiculo (
     id          SERIAL PRIMARY KEY,
     vehiculo_id UUID NOT NULL REFERENCES vehiculos(id) ON DELETE CASCADE,
@@ -274,11 +178,6 @@ CREATE TABLE IF NOT EXISTS excepciones_items_vehiculo (
 );
 
 
--- ==
--- FASE 3 · CHEQUEOS (CABECERA + DETALLE)
--- ==
-
--- Cabecera de cada chequeo preoperacional o post-operacional
 CREATE TABLE IF NOT EXISTS chequeos_preoperacionales (
     id                      UUID PRIMARY KEY DEFAULT gen_random_uuid(),
     vehiculo_id             UUID NOT NULL REFERENCES vehiculos(id) ON DELETE RESTRICT,
@@ -291,7 +190,6 @@ CREATE TABLE IF NOT EXISTS chequeos_preoperacionales (
     fecha                   TIMESTAMPTZ NOT NULL DEFAULT NOW(),
     kilometraje             INTEGER NOT NULL,
 
-    -- Resultado calculado al cerrar
     resultado_estado        TEXT CHECK (resultado_estado IN ('operativo','observacion','alerta','critico','no_operativo')),
     resultado_criticidad    INTEGER CHECK (resultado_criticidad BETWEEN 0 AND 100),
     items_cumple_count      INTEGER NOT NULL DEFAULT 0,
@@ -299,43 +197,36 @@ CREATE TABLE IF NOT EXISTS chequeos_preoperacionales (
     items_no_aplica_count   INTEGER NOT NULL DEFAULT 0,
     tiene_falla_critica     BOOLEAN NOT NULL DEFAULT false,
 
-    -- Ciclo de vida del chequeo
     cerrado                 BOOLEAN NOT NULL DEFAULT false,
     fecha_cierre            TIMESTAMPTZ,
 
-    -- Abandono: cuando el conductor sale sin cerrar el chequeo (cierra sesion,
-    -- cierra pestaña, o queda inactivo durante mas de 2 minutos). El admin recibe
-    -- una alerta. Ver tarea #104.
     abandonado              BOOLEAN NOT NULL DEFAULT false,
     abandonado_en           TIMESTAMPTZ,
     motivo_abandono         TEXT CHECK (motivo_abandono IN (
-                                'inactividad',     -- 2 min sin tocar la pantalla
-                                'cerro_sesion',    -- pulso cerrar sesion (futuro)
-                                'cerro_pestana',   -- onbeforeunload
-                                'manual'           -- admin lo cancelo
+                                'inactividad',
+                                'cerro_sesion',
+                                'cerro_pestana',
+                                'manual'
                             )),
 
     notas_generales         TEXT,
 
-    -- Timestamps
     created_at              TIMESTAMPTZ NOT NULL DEFAULT NOW(),
     updated_at              TIMESTAMPTZ NOT NULL DEFAULT NOW()
 );
 
--- Una respuesta por cada ítem del checklist dentro de un chequeo
 CREATE TABLE IF NOT EXISTS respuestas_chequeo (
     id           UUID PRIMARY KEY DEFAULT gen_random_uuid(),
     chequeo_id   UUID NOT NULL REFERENCES chequeos_preoperacionales(id) ON DELETE CASCADE,
     item_id      INTEGER NOT NULL REFERENCES items_chequeo(id),
 
     estado       TEXT NOT NULL CHECK (estado IN ('cumple','no_cumple','no_aplica')),
-    observacion  TEXT,        -- obligatorio si estado='no_cumple' (validación en backend)
+    observacion  TEXT,
 
     created_at   TIMESTAMPTZ NOT NULL DEFAULT NOW(),
     UNIQUE(chequeo_id, item_id)
 );
 
--- Una respuesta por cada pregunta de aptitud dentro de un chequeo
 CREATE TABLE IF NOT EXISTS respuestas_aptitud (
     id           UUID PRIMARY KEY DEFAULT gen_random_uuid(),
     chequeo_id   UUID NOT NULL REFERENCES chequeos_preoperacionales(id) ON DELETE CASCADE,
@@ -349,12 +240,6 @@ CREATE TABLE IF NOT EXISTS respuestas_aptitud (
 );
 
 
--- ==
--- FASE 3 · FOTOS DE EVIDENCIA DEL CHEQUEO
--- ==
--- Política: Máx 5 fotos por respuesta NO CUMPLE (validación en backend).
--- Borrado automático a los 12 meses salvo preservar_siempre = true.
-
 CREATE TABLE IF NOT EXISTS fotos_chequeo (
     id                          UUID PRIMARY KEY DEFAULT gen_random_uuid(),
     respuesta_id                UUID NOT NULL REFERENCES respuestas_chequeo(id) ON DELETE CASCADE,
@@ -365,17 +250,12 @@ CREATE TABLE IF NOT EXISTS fotos_chequeo (
 
     fecha_subida                TIMESTAMPTZ NOT NULL DEFAULT NOW(),
     preservar_siempre           BOOLEAN NOT NULL DEFAULT false,
-    fecha_borrado_programado    TIMESTAMPTZ,     -- calculada por trigger
+    fecha_borrado_programado    TIMESTAMPTZ,
 
     created_at                  TIMESTAMPTZ NOT NULL DEFAULT NOW()
 );
 
 
--- ==
--- FASE 3 · LOGS Y AUDITORÍA
--- ==
-
--- Cuando un conductor intenta hacer un chequeo pero el sistema lo bloquea
 CREATE TABLE IF NOT EXISTS intentos_chequeo_bloqueado (
     id                  UUID PRIMARY KEY DEFAULT gen_random_uuid(),
     conductor_id        UUID NOT NULL REFERENCES usuarios(id),
@@ -397,7 +277,6 @@ CREATE TABLE IF NOT EXISTS intentos_chequeo_bloqueado (
     created_at          TIMESTAMPTZ NOT NULL DEFAULT NOW()
 );
 
--- Auditoría de operaciones sobre chequeos
 CREATE TABLE IF NOT EXISTS auditoria_chequeos (
     id              UUID PRIMARY KEY DEFAULT gen_random_uuid(),
     chequeo_id      UUID,
@@ -408,16 +287,12 @@ CREATE TABLE IF NOT EXISTS auditoria_chequeos (
 );
 
 
--- Suplencias del pool (Paso 2, ver docs/superpowers/specs/2026-06-14-suplencia-pool-design.md):
--- un conductor del pool reemplaza temporalmente al Coordinador de Flota. Puede cubrir un
--- solo centro (alcance='centro', centro_id) o toda una regional/departamento
--- (alcance='departamento', departamento_id) — Fase B.
 CREATE TABLE IF NOT EXISTS suplencias (
     id                  UUID PRIMARY KEY DEFAULT gen_random_uuid(),
     pool_id             UUID NOT NULL REFERENCES usuarios(id) ON DELETE CASCADE,
-    alcance             TEXT NOT NULL DEFAULT 'centro',   -- 'centro' | 'departamento'
-    centro_id           UUID REFERENCES centros_formacion(id) ON DELETE CASCADE,   -- si alcance='centro'
-    departamento_id     UUID REFERENCES departamentos(id) ON DELETE CASCADE,       -- si alcance='departamento'
+    alcance             TEXT NOT NULL DEFAULT 'centro',
+    centro_id           UUID REFERENCES centros_formacion(id) ON DELETE CASCADE,
+    departamento_id     UUID REFERENCES departamentos(id) ON DELETE CASCADE,
     activada_por_id     UUID REFERENCES usuarios(id) ON DELETE SET NULL,
     motivo              TEXT,
     desde               TIMESTAMPTZ NOT NULL DEFAULT NOW(),
@@ -432,55 +307,29 @@ CREATE INDEX IF NOT EXISTS idx_suplencias_centro_activa ON suplencias(centro_id,
 CREATE INDEX IF NOT EXISTS idx_suplencias_departamento  ON suplencias(departamento_id);
 
 
--- ==
--- FASE 4 BLOQUE C · NOTIFICACIONES
--- ==
-
--- Notificaciones para los admins. Una notificacion se crea automaticamente
--- cuando ocurre un evento relevante (chequeo abandonado, vehiculo no operativo,
--- intento bloqueado, licencia por vencer). El admin la ve en la campanita del
--- header y puede marcarla como leida al hacer clic.
 CREATE TABLE IF NOT EXISTS notificaciones (
     id                  UUID PRIMARY KEY DEFAULT gen_random_uuid(),
 
-    -- A quien le llega
     destinatario_id     UUID NOT NULL REFERENCES usuarios(id) ON DELETE CASCADE,
 
-    -- Que tipo de evento la genero. Sin CHECK a proposito: la validacion de
-    -- tipos vive en el codigo (notificaciones.service.js) para poder agregar
-    -- tipos nuevos sin migrar la BD. Tipos actuales:
-    --   chequeo_operativo, chequeo_observacion, chequeo_alerta, chequeo_critico,
-    --   chequeo_no_operativo, chequeo_abandonado, intento_bloqueado_aptitud,
-    --   intento_bloqueado_vehiculo, licencia_proxima_vencer, licencia_vencida,
-    --   vehiculo_sin_runt, sistema
     tipo                TEXT NOT NULL,
 
-    -- Texto visible al usuario
     titulo              TEXT NOT NULL,
     mensaje             TEXT NOT NULL,
 
-    -- A donde ir si se hace clic (opcional)
     url_destino         TEXT,
 
-    -- Contexto: ids de las entidades relacionadas (opcionales)
     chequeo_id          UUID,
     vehiculo_id         UUID,
     conductor_id        UUID,
 
-    -- Estado de lectura
     leida               BOOLEAN NOT NULL DEFAULT false,
     leida_en            TIMESTAMPTZ,
 
-    -- Timestamp
     created_at          TIMESTAMPTZ NOT NULL DEFAULT NOW()
 );
 
 
--- ==
--- FUNCIONES Y TRIGGERS
--- ==
-
--- Función genérica: actualizar updated_at automáticamente
 CREATE OR REPLACE FUNCTION actualizar_updated_at()
 RETURNS TRIGGER AS $$
 BEGIN
@@ -489,7 +338,6 @@ BEGIN
 END;
 $$ LANGUAGE plpgsql;
 
--- Aplicar el trigger updated_at a todas las tablas que lo usan
 DROP TRIGGER IF EXISTS trg_centros_updated_at ON centros_formacion;
 CREATE TRIGGER trg_centros_updated_at
     BEFORE UPDATE ON centros_formacion
@@ -515,9 +363,6 @@ CREATE TRIGGER trg_chequeos_updated_at
     EXECUTE FUNCTION actualizar_updated_at();
 
 
--- Función: calcular fecha_borrado_programado al subir una foto de chequeo
--- Si preservar_siempre = true, la fecha se pone NULL (la foto nunca se borra)
--- Si preservar_siempre = false, se calcula fecha_subida + 12 meses
 CREATE OR REPLACE FUNCTION fotos_chequeo_calcular_borrado()
 RETURNS TRIGGER AS $$
 BEGIN
@@ -537,18 +382,12 @@ CREATE TRIGGER trg_fotos_chequeo_borrado
     EXECUTE FUNCTION fotos_chequeo_calcular_borrado();
 
 
--- ==
--- ÍNDICES (para queries frecuentes)
--- ==
-
--- Vehículos
 CREATE INDEX IF NOT EXISTS idx_vehiculos_centro              ON vehiculos(centro_id);
 CREATE INDEX IF NOT EXISTS idx_vehiculos_estado_activo       ON vehiculos(estado, activo);
 CREATE INDEX IF NOT EXISTS idx_vehiculos_es_vip              ON vehiculos(es_vip);
 CREATE INDEX IF NOT EXISTS idx_fotos_vehiculo_vehiculo       ON fotos_vehiculo(vehiculo_id);
 CREATE INDEX IF NOT EXISTS idx_auditoria_vehiculos_fecha     ON auditoria_vehiculos(vehiculo_id, created_at DESC);
 
--- Usuarios
 CREATE INDEX IF NOT EXISTS idx_usuarios_centro               ON usuarios(centro_id);
 CREATE INDEX IF NOT EXISTS idx_usuarios_ciudad               ON usuarios(ciudad_id);
 CREATE INDEX IF NOT EXISTS idx_usuarios_departamento         ON usuarios(departamento_id);
@@ -556,12 +395,10 @@ CREATE INDEX IF NOT EXISTS idx_usuarios_region               ON usuarios(region_
 CREATE INDEX IF NOT EXISTS idx_usuarios_rol_activo           ON usuarios(rol, activo);
 CREATE INDEX IF NOT EXISTS idx_auditoria_usuarios_fecha      ON auditoria_usuarios(usuario_afectado_id, created_at DESC);
 
--- Geografía
 CREATE INDEX IF NOT EXISTS idx_centros_ciudad                ON centros_formacion(ciudad_id);
 CREATE INDEX IF NOT EXISTS idx_ciudades_departamento         ON ciudades(departamento_id);
 CREATE INDEX IF NOT EXISTS idx_departamentos_region          ON departamentos(region_id);
 
--- Chequeos
 CREATE INDEX IF NOT EXISTS idx_chequeos_vehiculo             ON chequeos_preoperacionales(vehiculo_id);
 CREATE INDEX IF NOT EXISTS idx_chequeos_conductor            ON chequeos_preoperacionales(conductor_id);
 CREATE INDEX IF NOT EXISTS idx_chequeos_centro               ON chequeos_preoperacionales(centro_id);
@@ -570,14 +407,10 @@ CREATE INDEX IF NOT EXISTS idx_chequeos_oficial_fecha
     ON chequeos_preoperacionales(es_oficial, fecha)
     WHERE es_oficial = true;
 
--- Indice parcial para chequeos abandonados (Tarea #104): solo indexa filas con
--- abandonado=true, mucho mas eficiente que un indice normal cuando la mayoria
--- de chequeos no estan abandonados. Lo usa el dashboard para listar los del dia.
 CREATE INDEX IF NOT EXISTS idx_chequeos_abandonados
     ON chequeos_preoperacionales(abandonado_en DESC)
     WHERE abandonado = true;
 
--- Notificaciones (Bloque C)
 CREATE INDEX IF NOT EXISTS idx_notificaciones_destinatario
     ON notificaciones(destinatario_id, created_at DESC);
 CREATE INDEX IF NOT EXISTS idx_notificaciones_no_leidas
@@ -587,32 +420,17 @@ CREATE INDEX IF NOT EXISTS idx_notificaciones_no_leidas
 CREATE INDEX IF NOT EXISTS idx_respuestas_chequeo_chequeo    ON respuestas_chequeo(chequeo_id);
 CREATE INDEX IF NOT EXISTS idx_respuestas_aptitud_chequeo    ON respuestas_aptitud(chequeo_id);
 
--- Fotos del chequeo
 CREATE INDEX IF NOT EXISTS idx_fotos_chequeo_respuesta       ON fotos_chequeo(respuesta_id);
 CREATE INDEX IF NOT EXISTS idx_fotos_chequeo_borrado_pendiente
     ON fotos_chequeo(fecha_borrado_programado)
     WHERE preservar_siempre = false AND fecha_borrado_programado IS NOT NULL;
 
--- Intentos bloqueados
 CREATE INDEX IF NOT EXISTS idx_intentos_bloqueado_conductor_fecha
     ON intentos_chequeo_bloqueado(conductor_id, fecha DESC);
 CREATE INDEX IF NOT EXISTS idx_intentos_bloqueado_no_notificados
     ON intentos_chequeo_bloqueado(centro_id, fecha)
     WHERE notificado_admin = false;
 
-
--- ==
--- ACTIVAR ROW LEVEL SECURITY EN TODAS LAS TABLAS
--- ==
--- RLS ACTIVADO (2026-06-23, hallazgo de seguridad): la "anon key" de Supabase viaja
--- en el bundle PÚBLICO del frontend; con RLS apagado, cualquiera podía leer/escribir
--- la base directamente por la API REST, saltándose el backend. Con RLS activo y SIN
--- políticas, el rol anon (y authenticated) queda DENEGADO por defecto. El backend usa
--- service_role (BYPASSRLS) → sus consultas NO cambian. El Realtime anónimo de
--- notificaciones cae al polling de respaldo (useNotificaciones.js).
--- Ver migrations/2026-06-23_activar_rls.sql.
--- (Antes estaba DISABLE por BUG-008, que era sobre queries sujetas a RLS; el backend
--- con service_role nunca lo está, y el keepAlive ya mantiene la conexión caliente.)
 
 ALTER TABLE regiones                    ENABLE ROW LEVEL SECURITY;
 ALTER TABLE departamentos               ENABLE ROW LEVEL SECURITY;
@@ -637,11 +455,6 @@ ALTER TABLE notificaciones              ENABLE ROW LEVEL SECURITY;
 ALTER TABLE suplencias                  ENABLE ROW LEVEL SECURITY;
 
 
--- ==
--- INTENTOS DE LOGIN (anti fuerza bruta): 5 contraseñas falladas seguidas
--- por cuenta -> bloqueo de 15 minutos. El backend lo gestiona; ver
--- migrations/2026-06-20_login_intentos.sql
--- ==
 CREATE TABLE IF NOT EXISTS intentos_login (
     email           text        PRIMARY KEY,
     intentos        integer     NOT NULL DEFAULT 0,
@@ -651,12 +464,3 @@ CREATE TABLE IF NOT EXISTS intentos_login (
 ALTER TABLE intentos_login              ENABLE ROW LEVEL SECURITY;
 
 
--- ==
--- FIN DEL SCHEMA
--- ==
--- Después correr los seeds en orden:
---   seeds/01_categorias_chequeo.sql
---   seeds/02_items_chequeo.sql
---   seeds/03_preguntas_aptitud.sql
---   seeds/04_regiones.sql
---   seeds/05_departamentos.sql

@@ -1,6 +1,3 @@
-// Rutas de notificaciones (Bloque C paso 1).
-// Solo accesibles a roles administrativos.
-
 import { Router } from 'express';
 import {
     getMisNotificaciones,
@@ -14,8 +11,6 @@ const router = Router();
 
 router.use(verificarToken, soloAdmin);
 
-// IMPORTANTE: las rutas estaticas deben ir ANTES de las que tienen :id
-// para que Express no las confunda.
 router.get('/no-leidas/count', getContadorNoLeidas);
 router.patch('/leer-todas', patchMarcarTodasLeidas);
 

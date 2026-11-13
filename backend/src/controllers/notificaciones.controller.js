@@ -1,6 +1,3 @@
-// Controlador de notificaciones (Bloque C paso 1).
-// Endpoints para que el admin liste/lea sus notificaciones.
-
 import {
     listarMisNotificaciones,
     contarNoLeidas,
@@ -8,7 +5,6 @@ import {
     marcarTodasLeidas,
 } from '../services/notificaciones.service.js';
 
-// GET /api/notificaciones?pagina=1&limite=20&solo_no_leidas=true
 export const getMisNotificaciones = async (req, res) => {
     try {
         const { pagina, limite, solo_no_leidas } = req.query;
@@ -25,9 +21,6 @@ export const getMisNotificaciones = async (req, res) => {
     }
 };
 
-// GET /api/notificaciones/no-leidas/count
-// Lo consulta el frontend cada N segundos para mantener el badge del punto rojo
-// actualizado en TODAS las paginas del admin (no solo dashboard).
 export const getContadorNoLeidas = async (req, res) => {
     try {
         const count = await contarNoLeidas(req.usuario.id);
@@ -38,7 +31,6 @@ export const getContadorNoLeidas = async (req, res) => {
     }
 };
 
-// PATCH /api/notificaciones/:id/leer
 export const patchMarcarLeida = async (req, res) => {
     try {
         const { id } = req.params;
@@ -53,7 +45,6 @@ export const patchMarcarLeida = async (req, res) => {
     }
 };
 
-// PATCH /api/notificaciones/leer-todas
 export const patchMarcarTodasLeidas = async (req, res) => {
     try {
         await marcarTodasLeidas(req.usuario.id);

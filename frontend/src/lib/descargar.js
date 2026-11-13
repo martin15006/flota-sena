@@ -1,5 +1,3 @@
-// Descarga un archivo de un endpoint protegido (manda el token, lee el blob y dispara
-// la descarga). `endpoint` es relativo a /api. Lanza Error con el mensaje del backend.
 import { API_URL } from './api.js';
 
 export const descargarArchivo = async (endpoint, nombreSugerido) => {
@@ -13,7 +11,7 @@ export const descargarArchivo = async (endpoint, nombreSugerido) => {
     });
     if (!resp.ok) {
         let msg = 'No se pudo generar el documento';
-        try { msg = (await resp.json()).error || msg; } catch { /* respuesta no-JSON */ }
+        try { msg = (await resp.json()).error || msg; } catch {  }
         throw new Error(msg);
     }
     const blob = await resp.blob();

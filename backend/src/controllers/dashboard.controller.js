@@ -1,18 +1,6 @@
-// Controlador del dashboard administrativo.
-// Devuelve KPIs del dia + alertas que necesitan atencion del admin.
-//
-// Diferenciacion por rol (multinivel, Tarea #102): el filtro de scope lo resuelve
-// el helper scope.service.js segun el nivel del admin (centro / ciudad / departamento
-// / region / nacional). Todas las consultas se filtran por los centros de su scope.
-//
-// IMPORTANTE: para "del dia" usamos la medianoche local del servidor. En produccion,
-// si el servidor estuviera en otra zona horaria distinta a Colombia, habria que
-// normalizar a America/Bogota explicitamente.
-
 import { supabase } from '../config/supabase.js';
 import { obtenerScope, aplicarScope } from '../services/scope.service.js';
 
-// Helper: devuelve el ISO string de la medianoche de hoy en hora local
 const inicioDelDiaISO = () => {
     const ahora = new Date();
     const inicio = new Date(
@@ -24,7 +12,6 @@ const inicioDelDiaISO = () => {
     return inicio.toISOString();
 };
 
-// Helper: ISO de hoy + N dias hacia el futuro
 const enDiasISO = (dias) => {
     const ahora = new Date();
     const objetivo = new Date(
@@ -38,23 +25,16 @@ const enDiasISO = (dias) => {
 
 export const obtenerStatsDashboard = async (req, res) => {
     try {
-        const usuario = req.usuario; // viene del middleware verificarToken
-        // Resolver una sola vez el scope territorial del admin (qué centros ve)
+        const usuario = req.usuario;
         const scope = await obtenerScope(usuario);
         const desdeHoy = inicioDelDiaISO();
         const enUnMes = enDiasISO(30);
 
-        // ====================================================================
-        // 1) KPIs del dia (4 cajas)
-        // ====================================================================
-
-        // a) Chequeos creados hoy (cerrados o no)
         const chequeosHoyQuery = supabase
             .from('chequeos_preoperacionales')
             .select('id', { count: 'exact', head: true })
             .gte('fecha', desdeHoy);
 
-        // b) Chequeos cerrados hoy con resultado NO OPERATIVO
         const noOperativosHoyQuery = supabase
             .from('chequeos_preoperacionales')
             .select('id', { count: 'exact', head: true })
@@ -62,27 +42,23 @@ export const obtenerStatsDashboard = async (req, res) => {
             .eq('cerrado', true)
             .eq('resultado_estado', 'no_operativo');
 
-        // c) Intentos bloqueados de hoy
         const intentosHoyQuery = supabase
             .from('intentos_chequeo_bloqueado')
             .select('id', { count: 'exact', head: true })
             .gte('fecha', desdeHoy);
 
-        // d) Conductores activos (totalidad, no del dia)
         const conductoresActivosQuery = supabase
             .from('usuarios')
             .select('id', { count: 'exact', head: true })
             .eq('rol', 'conductor')
             .eq('activo', true);
 
-        // e) Chequeos abandonados hoy (Tarea #104)
         const abandonadosHoyQuery = supabase
             .from('chequeos_preoperacionales')
             .select('id', { count: 'exact', head: true })
             .gte('abandonado_en', desdeHoy)
             .eq('abandonado', true);
 
-        // Aplicar filtro de centro si aplica y ejecutar todo en paralelo
         const [
             { count: chequeosDelDia },
             { count: chequeosNoOperativosDelDia },
@@ -97,11 +73,6 @@ export const obtenerStatsDashboard = async (req, res) => {
             aplicarScope(abandonadosHoyQuery, scope),
         ]);
 
-        // ====================================================================
-        // 2) Alertas "Necesita atencion"
-        // ====================================================================
-
-        // a) Licencias por vencer (proximos 30 dias) — solo conductores activos
         let licenciasQuery = supabase
             .from('usuarios')
             .select('id, nombre_completo, licencia_numero, licencia_categoria, licencia_vencimiento, centro_id')
@@ -113,7 +84,6 @@ export const obtenerStatsDashboard = async (req, res) => {
         licenciasQuery = aplicarScope(licenciasQuery, scope);
         const { data: licenciasPorVencerRaw } = await licenciasQuery;
 
-        // Calcular dias_restantes para cada licencia (negativo si ya vencio)
         const hoyMidnight = new Date(desdeHoy);
         const licenciasPorVencer = (licenciasPorVencerRaw || []).map((u) => {
             const vencimiento = new Date(u.licencia_vencimiento);
@@ -129,7 +99,6 @@ export const obtenerStatsDashboard = async (req, res) => {
             };
         });
 
-        // b) Vehiculos sin RUNT cargado
         let sinRuntQuery = supabase
             .from('vehiculos')
             .select('id, placa, marca, linea')
@@ -138,7 +107,6 @@ export const obtenerStatsDashboard = async (req, res) => {
         sinRuntQuery = aplicarScope(sinRuntQuery, scope);
         const { data: vehiculosSinRunt } = await sinRuntQuery;
 
-        // c) Vehiculos no operativos (estado='no_operativo' o inactivos)
         let noOperativosQuery = supabase
             .from('vehiculos')
             .select('id, placa, marca, linea, estado, activo')
@@ -146,8 +114,6 @@ export const obtenerStatsDashboard = async (req, res) => {
         noOperativosQuery = aplicarScope(noOperativosQuery, scope);
         const { data: vehiculosNoOperativos } = await noOperativosQuery;
 
-        // d) Chequeos abandonados hoy (con datos del conductor y vehiculo).
-        // Solo para visualizacion — el contador completo del dia ya esta en kpis.
         let abandonadosListaQuery = supabase
             .from('chequeos_preoperacionales')
             .select(`
@@ -173,14 +139,7 @@ export const obtenerStatsDashboard = async (req, res) => {
             placa: c.vehiculo?.placa || '—',
         }));
 
-        // ====================================================================
-        // 3) Respuesta
-        // ====================================================================
-
         res.json({
-            // scope.tipo: 'global' (superadmin) | 'centros' (resto, con la lista
-            // de centros que cubre su nivel). El frontend lo usa para el texto
-            // contextual del dashboard.
             scope: scope.tipo === 'global'
                 ? { tipo: 'global' }
                 : { tipo: 'centros', cantidad_centros: scope.centroIds.length },

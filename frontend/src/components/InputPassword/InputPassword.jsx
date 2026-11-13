@@ -1,18 +1,6 @@
-// Componente reutilizable: input de contraseña con boton de "ojo" para
-// mostrar/ocultar el texto. Usado en Login, CambiarPassword y
-// ModalVerificacionAdmin. La convencion es:
-//   - Ojo ABIERTO  -> la contraseña esta visible ahora mismo
-//   - Ojo TACHADO  -> la contraseña esta oculta ahora mismo
-//
-// API: acepta las mismas props que un <input> normal (value, onChange,
-// placeholder, required, disabled, autoFocus, id, name, etc) + una prop
-// adicional `className` que se aplica al <input> interno para que cada
-// pantalla pueda mantener su propio estilo visual.
-
 import { useState } from "react";
 import "./InputPassword.css";
 
-// SVG inline: ojo abierto (la contraseña esta visible)
 const IconoOjoAbierto = () => (
     <svg
         xmlns="http://www.w3.org/2000/svg"
@@ -31,7 +19,6 @@ const IconoOjoAbierto = () => (
     </svg>
 );
 
-// SVG inline: ojo tachado (la contraseña esta oculta)
 const IconoOjoTachado = () => (
     <svg
         xmlns="http://www.w3.org/2000/svg"
@@ -59,8 +46,6 @@ function InputPassword({ className = "", disabled, ...inputProps }) {
                 {...inputProps}
                 type={mostrar ? "text" : "password"}
                 disabled={disabled}
-                // El padding-right viene de input-password-input para dejar
-                // espacio al boton del ojo, asi no tapa el texto del usuario.
                 className={`${className} input-password-input`}
             />
             <button

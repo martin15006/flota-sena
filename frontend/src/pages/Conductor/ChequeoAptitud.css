@@ -1,5 +1,3 @@
-/* Pantalla de Aptitud (paso 2 del flujo del conductor). Mobile-first. */
-
 .aptitud-pagina {
     min-height: 100vh;
     background: var(--superficie-sutil);
@@ -7,7 +5,6 @@
     flex-direction: column;
 }
 
-/* Header */
 .aptitud-header {
     background: var(--superficie);
     border-bottom: var(--borde-fino);
@@ -75,7 +72,6 @@
     transition: width var(--velocidad-media) var(--suavizado);
 }
 
-/* Main */
 .aptitud-main {
     flex: 1;
     max-width: 600px;
@@ -115,7 +111,6 @@
     justify-content: center;
 }
 
-/* Botones SI / NO */
 .aptitud-botones {
     display: grid;
     grid-template-columns: 1fr 1fr;
@@ -168,7 +163,6 @@
     box-shadow: var(--sombra-lg);
 }
 
-/* Estados de carga / error */
 .aptitud-estado {
     text-align: center;
     padding: var(--espacio-xl) var(--espacio-md);
@@ -202,7 +196,6 @@
     box-shadow: var(--sombra-md);
 }
 
-/* Pantalla de bloqueo */
 .aptitud-bloqueada {
     justify-content: center;
     align-items: center;
@@ -294,7 +287,6 @@
     gap: 4px;
 }
 
-/* Modal de confirmacion */
 .aptitud-modal-overlay {
     position: fixed;
     inset: 0;
@@ -398,7 +390,6 @@
     box-shadow: var(--sombra-md);
 }
 
-/* Animaciones */
 @keyframes aptitud-fade-in {
     from { opacity: 0; }
     to { opacity: 1; }
@@ -409,7 +400,6 @@
     to { opacity: 1; transform: scale(1); }
 }
 
-/* Responsive */
 @media (max-width: 480px) {
     .aptitud-pregunta {
         font-size: var(--tamano-lg);
@@ -430,9 +420,6 @@
     }
 }
 
-/* === Modo oscuro === */
-/* El fondo de la pantalla de bloqueo era un gradiente rojo claro: se aplana
-   al fondo de error oscuro para no quedar luminoso. */
 [data-tema="oscuro"] .aptitud-bloqueada {
     background: var(--estado-error-fondo);
 }

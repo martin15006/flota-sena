@@ -1,6 +1,3 @@
-// Controllers del admin del catalogo del chequeo
-// Todos requieren rol admin (validado en el middleware del router)
-
 import {
     listarCategoriasAdmin,
     crearCategoria,
@@ -15,8 +12,6 @@ import {
     actualizarPregunta,
     eliminarPregunta,
 } from "../services/catalogoAdmin.service.js";
-
-// -- Categorias --
 
 export const getCategorias = async (req, res) => {
      try{
@@ -71,8 +66,6 @@ export const deleteCategoria = async (req, res) => {
     }
 };
 
-// -- Items --
-
 export const getItems = async (req, res) => {
     try {
         const data = await listarItemsAdmin();
@@ -124,8 +117,6 @@ export const deleteItem = async (req, res) => {
         res.status(500).json({ error: err.message || "Error al eliminar el item" });
     }
 };
-
-// -- Preguntas de aptitud --
 
 export const getPreguntas = async (req, res) => {
     try {

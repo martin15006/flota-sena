@@ -1,25 +1,3 @@
--- ============================================================================
--- SEED 06 — Ciudades capitales de Colombia + centros SENA de muestra
--- ============================================================================
--- Contexto (Fase 4, multinivel #102): regiones (5) y departamentos (33) ya
--- estaban sembrados completos, pero ciudades y centros solo tenian el minimo
--- del MVP (Ibague + 1 centro). Sin mas ciudades/centros no se pueden asignar
--- administradores de otros niveles ni probar el alcance territorial.
---
--- Este seed agrega:
---   1) Las 33 ciudades capitales (una por departamento) + Espinal (Tolima).
---   2) 5 centros de formacion REALES del SENA como muestra para pruebas
---      (editables/desactivables; la gestion completa de geografia por UI es
---      la tarea #116).
---
--- IDEMPOTENTE: se puede ejecutar varias veces sin duplicar filas.
---   - ciudades: usa ON CONFLICT (nombre, departamento_id) DO NOTHING.
---   - centros: usa WHERE NOT EXISTS (no hay constraint UNIQUE en esa tabla).
--- ============================================================================
-
--- ============================================
--- 1) CIUDADES CAPITALES (33) + Espinal
--- ============================================
 INSERT INTO ciudades (nombre, departamento_id)
 SELECT v.ciudad, d.id
 FROM (VALUES
@@ -60,11 +38,6 @@ FROM (VALUES
 ) AS v(ciudad, departamento)
 JOIN departamentos d ON d.nombre = v.departamento
 ON CONFLICT (nombre, departamento_id) DO NOTHING;
-
--- ============================================
--- 2) CENTROS SENA DE MUESTRA (reales, 5)
--- ============================================
--- Patron anti-duplicados: inserta solo si no existe ese centro en esa ciudad.
 
 INSERT INTO centros_formacion (nombre, ciudad_id, direccion)
 SELECT 'Centro de Servicios Financieros', c.id, NULL
@@ -111,9 +84,6 @@ WHERE c.nombre = 'Espinal' AND d.nombre = 'Tolima'
     WHERE cf.nombre = 'Centro Agropecuario La Granja' AND cf.ciudad_id = c.id
   );
 
--- ============================================
--- 3) VERIFICACION (debe dar: 34 ciudades, 6 centros)
--- ============================================
 SELECT
     (SELECT COUNT(*) FROM ciudades)           AS ciudades,
     (SELECT COUNT(*) FROM centros_formacion)  AS centros;

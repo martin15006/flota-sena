@@ -1,17 +1,3 @@
-/* ============================================================
-   ANIMACIONES REUTILIZABLES
-   ------------------------------------------------------------
-   Coleccion de animaciones que se aplican poniendo la clase
-   en el elemento. Ejemplo:
-
-       <div class="animar-fade-in">Hola</div>
-
-   Tambien hay clases utilitarias para retraso (delay) por si
-   quieres que varios elementos aparezcan en cascada.
-   ============================================================ */
-
-
-/* ============ APARICIONES ============ */
 
 @keyframes fadeIn {
   from { opacity: 0; }
@@ -84,8 +70,6 @@
 }
 
 
-/* ============ ENFASIS ============ */
-
 @keyframes pulse {
   0%, 100% { transform: scale(1); }
   50% { transform: scale(1.05); }
@@ -128,8 +112,6 @@
 }
 
 
-/* ============ LOADERS ============ */
-
 @keyframes rotate {
   from { transform: rotate(0deg); }
   to { transform: rotate(360deg); }
@@ -140,11 +122,6 @@
   100% { background-position: -200% 0; }
 }
 
-
-/* ============ CLASES UTILITARIAS ============
-   Para usar una animacion en cualquier elemento,
-   simplemente agrega la clase correspondiente.
-   ============================================ */
 
 .animar-fade-in {
   animation: fadeIn var(--velocidad-media) var(--suavizado) both;
@@ -207,11 +184,6 @@
 }
 
 
-/* ============ RETRASOS EN CASCADA ============
-   Combina con cualquier animacion para que varios
-   elementos aparezcan uno tras otro.
-   ============================================ */
-
 .delay-100 { animation-delay: 100ms; }
 .delay-200 { animation-delay: 200ms; }
 .delay-300 { animation-delay: 300ms; }
@@ -220,12 +192,6 @@
 .delay-700 { animation-delay: 700ms; }
 .delay-1000 { animation-delay: 1000ms; }
 
-
-/* ============ ACCESIBILIDAD ============
-   Si el usuario tiene activada la opcion
-   "reducir movimiento" en su sistema, no
-   le aplicamos animaciones (evita mareos).
-   ============================================ */
 
 @media (prefers-reduced-motion: reduce) {
   *,

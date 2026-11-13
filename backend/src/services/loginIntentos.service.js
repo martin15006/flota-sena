@@ -1,16 +1,8 @@
-// Proteccion anti fuerza bruta del login: cuenta los intentos fallidos por
-// cuenta (email) y la bloquea unos minutos cuando se pasan del limite.
-//
-// IMPORTANTE — FAIL-SOFT: todas las funciones estan envueltas en try/catch y, si
-// la tabla `intentos_login` aun no existe (migracion no corrida) o hay cualquier
-// error de base de datos, NO rompen el login: simplemente se comportan como si
-// no hubiera bloqueo. Asi el login funciona igual con o sin la migracion aplicada.
 import { supabase } from '../config/supabase.js';
 
-const MAX_INTENTOS = 5;       // contraseñas falladas seguidas antes de bloquear
-const BLOQUEO_MINUTOS = 15;   // cuanto dura el bloqueo
+const MAX_INTENTOS = 5;
+const BLOQUEO_MINUTOS = 15;
 
-// ¿La cuenta esta bloqueada ahora mismo? -> { bloqueado, minutosRestantes }
 export const estadoBloqueo = async (email) => {
     try {
         const { data, error } = await supabase
@@ -33,8 +25,6 @@ export const estadoBloqueo = async (email) => {
     }
 };
 
-// Registra un intento fallido. Si llega al limite, deja la cuenta bloqueada.
-// Devuelve { recienBloqueado, minutos }.
 export const registrarFallo = async (email) => {
     try {
         const { data } = await supabase
@@ -48,8 +38,6 @@ export const registrarFallo = async (email) => {
 
         if (intentos >= MAX_INTENTOS) {
             const bloqueadoHasta = new Date(Date.now() + BLOQUEO_MINUTOS * 60000).toISOString();
-            // Al bloquear reiniciamos el contador: al expirar el bloqueo, vuelven a
-            // tener 5 intentos limpios.
             await supabase.from('intentos_login').upsert(
                 { email, intentos: 0, bloqueado_hasta: bloqueadoHasta, actualizado_en: ahora },
                 { onConflict: 'email' }
@@ -68,7 +56,6 @@ export const registrarFallo = async (email) => {
     }
 };
 
-// Login correcto: borra el contador de intentos fallidos de esa cuenta.
 export const limpiarIntentos = async (email) => {
     try {
         await supabase.from('intentos_login').delete().eq('email', email);

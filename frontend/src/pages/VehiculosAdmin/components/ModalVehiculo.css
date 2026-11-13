@@ -167,7 +167,6 @@
     font-style: italic;
 }
 
-/* RUNT */
 .form-vehiculo-archivo {
     display: flex;
     flex-direction: column;
@@ -304,7 +303,6 @@
     color: #FFFFFF;
 }
 
-/* FOTOS */
 .form-vehiculo-foto-add {
     padding: var(--espacio-md);
     background: var(--color-gris-100);
@@ -427,7 +425,6 @@
     color: var(--color-blanco);
 }
 
-/* MENSAJES */
 .form-vehiculo-error {
     background: var(--estado-error-fondo);
     color: var(--color-rojo);
@@ -458,7 +455,6 @@
     animation: rotate 0.8s linear infinite;
 }
 
-/* BOTONES */
 .form-vehiculo-acciones {
     display: flex;
     gap: var(--espacio-md);
@@ -518,7 +514,6 @@
     }
 }
 
-/* Casilla "Vehiculo especial (VIP)" — Pool de transporte (ver docs/diseno-pool-vip.md) */
 .form-vehiculo-campo-ancho {
     grid-column: 1 / -1;
 }

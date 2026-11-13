@@ -1,4 +1,3 @@
-// Modulo de Ajustes. Por ahora gestiona el tema (claro / oscuro).
 import { useTheme } from "../../lib/useTheme.js";
 import { cambiarConOnda } from "../../lib/onda.js";
 import AdminLayout from "../../components/AdminLayout/AdminLayout.jsx";

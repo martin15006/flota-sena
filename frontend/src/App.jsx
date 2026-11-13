@@ -116,7 +116,6 @@ function App() {
                         </ProtectedRoutes>
                     } />
 
-                    {/* La ruta estática debe ir antes de la :id para evitar conflictos */}
                     <Route path="/admin/chequeos/intentos-bloqueados" element={
                         <ProtectedRoutes>
                             <IntentosBloqueados />

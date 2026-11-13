@@ -1,6 +1,3 @@
-// Interruptor de tema con "onda": al cambiar, la View Transitions API revela el
-// nuevo tema con un circulo que crece desde el centro del boton. Si el navegador
-// no la soporta o el usuario pidio menos movimiento, el cambio es instantaneo.
 import { useRef } from "react";
 import { useTheme } from "../../lib/useTheme.js";
 import { cambiarConOnda } from "../../lib/onda.js";

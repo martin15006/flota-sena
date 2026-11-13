@@ -4,7 +4,7 @@ import { getSuperior, postInforme } from '../controllers/escalacion.controller.j
 
 const router = Router();
 router.use(verificarToken);
-router.use(soloAdmin); // solo admins (no conductores) pueden escalar
+router.use(soloAdmin);
 
 router.get('/superior', getSuperior);
 router.post('/informe', postInforme);

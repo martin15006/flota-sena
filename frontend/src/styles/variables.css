@@ -1,46 +1,32 @@
-/* ============================================================
-   VARIABLES GLOBALES
-   ------------------------------------------------------------
-   Aquí van TODOS los colores, tamaños, espacios y fuentes
-   del sistema. Si quieres cambiar el verde SENA en toda la
-   aplicación, lo cambias acá una vez y se actualiza en todo.
-   ============================================================ */
-
 :root {
-  /* === COLORES INSTITUCIONALES SENA === */
   --color-verde-sena: #39A900;
   --color-verde-oscuro: #007832;
   --color-verde-muy-oscuro: #004D20;
   --color-verde-claro: #E8F5E9;
 
-  /* === COLORES DE ACENTO === */
   --color-naranja: #FF8200;
   --color-rojo: #D32F2F;
   --color-amarillo: #FFB300;
   --color-azul: #1976D2;
 
-  /* === GRISES === */
   --color-blanco: #FFFFFF;
   --color-gris-50: #F5F7FA;
   --color-gris-100: #BFC5CD;
-  --color-gris-200: #C9C9C9;   /* ajustado: era #E0E0E0 (muy claro) */
-  --color-gris-300: #A0A0A0;   /* ajustado: era #BDBDBD */
+  --color-gris-200: #C9C9C9;
+  --color-gris-300: #A0A0A0;
   --color-gris-500: #757575;
   --color-gris-700: #424242;
   --color-gris-900: #212121;
   --color-negro: #000000;
 
-  /* === FORMULARIOS === */
-  --color-input-bg: #F0F2F5;       /* fondo sutil para diferenciar input */
-  --color-input-borde: #B0B0B0;    /* borde mas visible para inputs */
+  --color-input-bg: #F0F2F5;
+  --color-input-borde: #B0B0B0;
 
-  /* === COLORES DE ESTADO === */
   --color-exito: var(--color-verde-sena);
   --color-error: var(--color-rojo);
   --color-advertencia: var(--color-amarillo);
   --color-info: var(--color-azul);
 
-  /* === ESPACIADOS (multiplos de 4px para mantener consistencia) === */
   --espacio-xs: 4px;
   --espacio-sm: 8px;
   --espacio-md: 16px;
@@ -49,7 +35,6 @@
   --espacio-xxl: 48px;
   --espacio-xxxl: 64px;
 
-  /* === TIPOGRAFIA === */
   --fuente-principal: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto,
                       "Helvetica Neue", Arial, sans-serif;
   --fuente-monospace: "Consolas", "Monaco", "Courier New", monospace;
@@ -67,7 +52,6 @@
   --peso-semibold: 600;
   --peso-bold: 700;
 
-  /* === BORDES Y RADIOS === */
   --radio-sm: 4px;
   --radio-md: 8px;
   --radio-lg: 12px;
@@ -77,67 +61,49 @@
   --borde-fino: 1px solid var(--color-gris-200);
   --borde-medio: 2px solid var(--color-gris-200);
 
-  /* === SOMBRAS === */
   --sombra-sm: 0 2px 6px rgba(0, 0, 0, 0.12);
   --sombra-md: 0 4px 14px rgba(0, 0, 0, 0.18);
   --sombra-lg: 0 10px 28px rgba(0, 0, 0, 0.22);
   --sombra-xl: 0 18px 44px rgba(0, 0, 0, 0.28);
 
-  /* === BORDE DE CARDS (mas marcado para mejor contraste) === */
   --borde-card: 2px solid #6F7785;
   --color-separador: #95A0AC;
 
-  /* === TRANSICIONES (velocidades estandar) === */
   --velocidad-rapida: 150ms;
   --velocidad-media: 300ms;
   --velocidad-lenta: 500ms;
   --suavizado: cubic-bezier(0.4, 0, 0.2, 1);
 
-  /* === Z-INDEX (capas de profundidad) === */
   --z-base: 1;
   --z-dropdown: 100;
   --z-overlay: 500;
   --z-modal: 1000;
   --z-notificacion: 2000;
 
-  /* === TOKENS SEMANTICOS DE TEMA (claro = comportamiento actual) ===
-     Estos son los que cambian en modo oscuro. La regla: los FONDOS usan
-     --superficie/--fondo; el TEXTO usa --texto/--texto-suave; los estados
-     usan --estado-*. Asi un solo override de [data-tema] repinta todo. */
-  --fondo: var(--color-gris-100);          /* fondo de pagina (body) */
-  --superficie: var(--color-blanco);       /* tarjetas, modales, barras, sidebar */
-  --superficie-alta: var(--color-blanco);  /* elevacion sobre superficie */
+  --fondo: var(--color-gris-100);
+  --superficie: var(--color-blanco);
+  --superficie-alta: var(--color-blanco);
   --texto: var(--color-gris-900);
   --texto-suave: var(--color-gris-500);
   --borde: var(--color-gris-200);
-  --titulo: var(--color-verde-oscuro);     /* h1/h2/h3 */
-  --texto-inverso: #FFFFFF;                /* texto que SIEMPRE es blanco (sobre verde) */
-  --verde-luz: var(--color-verde-sena);    /* acento luminoso (en claro = verde normal) */
+  --titulo: var(--color-verde-oscuro);
+  --texto-inverso: #FFFFFF;
+  --verde-luz: var(--color-verde-sena);
 
-  /* Estados (claro = pasteles actuales) */
   --estado-error-fondo: #FFEBEE;  --estado-error-texto: #B71C1C;  --estado-error-borde: #FFCDD2;
   --estado-adv-fondo:   #FFF3E0;  --estado-adv-texto:   #E65100;  --estado-adv-borde:   #FFE082;
   --estado-info-fondo:  #E3F2FD;  --estado-info-texto:  #1565C0;  --estado-info-borde:  #BBDEFB;
   --estado-exito-fondo: #E8F5E9;  --estado-exito-texto: #2E7D32;  --estado-exito-borde: #C8E6C9;
   --estado-neutro-fondo:#374151;  --estado-neutro-texto:#FFFFFF;
 
-  /* Suplencia (morado) */
   --suplencia-fondo: #EDE7F6;  --suplencia-color: #5E35B1;  --suplencia-fuerte: #4527A0;  --suplencia-solido: #5E35B1;
 
-  /* Variantes que tambien cambian en oscuro */
-  --superficie-sutil: var(--color-gris-50);  /* fills gris muy claro (no es la pagina) */
-  --verde-suave: var(--color-verde-claro);   /* tints verdes (activos/hover) */
-  --badge-gris: var(--color-gris-500);       /* fondo de badges grises solidos (texto blanco) */
-  /* SOLIDO = color saturado para FONDO de boton (texto blanco encima); el -texto
-     se aclara en oscuro y NO sirve de fondo de boton, por eso van separados. */
+  --superficie-sutil: var(--color-gris-50);
+  --verde-suave: var(--color-verde-claro);
+  --badge-gris: var(--color-gris-500);
   --estado-error-solido: #B71C1C;  --estado-adv-solido: #eb943e;  --estado-info-solido: #1565C0;
 }
 
-/* ============================================================
-   TEMA OSCURO — "Onda Monarca" (OLED, el verde es la unica luz)
-   Se activa con <html data-tema="oscuro">. Solo redefine tokens
-   SEMANTICOS; los tokens de marca/grises base no cambian.
-   ============================================================ */
 [data-tema="oscuro"] {
   --fondo: #05070A;
   --superficie: #0C1015;
@@ -161,24 +127,18 @@
   --verde-suave: rgba(57,169,0,.14);
   --estado-error-solido: #C62828;  --estado-adv-solido: #C9701C;  --estado-info-solido: #2E7DD0;
 
-  /* Inputs en oscuro (los tokens ya eran semanticos: se sobre-escriben directo) */
   --color-input-bg: #141A21;
   --color-input-borde: #2C3644;
   --badge-gris: #5A6470;
 
-  /* === RAMPA DE GRISES EN OSCURO ===
-     Clave para que todo el texto y los bordes que usan grises DIRECTOS
-     funcionen sin tocar cada archivo. Los grises oscuros (texto) se aclaran;
-     los grises claros (bordes/fills) se oscurecen. */
-  --color-gris-900: #EAF2EC;   /* texto principal -> claro */
-  --color-gris-700: #C2CCC6;   /* texto secundario */
-  --color-gris-500: #9AAAA0;   /* texto terciario / suave */
-  --color-gris-300: #2C3644;   /* bordes / fills fuertes -> oscuro */
-  --color-gris-200: #222A32;   /* bordes / fills sutiles -> oscuro */
-  --color-gris-100: #141A21;   /* fondos gris claro -> superficie */
+  --color-gris-900: #EAF2EC;
+  --color-gris-700: #C2CCC6;
+  --color-gris-500: #9AAAA0;
+  --color-gris-300: #2C3644;
+  --color-gris-200: #222A32;
+  --color-gris-100: #141A21;
   --color-gris-50:  #0F141A;
 
-  /* Tokens de borde con valor fijo */
   --borde-card: 2px solid #2C3644;
   --color-separador: #2C3644;
 }

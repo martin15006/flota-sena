@@ -1,7 +1,3 @@
-/* ============================================================
-   COMPONENTE: ModalCrearUsuario (formulario)
-   ============================================================ */
-
 .form-usuario {
   display: flex;
   flex-direction: column;
@@ -72,7 +68,6 @@
   cursor: not-allowed;
 }
 
-/* === FOTO === */
 .form-usuario-foto-area {
   display: flex;
   align-items: center;
@@ -138,7 +133,6 @@
   background: var(--estado-error-solido);
 }
 
-/* === MENSAJES === */
 .form-usuario-error {
   background: var(--estado-error-fondo);
   color: var(--color-rojo);
@@ -157,8 +151,6 @@
   font-size: var(--tamano-sm);
 }
 
-/* Campo sensible: input arriba + boton "Cambiar" abajo (para correo/cedula).
-   Lo ponemos en columna para que no se rompa cuando el grid usa columnas estrechas. */
 .form-usuario-campo-sensible {
   display: flex;
   flex-direction: column;
@@ -194,7 +186,6 @@
   cursor: not-allowed;
 }
 
-/* Texto pequeño de ayuda debajo de un campo (gris-900 por accesibilidad) */
 .form-usuario-ayuda {
   display: block;
   margin-top: 4px;
@@ -204,7 +195,6 @@
   line-height: 1.4;
 }
 
-/* Confirmación de la cadena de mando (#116): ocupa toda la fila del grid */
 .form-usuario-resumen-cadena {
   grid-column: 1 / -1;
   margin-top: var(--espacio-xs);
@@ -218,9 +208,6 @@
   line-height: 1.4;
 }
 
-/* Aviso temporal cuando se intenta escribir un caracter no permitido.
-   PROBANDO: fondo naranja + texto y borde negros (combinacion alto contraste
-   estilo senales de transito). Tipografia fina semibold sin letter-spacing. */
 .form-usuario-aviso-validacion {
   display: block;
   margin-top: 6px;
@@ -247,7 +234,6 @@
   }
 }
 
-/* === BOTONES === */
 .form-usuario-acciones {
   display: flex;
   gap: var(--espacio-md);
@@ -303,7 +289,6 @@
     width: 100%;
   }
 }
-/* Casilla "Pool de transporte" — conductor que maneja vehiculos VIP (docs/diseno-pool-vip.md) */
 .form-usuario-campo-ancho {
     grid-column: 1 / -1;
 }
@@ -330,9 +315,6 @@
     flex-shrink: 0;
 }
 
-/* === Modo oscuro === */
-/* Aviso de validacion: el badge naranja se oscurece en modo oscuro, asi que
-   el texto y borde oscuros del modo claro pierden contraste -> los aclaramos. */
 [data-tema="oscuro"] .form-usuario-aviso-validacion {
     color: #2B1A06;
     border-color: #E0A24A;

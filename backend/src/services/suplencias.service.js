@@ -1,7 +1,6 @@
 import { supabase } from '../config/supabase.js';
 import { obtenerScope, puedeAccederCentro } from './scope.service.js';
 
-// "Vigente" = activa AND ahora dentro de [desde, hasta] (hasta NULL = abierta).
 const SELECT_SUPLENCIA = `
     *,
     pool:pool_id ( id, nombre_completo, cedula ),
@@ -10,10 +9,6 @@ const SELECT_SUPLENCIA = `
     activada_por:activada_por_id ( id, nombre_completo )
 `;
 
-// Resuelve los centros que CUBRE una suplencia (Fase B):
-//   - alcance 'centro'       -> [centro_id]
-//   - alcance 'departamento' -> todos los centros de ese depto (via ciudades)
-// Devuelve [{ id, nombre }]. Si no resuelve nada, [].
 export const centrosCubiertosDeSuplencia = async (suplencia) => {
     if (!suplencia) return [];
     if (suplencia.alcance === 'departamento' && suplencia.departamento_id) {
@@ -25,7 +20,6 @@ export const centrosCubiertosDeSuplencia = async (suplencia) => {
             .from('centros_formacion').select('id, nombre').in('ciudad_id', ciudadIds).eq('activo', true);
         return centros || [];
     }
-    // alcance 'centro' (o legado sin alcance)
     if (suplencia.centro_id) {
         const { data: centro } = await supabase
             .from('centros_formacion').select('id, nombre').eq('id', suplencia.centro_id).maybeSingle();
@@ -34,19 +28,9 @@ export const centrosCubiertosDeSuplencia = async (suplencia) => {
     return [];
 };
 
-// Calcula la vigencia EN JS, sobre filas ya filtradas por activa=true.
-// Solo depende de `hasta`: `desde` siempre se setea en NOW() al activar (no hay
-// forma de programar una suplencia a futuro), asi que comparar `desde` no aporta y
-// ademas puede mis-disparar por como se parsea el timestamp (zona horaria). Vigente:
-//   - hasta NULL  -> abierta, siempre vigente
-//   - hasta fecha -> vigente si todavia no paso
 const esVigente = (s, ahora = Date.now()) =>
     s.hasta == null || new Date(s.hasta).getTime() >= ahora;
 
-// Suplencia VIGENTE de un pool (o null). Busca por pool_id (NO por su centro propio),
-// porque la suplencia puede cubrir un centro distinto al del pool (Fase A: suplir otro
-// centro de su area). Incluye el nombre del centro CUBIERTO para mostrarlo en la UI.
-// La usa el middleware/login para adjuntar req.usuario.suplencia.
 export const suplenciaVigenteDePool = async (poolId) => {
     if (!poolId) return null;
     const { data, error } = await supabase
@@ -59,8 +43,6 @@ export const suplenciaVigenteDePool = async (poolId) => {
     return (data || []).find((s) => esVigente(s)) || null;
 };
 
-// Mapa poolId -> suplencia vigente, para una lista de pools (lo usa listarUsuarios
-// para marcar quien esta supliendo ahora mismo).
 export const mapaSuplenciasVigentes = async (poolIds = []) => {
     const mapa = new Map();
     if (!poolIds.length) return mapa;
@@ -76,16 +58,11 @@ export const mapaSuplenciasVigentes = async (poolIds = []) => {
     return mapa;
 };
 
-// pool_ids con suplencia vigente que CUBRE un centro (para rutear notificaciones).
-// Incluye las que lo cubren directo (alcance 'centro') y las que cubren todo su
-// departamento (alcance 'departamento').
 export const poolsVigentesEnCentro = async (centroId) => {
     if (!centroId) return [];
-    // Directas (alcance 'centro')
     const { data: directas } = await supabase
         .from('suplencias').select('*').eq('centro_id', centroId).eq('activa', true);
 
-    // Por departamento: resolver a que depto pertenece el centro (centro -> ciudad -> depto)
     const { data: centro } = await supabase
         .from('centros_formacion')
         .select('ciudad:ciudad_id ( departamento_id )')
@@ -104,9 +81,6 @@ export const poolsVigentesEnCentro = async (centroId) => {
     return [...new Set(ids)];
 };
 
-// Activa una suplencia. Valida que el pool sea un conductor con es_pool y centro,
-// que no tenga ya una vigente, y que el actor tenga scope sobre el centro del pool.
-// Devuelve la suplencia creada o lanza un Error con .status.
 export const activarSuplencia = async ({
     actor, poolId, alcance = 'centro', centroId = null, departamentoId = null,
     hasta = null, motivo = null,
@@ -125,12 +99,9 @@ export const activarSuplencia = async ({
         const e = new Error('Solo un conductor del pool con centro asignado puede suplir.'); e.status = 400; throw e;
     }
 
-    // Resolver el ALCANCE y validar que esté dentro del área del que activa.
     let centroCubierto = null;
     let deptoCubierto = null;
     if (alcance === 'departamento') {
-        // Cubre TODOS los centros de una regional/departamento (Fase B). Solo lo puede
-        // dar quien tenga ese depto en su scope (Director Regional de ese depto o Nacional).
         if (!departamentoId) {
             const e = new Error('Falta el departamento a cubrir.'); e.status = 400; throw e;
         }
@@ -141,7 +112,6 @@ export const activarSuplencia = async ({
         }
         deptoCubierto = departamentoId;
     } else {
-        // Un solo centro: el elegido o, por defecto, el propio del pool (Fase A).
         centroCubierto = centroId || pool.centro_id;
         const tieneScope = await puedeAccederCentro(actor, centroCubierto);
         if (!tieneScope) {
@@ -154,7 +124,6 @@ export const activarSuplencia = async ({
         const e = new Error('La fecha de fin debe ser posterior a ahora.'); e.status = 400; throw e;
     }
 
-    // Ya hay una vigente para este pool? (una sola a la vez, sin importar el centro)
     const { data: activas } = await supabase
         .from('suplencias')
         .select('*')
@@ -181,7 +150,6 @@ export const activarSuplencia = async ({
     return data;
 };
 
-// Desactiva una suplencia (manual). Valida scope sobre su centro o su departamento.
 export const desactivarSuplencia = async ({ actor, suplenciaId }) => {
     const { data: sup, error: errSup } = await supabase
         .from('suplencias')
@@ -191,7 +159,6 @@ export const desactivarSuplencia = async ({ actor, suplenciaId }) => {
     if (errSup) throw errSup;
     if (!sup) { const e = new Error('Suplencia no encontrada.'); e.status = 404; throw e; }
 
-    // El actor debe tener en su área el centro (si cubre uno) o el departamento (regional).
     const scope = await obtenerScope(actor);
     const enArea = scope.tipo === 'global'
         || (sup.centro_id && (scope.centroIds || []).includes(sup.centro_id))
@@ -208,9 +175,6 @@ export const desactivarSuplencia = async ({ actor, suplenciaId }) => {
     return data;
 };
 
-// Lista suplencias dentro del scope del actor. Filtros opcionales: centroId, soloActivas.
-// El filtro por scope se hace EN JS para cubrir tanto las de un centro como las de toda
-// una regional (departamento), que el actor ve si el depto está en su área.
 export const listarSuplencias = async ({ actor, centroId = null, soloActivas = false }) => {
     const scope = await obtenerScope(actor);
     let q = supabase.from('suplencias').select(SELECT_SUPLENCIA).order('desde', { ascending: false });
@@ -230,10 +194,7 @@ export const listarSuplencias = async ({ actor, centroId = null, soloActivas = f
     return filas;
 };
 
-// "Actividad del pool": acciones de auditoria hechas por un pool (accion_por_id),
-// uniendo usuarios + vehiculos + chequeos, opcionalmente acotado a [desde, hasta].
 export const actividadDelPool = async ({ actor, poolId, desde = null, hasta = null }) => {
-    // El pool debe estar en el area del actor.
     const { data: pool } = await supabase
         .from('usuarios').select('id, centro_id').eq('id', poolId).maybeSingle();
     if (!pool) { const e = new Error('Conductor no encontrado.'); e.status = 404; throw e; }

@@ -6,9 +6,6 @@ export const verificarToken = async (req, res, next) => {
     try {
         const authHeader = req.headers.authorization;
 
-        // Token normal en header Authorization. Como fallback aceptamos token en body
-        // SOLO para el endpoint de abandono — navigator.sendBeacon no soporta headers
-        // y necesitamos detectar el cierre de pestaña en medio del chequeo (Tarea #104).
         let token = null;
         if (authHeader && authHeader.startsWith('Bearer ')) {
             token = authHeader.slice(7);
@@ -18,7 +15,6 @@ export const verificarToken = async (req, res, next) => {
             req.path.endsWith('/abandonar')
         ) {
             token = req.body.token;
-            // Limpiar el token del body para que el controller no lo vea
             delete req.body.token;
         }
 
@@ -28,8 +24,6 @@ export const verificarToken = async (req, res, next) => {
             return res.status(401).json({ error: 'Token invalido o expirado' });
         }
 
-        // Join con centros_formacion para que cualquier endpoint pueda usar
-        // perfil.centro_nombre sin hacer otra query.
         const { data: perfil, error: errPerfil } = await supabase
             .from('usuarios')
             .select(`
@@ -51,25 +45,17 @@ export const verificarToken = async (req, res, next) => {
         }
 
         perfil.email = data.user.email;
-        // Aplanar el join: el join devuelve el centro como objeto anidado, pero
-        // es mas comodo exponer solo el nombre como campo plano.
         perfil.centro_nombre = perfil.centros_formacion?.nombre || null;
         delete perfil.centros_formacion;
 
-        // Pool · Paso 2: si es un conductor del pool, adjuntar su suplencia VIGENTE
-        // (si la tiene) para que rolEfectivo() lo trate como admin_centro de su centro.
         perfil.suplencia = null;
-        perfil.suplenciaCentros = [];   // centros que CUBRE la suplencia (Fase B)
-        perfil.centroActivo = null;     // cual esta gestionando ahora (selector)
+        perfil.suplenciaCentros = [];
+        perfil.centroActivo = null;
         if (perfil.rol === 'conductor' && perfil.es_pool === true && perfil.centro_id) {
             perfil.suplencia = await suplenciaVigenteDePool(perfil.id);
             if (perfil.suplencia) {
                 perfil.suplenciaCentros = await centrosCubiertosDeSuplencia(perfil.suplencia);
                 const ids = perfil.suplenciaCentros.map((c) => c.id);
-                // El "centro activo" llega por header (lo manda el selector del frontend).
-                // Si es valido (esta entre los cubiertos), lo usamos. Si la suplencia cubre
-                // un solo centro, ese es el activo por defecto. Si cubre varios y no se
-                // eligio ninguno, queda null (el pool debe elegir uno antes de gestionar).
                 const headerCentro = req.headers['x-centro-activo'];
                 if (headerCentro && ids.includes(headerCentro)) {
                     perfil.centroActivo = headerCentro;
@@ -88,7 +74,6 @@ export const verificarToken = async (req, res, next) => {
     }
 };
 
-// Roles considerados "admin" en cualquiera de los niveles de la jerarquía
 const ROLES_ADMIN = [
     'admin',
     'admin_centro',
@@ -96,7 +81,6 @@ const ROLES_ADMIN = [
     'superadmin',
 ];
 
-// Guard genérico: pasa si el rol del usuario está en la lista permitida
 export const requiereRol = (...rolesPermitidos) => (req, res, next) => {
     if (!req.usuario || !rolesPermitidos.includes(rolEfectivo(req.usuario))) {
         return res

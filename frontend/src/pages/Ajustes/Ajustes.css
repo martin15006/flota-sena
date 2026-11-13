@@ -17,7 +17,6 @@
     font-size: var(--tamano-sm);
 }
 
-/* ===== Filas tipo ajustes del sistema ===== */
 .ajustes-rows {
     display: flex;
     flex-direction: column;

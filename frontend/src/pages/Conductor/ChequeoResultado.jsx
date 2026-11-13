@@ -6,7 +6,6 @@ import {
 } from "../../lib/chequeoEnCurso.js";
 import "./ChequeoResultado.css";
 
-// Configuracion visual segun el estado resultante del chequeo
 const CONFIG_ESTADO = {
     operativo: {
         titulo: "Vehículo OPERATIVO",
@@ -80,8 +79,6 @@ function ChequeoResultado() {
     const estadoFinal = chequeo.resultado_estado || vehiculo.estado_actual || "operativo";
     const config = CONFIG_ESTADO[estadoFinal] || CONFIG_ESTADO.operativo;
 
-    // Los counts vienen del row del chequeo en BD (items_*_count) y el conteo
-    // de criticos no cumple viene a nivel root de la respuesta del cierre.
     const totalCumple = chequeo.items_cumple_count ?? 0;
     const totalNoCumple = chequeo.items_no_cumple_count ?? 0;
     const totalNoAplica = chequeo.items_no_aplica_count ?? 0;
@@ -93,7 +90,6 @@ function ChequeoResultado() {
                 <img src="/logoverde.png" alt="SENA" className="resultado-mini-logo" />
             </header>
             <main className="resultado-main">
-                {/* Tarjeta principal con resultado */}
                 <div className="resultado-tarjeta">
                     <div className="resultado-icono">{config.icono}</div>
                     <h1 className="resultado-titulo">{config.titulo}</h1>
@@ -106,7 +102,6 @@ function ChequeoResultado() {
                     )}
                 </div>
 
-                {/* Resumen del chequeo */}
                 <div className="resultado-resumen">
                     <div className="resultado-resumen-titulo">Resumen del chequeo</div>
 
@@ -143,7 +138,6 @@ function ChequeoResultado() {
                     )}
                 </div>
 
-                {/* Datos del vehiculo */}
                 <div className="resultado-vehiculo">
                     <div className="resultado-vehiculo-placa">
                         {vehiculo.placa || "—"}
@@ -153,7 +147,6 @@ function ChequeoResultado() {
                     </div>
                 </div>
 
-                {/* Aviso de actualizacion del vehiculo */}
                 {actualizacion && actualizacion.actualizado && (
                     <div className="resultado-aviso resultado-aviso-warning">
                         <strong>Estado del vehículo actualizado:</strong>{" "}
@@ -161,7 +154,6 @@ function ChequeoResultado() {
                     </div>
                 )}
 
-                {/* Sugerencia al admin (mejora del estado) */}
                 {sugerencia && (
                     <div className="resultado-aviso resultado-aviso-info">
                         Tu chequeo sugiere que el vehículo está mejor que su estado actual.

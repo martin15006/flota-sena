@@ -1,5 +1,3 @@
-/* Pantalla del checklist (paso 4 del flujo del conductor). Mobile-first. */
-
 .items-pagina {
     min-height: 100vh;
     background: var(--superficie-sutil);
@@ -7,7 +5,6 @@
     flex-direction: column;
 }
 
-/* Header */
 .items-header {
     background: var(--superficie);
     border-bottom: var(--borde-fino);
@@ -73,7 +70,6 @@
     letter-spacing: 1px;
 }
 
-/* Progreso de categorias */
 .items-progreso-categorias {
     display: grid;
     grid-template-columns: repeat(5, 1fr);
@@ -102,7 +98,6 @@
     box-shadow: 0 0 0 2px rgba(46, 125, 50, 0.25);
 }
 
-/* Main */
 .items-main {
     flex: 1;
     max-width: 700px;
@@ -114,7 +109,6 @@
     gap: var(--espacio-md);
 }
 
-/* Encabezado de la categoria */
 .items-cat-encabezado {
     background: var(--superficie);
     border: 2px solid var(--color-gris-300);
@@ -162,7 +156,6 @@
     letter-spacing: 0.5px;
 }
 
-/* Lista de items */
 .items-lista {
     display: flex;
     flex-direction: column;
@@ -219,7 +212,6 @@
     line-height: 1.4;
 }
 
-/* Botones Cumple / No cumple / N/A */
 .items-card-botones {
     display: grid;
     grid-template-columns: 1fr 1fr 1fr;
@@ -250,7 +242,6 @@
     transform: scale(0.97);
 }
 
-/* Estados activos */
 .items-card-boton-cumple.items-card-boton-activo {
     background: var(--color-verde-sena);
     color: var(--color-blanco);
@@ -272,7 +263,6 @@
     box-shadow: 0 3px 10px rgba(0, 0, 0, 0.2);
 }
 
-/* Observacion (aparece solo si No cumple) */
 .items-card-obs-wrap {
     display: flex;
     flex-direction: column;
@@ -316,7 +306,6 @@
     box-shadow: 0 0 0 3px rgba(211, 47, 47, 0.15);
 }
 
-/* Evidencia fotográfica */
 .items-card-fotos-wrap {
     display: flex;
     flex-direction: column;
@@ -400,7 +389,6 @@
     transform: scale(1.1);
 }
 
-/* Aviso cuando aún no hay observación válida */
 .items-card-fotos-aviso {
     background: var(--estado-adv-fondo);
     border: 2px solid var(--estado-adv-borde);
@@ -412,7 +400,6 @@
     line-height: 1.4;
 }
 
-/* Grid de 2 botones (cámara y galería) */
 .items-card-fotos-botones {
     display: grid;
     grid-template-columns: 1fr 1fr;
@@ -472,7 +459,6 @@
     font-style: italic;
 }
 
-/* Error de categoria */
 .items-error-categoria {
     background: var(--estado-error-fondo);
     color: var(--color-rojo);
@@ -484,7 +470,6 @@
     line-height: 1.4;
 }
 
-/* Botones de navegacion */
 .items-nav-botones {
     display: grid;
     grid-template-columns: 1fr 2fr;
@@ -544,7 +529,6 @@
     box-shadow: var(--sombra-lg);
 }
 
-/* Estados genericos */
 .items-estado {
     text-align: center;
     padding: var(--espacio-xl) var(--espacio-md);
@@ -578,7 +562,6 @@
     box-shadow: var(--sombra-md);
 }
 
-/* Modal de confirmacion final */
 .items-modal-overlay {
     position: fixed;
     inset: 0;
@@ -684,7 +667,6 @@
     box-shadow: var(--sombra-md);
 }
 
-/* Animaciones */
 @keyframes items-fade-in {
     from { opacity: 0; }
     to { opacity: 1; }
@@ -695,7 +677,6 @@
     to { opacity: 1; transform: scale(1); }
 }
 
-/* Responsive */
 @media (max-width: 480px) {
     .items-cat-icono {
         font-size: 28px;

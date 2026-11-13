@@ -1,8 +1,3 @@
--- Migracion: agregar 'licencia_vencida' a las razones de intento bloqueado.
--- Tarea #106: bloquear el chequeo si la licencia del conductor esta vencida.
---
--- COMO APLICAR (Supabase Dashboard -> SQL Editor -> Run):
-
 ALTER TABLE intentos_chequeo_bloqueado
     DROP CONSTRAINT IF EXISTS intentos_chequeo_bloqueado_razon_check;
 

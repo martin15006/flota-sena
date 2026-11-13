@@ -1,14 +1,3 @@
-// Pagina de detalle (vista de "ficha completa") de un usuario en modo lectura.
-// Acceso: solo admin, ruta /admin/usuarios/:id. Boton "Ver perfil" desde la tabla.
-// Diseno (ver explicacion en bitacora.semana-4.fase 4):
-//   - Hero: foto + nombre + rol + centro + estado
-//   - Datos personales (cedula, correo, telefono)
-//   - Licencia + seguridad social (solo si es conductor)
-//   - Resumen de chequeos (solo si es conductor)
-//   - Actividad reciente (auditoria_usuarios)
-// Acciones administrativas: 1 sola, "Editar perfil", que abre el modal de edicion
-// existente (no se duplican aqui acciones de cambiar correo/cedula).
-
 import { useEffect, useState } from "react";
 import { useNavigate, useParams } from "react-router-dom";
 import { useAuth } from "../../hooks/useAuth.js";
@@ -21,7 +10,6 @@ import BotonExportar from "../../components/BotonExportar/BotonExportar.jsx";
 import ModalEditarUsuario from "../UsuariosAdmin/components/ModalEditarUsuario.jsx";
 import "./PerfilUsuario.css";
 
-// Etiquetas legibles para las acciones de auditoria
 const ETIQUETAS_ACCION = {
     creado: "Cuenta creada",
     editado: "Datos editados",
@@ -33,7 +21,6 @@ const ETIQUETAS_ACCION = {
     eliminado: "Cuenta eliminada",
 };
 
-// Estado del último chequeo → color de badge
 const COLOR_RESULTADO = {
     operativo: "verde",
     observacion: "amarillo",
@@ -42,7 +29,6 @@ const COLOR_RESULTADO = {
     no_operativo: "rojo",
 };
 
-// Formato de fecha tipo "28 may 2026, 14:30"
 const formatearFechaCorta = (iso) => {
     if (!iso) return "—";
     const d = new Date(iso);
@@ -55,7 +41,6 @@ const formatearFechaCorta = (iso) => {
     });
 };
 
-// Para fechas de vencimiento (sin hora)
 const formatearFechaSimple = (iso) => {
     if (!iso) return "—";
     const d = new Date(iso);
@@ -66,8 +51,6 @@ const formatearFechaSimple = (iso) => {
     });
 };
 
-// Devuelve string tipo "9 meses", "12 días", "vencida hace 3 días".
-// Umbrales: <0=vencido (rojo invertido), <=15=critico (rojo), <=30=urgente (naranja), >30=normal (verde)
 const tiempoHasta = (iso) => {
     if (!iso) return null;
     const ahora = new Date();
@@ -148,7 +131,6 @@ function PerfilUsuario() {
 
     return (
         <div className="perfil-pagina">
-            {/* Header igual que el resto del admin */}
             <header className="perfil-header">
                 <div className="perfil-logo-wrapper">
                     <img src="/logoverde.png" alt="SENA" className="perfil-logo-img" />
@@ -184,7 +166,6 @@ function PerfilUsuario() {
                     </div>
                 </div>
 
-                {/* ===== HERO: foto + datos resumen ===== */}
                 <section className="perfil-hero animar-fade-in">
                     {usuario.foto_url ? (
                         <img
@@ -226,7 +207,6 @@ function PerfilUsuario() {
                     </div>
                 </section>
 
-                {/* ===== DATOS PERSONALES ===== */}
                 <section className="perfil-seccion animar-fade-in">
                     <h2 className="perfil-seccion-titulo">Datos personales</h2>
                     <div className="perfil-grid-datos">
@@ -255,7 +235,6 @@ function PerfilUsuario() {
                     </div>
                 </section>
 
-                {/* ===== LICENCIA + SEGURIDAD SOCIAL (solo conductor) ===== */}
                 {esConductor && (
                     <section className="perfil-seccion animar-fade-in">
                         <h2 className="perfil-seccion-titulo">Licencia y seguridad social</h2>
@@ -304,7 +283,6 @@ function PerfilUsuario() {
                     </section>
                 )}
 
-                {/* ===== RESUMEN DE CHEQUEOS (solo conductor) ===== */}
                 {esConductor && chequeos && (
                     <section className="perfil-seccion animar-fade-in">
                         <h2 className="perfil-seccion-titulo">Historial de chequeos</h2>
@@ -373,7 +351,6 @@ function PerfilUsuario() {
                     </section>
                 )}
 
-                {/* ===== ACTIVIDAD RECIENTE ===== */}
                 <section className="perfil-seccion animar-fade-in">
                     <h2 className="perfil-seccion-titulo">Actividad reciente</h2>
                     {actividad_reciente.length === 0 ? (
@@ -403,8 +380,6 @@ function PerfilUsuario() {
 
             <Footer />
 
-            {/* Modal de edicion reutilizado de UsuariosAdmin.
-                Al guardar, mostramos toast y recargamos el perfil para reflejar cambios. */}
             <ModalEditarUsuario
                 abierto={modalEditarAbierto}
                 onCerrar={() => setModalEditarAbierto(false)}

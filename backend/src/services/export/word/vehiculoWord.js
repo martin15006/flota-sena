@@ -5,11 +5,9 @@ import { encabezadoDocx, tituloSeccion, ANCHO_CONTENIDO, celdaTexto, filaDato, e
 const ROJO = 'A32D2D';
 const textoResultado = (e) => (e || '—').replace('_', ' ').toUpperCase();
 
-// Tabla de datos (etiqueta + valor)
 const COL_ETIQUETA = 3200;
 const COL_VALOR = ANCHO_CONTENIDO - COL_ETIQUETA;
 
-// Tabla de chequeos (fecha | conductor | tipo | resultado)
 const COL_FECHA = 2400;
 const COL_TIPO = 2300;
 const COL_RES = 2200;
@@ -28,7 +26,6 @@ export const vehiculoWordBuffer = async ({ vehiculo, chequeos, origen }) => {
     const depto = ce.ciudad?.departamento?.nombre || '';
     const ubic = [ce.nombre, ciudad, depto].filter(Boolean).join(' · ') || '—';
 
-    // Identificación + estado
     const tablaDatos = tablaFull([
         filaDato('Estado', `${etiquetaEstado(vehiculo.estado).toUpperCase()}${vehiculo.nivel_criticidad != null ? ` · criticidad ${vehiculo.nivel_criticidad}%` : ''}${vehiculo.es_vip ? ' · VIP' : ''} · ${vehiculo.activo ? 'Activo' : 'Inactivo'}`, COL_ETIQUETA, COL_VALOR),
         filaDato('Marca y línea', `${vehiculo.marca || '—'} ${vehiculo.linea || ''}`.trim(), COL_ETIQUETA, COL_VALOR),
@@ -39,7 +36,6 @@ export const vehiculoWordBuffer = async ({ vehiculo, chequeos, origen }) => {
         filaDato('Kilometraje actual', vehiculo.kilometraje_actual != null ? `${Number(vehiculo.kilometraje_actual).toLocaleString('es-CO')} km` : '—', COL_ETIQUETA, COL_VALOR),
     ], [COL_ETIQUETA, COL_VALOR]);
 
-    // Documentación con marca de vencido
     const filaDoc = (etiqueta, fecha, chequeaVencido = true) => {
         const vencido = chequeaVencido && estaVencido(fecha);
         return new TableRow({ children: [
@@ -54,7 +50,6 @@ export const vehiculoWordBuffer = async ({ vehiculo, chequeos, origen }) => {
         filaDoc('Último cambio de aceite', vehiculo.ultimo_cambio_aceite, false),
     ], [COL_ETIQUETA, COL_VALOR]);
 
-    // Últimos chequeos
     const cabCheq = new TableRow({ tableHeader: true, children: [
         celdaTexto('Fecha', { width: COL_FECHA, bold: true, fill: 'F1EFE8', size: 20 }),
         celdaTexto('Conductor', { width: COL_COND, bold: true, fill: 'F1EFE8', size: 20 }),

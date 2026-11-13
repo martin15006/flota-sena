@@ -42,17 +42,13 @@ function VehiculosAdmin() {
     const [refrescando, setRefrescando] = useState(false);
     const [toast, setToast] = useState(null);
 
-    // Navegación territorial: el Nacional ve Departamentos → Centros → Vehículos;
-    // el Regional ve los Centros de su departamento → Vehículos; el Coordinador ve
-    // sus vehículos directo. La "vista" se deriva del rol + lo que el admin haya
-    // seleccionado (sin estado extra ni efectos).
     const nivelBase =
         usuario?.rol === "superadmin" ? "departamentos"
             : usuario?.rol === "admin_departamental" ? "centros"
                 : "vehiculos";
     const [deptoSel, setDeptoSel] = useState(null);
     const [centroSel, setCentroSel] = useState(null);
-    const [busquedaNivel, setBusquedaNivel] = useState(""); // buscar departamento/centro
+    const [busquedaNivel, setBusquedaNivel] = useState("");
     const vista = centroSel ? "vehiculos"
         : nivelBase === "vehiculos" ? "vehiculos"
             : (nivelBase === "departamentos" && !deptoSel) ? "departamentos"
@@ -93,8 +89,6 @@ function VehiculosAdmin() {
         return () => clearInterval(intervalo);
     }, [usuario]);
 
-    // Si el admin entró a un centro, todo (filtros, conteos, grid) se acota a ese
-    // centro; si no, trabaja sobre todos los vehículos visibles según su scope.
     const vehiculosBase = centroSel
         ? vehiculos.filter((v) => v.centro?.id === centroSel.id)
         : vehiculos;
@@ -124,8 +118,6 @@ function VehiculosAdmin() {
 
     const conteoInactivos = vehiculosBase.filter((v) => !v.activo).length;
 
-    // Agrupa los vehículos por departamento o por centro, con conteo de alertas
-    // (críticos / no operativos) para las tarjetas de los niveles superiores.
     const agruparNivel = (lista, clave) => {
         const mapa = new Map();
         for (const v of lista) {
@@ -159,7 +151,6 @@ function VehiculosAdmin() {
     };
     const puedeVolver = vista !== nivelBase;
 
-    // Buscador de los niveles superiores (departamentos / centros).
     const gruposNivel = vista === "departamentos" ? departamentos : vista === "centros" ? centrosDelNivel : [];
     const qNivel = busquedaNivel.trim().toLowerCase();
     const gruposNivelFiltrados = qNivel
@@ -256,7 +247,6 @@ function VehiculosAdmin() {
                     </div>
                 </div>
 
-                {/* Barra de navegación territorial: volver + ruta (depto › centro) */}
                 {puedeVolver && (
                     <div className="vehiculos-nivel-barra animar-fade-in">
                         <button className="vehiculos-nivel-volver" onClick={volver}>← Volver</button>
@@ -267,7 +257,6 @@ function VehiculosAdmin() {
                     </div>
                 )}
 
-                {/* NIVELES SUPERIORES: buscador + tarjetas de departamentos o de centros */}
                 {(vista === "departamentos" || vista === "centros") && !cargando && !error && gruposNivel.length > 0 && (
                     <div className="vehiculos-admin-filtros animar-fade-in">
                         <input

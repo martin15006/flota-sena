@@ -1,6 +1,3 @@
-// Rutas de fotos de evidencia del chequeo.
-// El conductor sube/elimina las suyas. El admin marca preservar_siempre.
-
 import { Router } from "express";
 import multer from "multer";
 import {
@@ -29,16 +26,12 @@ const uploadFoto = multer({
 
 router.use(verificarToken);
 
-// Conductor sube una foto a una respuesta marcada como NO CUMPLE
 router.post("/:respuestaId/fotos", soloConductor, uploadFoto.single("foto"), postFotoEvidencia);
 
-// Conductor lista las fotos de una de sus respuestas (mientras edita)
 router.get("/:respuestaId/fotos", soloConductor, getFotosDeRespuesta);
 
-// Conductor elimina una de sus fotos (mientras el chequeo este abierto)
 router.delete("/fotos/:fotoId", soloConductor, deleteFotoEvidencia);
 
-// Admin marca una foto como preservar_siempre (o lo quita)
 router.patch("/fotos/:fotoId/preservar", soloAdmin, patchPreservarFoto);
 
 export default router;

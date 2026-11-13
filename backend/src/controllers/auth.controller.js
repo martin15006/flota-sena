@@ -4,7 +4,6 @@ import { crearNotificacion } from "../services/notificaciones.service.js";
 import { suplenciaVigenteDePool, centrosCubiertosDeSuplencia } from "../services/suplencias.service.js";
 import { estadoBloqueo, registrarFallo, limpiarIntentos } from "../services/loginIntentos.service.js";
 
-// Helper: ¿la fecha de vencimiento (YYYY-MM-DD) ya paso? Compara solo fechas.
 const licenciaEstaVencida = (fechaVencimiento) => {
     if (!fechaVencimiento) return false;
     const hoy = new Date();
@@ -30,9 +29,6 @@ export const login = async (req, res) => {
             return res.status(401).json({ error: 'Credenciales invalidas' });
         }
 
-        // Anti fuerza bruta: si la cuenta esta bloqueada por intentos fallidos,
-        // ni siquiera intentamos el login hasta que pase el tiempo. (Fail-soft:
-        // si la tabla aun no existe, esto devuelve no-bloqueado y el login sigue.)
         const bloqueo = await estadoBloqueo(email);
         if (bloqueo.bloqueado) {
             const m = bloqueo.minutosRestantes;
@@ -47,8 +43,6 @@ export const login = async (req, res) => {
         });
 
         if (error) {
-            // Contraseña incorrecta: contamos el fallo. Si llega a 5 seguidos,
-            // la cuenta queda bloqueada 15 minutos.
             const fallo = await registrarFallo(email);
             if (fallo.recienBloqueado) {
                 return res.status(429).json({
@@ -58,23 +52,16 @@ export const login = async (req, res) => {
             return res.status(401).json({ error: 'Credenciales invalidas' });
         }
 
-        // Login correcto: reiniciamos el contador de intentos fallidos.
-        // Fire-and-forget (la funcion es fail-soft): no demora ni rompe el login.
         limpiarIntentos(email);
 
         const perfil = await obtenerPerfil(data.user.id);
 
-        // Llegamos aqui solo si la contraseña fue correcta (signInWithPassword OK).
-        // Si la cuenta esta desactivada, devolvemos 403 con mensaje claro para que
-        // el usuario sepa por que no puede entrar (no es un typo de contraseña).
         if (!perfil.activo) {
             return res.status(403).json({
                 error: 'Tu cuenta esta desactivada. Contacta al administrador del SENA para reactivarla.',
             });
         }
 
-        // Pool · Paso 2: adjuntar la suplencia VIGENTE para que el front sepa de una
-        // (sin esperar a /auth/me) que este conductor esta supliendo al Coordinador.
         perfil.suplencia = null;
         perfil.suplenciaCentros = [];
         perfil.centroActivo = null;
@@ -82,18 +69,12 @@ export const login = async (req, res) => {
             perfil.suplencia = await suplenciaVigenteDePool(perfil.id);
             if (perfil.suplencia) {
                 perfil.suplenciaCentros = await centrosCubiertosDeSuplencia(perfil.suplencia);
-                // Si cubre un solo centro, ese es el activo de una; si cubre varios,
-                // queda null hasta que el pool elija uno en el selector.
                 if (perfil.suplenciaCentros.length === 1) {
                     perfil.centroActivo = perfil.suplenciaCentros[0].id;
                 }
             }
         }
 
-        // Si un conductor inicia sesion con la licencia vencida, avisar al admin.
-        // Limite: maximo 5 avisos por dia por conductor (dedupeHoras=24, maxPorVentana=5)
-        // para que el admin lo vea varias veces sin saturarse si el conductor entra
-        // muchas veces. Fire-and-forget: no bloquea ni falla el login.
         if (perfil.rol === 'conductor' && licenciaEstaVencida(perfil.licencia_vencimiento)) {
             const fechaLegible = new Date(perfil.licencia_vencimiento).toLocaleDateString('es-CO', {
                 day: '2-digit', month: 'long', year: 'numeric',
@@ -107,7 +88,7 @@ export const login = async (req, res) => {
                 conductor_id: perfil.id,
                 dedupeHoras: 24,
                 maxPorVentana: 5,
-                soloCentro: true, // se queda en el centro; hacia arriba se escala a mano
+                soloCentro: true,
             }).catch((e) => console.warn('[notificaciones] login licencia vencida:', e.message));
         }
 
@@ -119,8 +100,6 @@ export const login = async (req, res) => {
                 id: perfil.id,
                 cedula: perfil.cedula,
                 nombre_completo: perfil.nombre_completo,
-                // El email vive en Supabase Auth (no en la tabla usuarios); lo tomamos
-                // del usuario autenticado para que "Mi perfil" lo muestre desde el login.
                 email: data.user.email,
                 telefono: perfil.telefono,
                 rol: perfil.rol,
@@ -167,21 +146,10 @@ export const obtenerActual = (req, res) => {
     });
 };
 
-// PATCH /api/auth/mi-perfil
-// Permite que CUALQUIER usuario logueado (admin o conductor) edite SUS PROPIOS
-// datos personales seguros: nombre_completo, telefono, foto_url.
-//
-// IMPORTANTE: NO permite cambiar cedula, email, rol, centro_id, activo,
-// debe_cambiar_password ni licencia. Esos datos solo los puede tocar:
-//   - un admin de rango superior (cedula/correo via ModalVerificacionAdmin)
-//   - el sistema (debe_cambiar_password al cambiar la contraseña)
-//   - el admin del centro (datos del conductor desde UsuariosAdmin)
 export const actualizarMiPerfil = async (req, res) => {
     try {
         const { nombre_completo, telefono, foto_url } = req.body;
 
-        // Construir solo con campos seguros que vinieron en el body.
-        // Asi un PATCH parcial es valido (solo cambiar la foto, por ejemplo).
         const cambios = {};
         if (nombre_completo !== undefined) {
             const limpio = String(nombre_completo).trim();
@@ -243,13 +211,8 @@ export const cambiarPassword = async (req, res) => {
     try {
         const { password_actual, password_nueva, password_confirmacion } = req.body;
 
-        // En primer login el flujo es distinto: el usuario tiene una password temporal
-        // que apunto pero ya no recuerda. Solo se le pide la nueva.
-        // En cambio voluntario (debe_cambiar_password=false) si se pide la actual
-        // como verificacion de identidad.
         const esPrimerLogin = req.usuario.debe_cambiar_password === true;
 
-        // Validaciones basicas
         if (!password_nueva || !password_confirmacion) {
             return res.status(400).json({
                 error: "La nueva contraseña y su confirmación son obligatorias",
@@ -274,7 +237,6 @@ export const cambiarPassword = async (req, res) => {
             });
         }
 
-        // Solo en cambio voluntario verificamos la contraseña actual
         if (!esPrimerLogin) {
             if (password_nueva === password_actual) {
                 return res.status(400).json({
@@ -292,7 +254,6 @@ export const cambiarPassword = async (req, res) => {
             }
         }
 
-        // Cambiar la password via Admin API
         const { error: errUpdate } = await supabase.auth.admin.updateUserById(
             req.usuario.id,
             { password: password_nueva }
@@ -304,19 +265,11 @@ export const cambiarPassword = async (req, res) => {
                 .json({ error: "Error al actualizar la contraseña" });
         }
 
-        // Marcar debe_cambiar_password = false en la tabla usuarios
         await supabase
             .from("usuarios")
             .update({ debe_cambiar_password: false })
             .eq("id", req.usuario.id);
 
-        // IMPORTANTE: Supabase Auth invalida los tokens activos cuando se cambia
-        // la contraseña. Si simplemente respondieramos OK, la siguiente peticion
-        // del frontend devolveria 401 y el usuario seria desconectado.
-        //
-        // Solucion: hacer un login fresco con la nueva contraseña y devolver el
-        // nuevo token. El frontend lo reemplaza en localStorage y sigue navegando
-        // sin interrupcion.
         const { data: sesionNueva, error: errLoginNuevo } = await supabase.auth
             .signInWithPassword({
                 email: req.usuario.email,
@@ -324,8 +277,6 @@ export const cambiarPassword = async (req, res) => {
             });
 
         if (errLoginNuevo) {
-            // Caso raro: el cambio funciono pero no podemos generar token nuevo.
-            // El frontend debera redirigir al login con un mensaje claro.
             return res.json({
                 mensaje: "Contraseña actualizada. Por favor inicia sesión de nuevo.",
                 requiere_relogin: true,

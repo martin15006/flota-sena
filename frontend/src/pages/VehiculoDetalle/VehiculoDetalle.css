@@ -5,7 +5,6 @@
     flex-direction: column;
 }
 
-/* HEADER */
 .vehiculo-detalle-header {
     background: var(--superficie);
     border-bottom: var(--borde-fino);
@@ -72,7 +71,6 @@
     color: var(--color-blanco);
 }
 
-/* MAIN */
 .vehiculo-detalle-main {
     flex: 1;
     max-width: 1280px;
@@ -115,7 +113,6 @@
     border-left: 4px solid var(--color-rojo);
 }
 
-/* HERO */
 .vehiculo-detalle-hero {
     background: var(--superficie);
     border-radius: var(--radio-lg);
@@ -263,14 +260,12 @@
     background: var(--verde-suave);
 }
 
-/* COLUMNAS */
 .vehiculo-detalle-columnas {
     display: grid;
     grid-template-columns: repeat(auto-fit, minmax(360px, 1fr));
     gap: var(--espacio-lg);
 }
 
-/* TARJETA */
 .vehiculo-detalle-tarjeta {
     background: var(--superficie);
     border-radius: var(--radio-lg);
@@ -315,7 +310,6 @@
     text-decoration: underline;
 }
 
-/* DATOS */
 .vehiculo-detalle-datos {
     display: grid;
     grid-template-columns: repeat(auto-fit, minmax(180px, 1fr));
@@ -371,7 +365,6 @@
     margin: 0;
 }
 
-/* GALERÍA */
 .vehiculo-detalle-galeria {
     display: grid;
     grid-template-columns: repeat(auto-fill, minmax(160px, 1fr));
@@ -416,7 +409,6 @@
     box-shadow: var(--sombra-sm);
 }
 
-/* RUNT */
 .vehiculo-detalle-runt {
     border-radius: var(--radio-md);
     overflow: hidden;

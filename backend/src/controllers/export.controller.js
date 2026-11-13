@@ -10,7 +10,6 @@ import { reporteChequeosWordBuffer } from '../services/export/word/reporteCheque
 
 const TIPO_WORD = 'application/vnd.openxmlformats-officedocument.wordprocessingml.document';
 
-// GET /api/export/chequeo/:id?formato=pdf|word
 export const exportarChequeo = async (req, res) => {
     try {
         const { id } = req.params;
@@ -35,7 +34,6 @@ export const exportarChequeo = async (req, res) => {
     }
 };
 
-// GET /api/export/vehiculo/:id?formato=pdf|word
 export const exportarVehiculo = async (req, res) => {
     try {
         const { id } = req.params;
@@ -60,7 +58,6 @@ export const exportarVehiculo = async (req, res) => {
     }
 };
 
-// GET /api/export/conductor/:id?formato=pdf|word
 export const exportarConductor = async (req, res) => {
     try {
         const { id } = req.params;
@@ -86,7 +83,6 @@ export const exportarConductor = async (req, res) => {
     }
 };
 
-// GET /api/export/reporte/chequeos?formato=pdf|word&fecha_desde=&fecha_hasta=&placa=&resultado_estado=&solo_oficiales=&solo_cerrados=
 export const exportarReporteChequeos = async (req, res) => {
     try {
         const formato = req.query.formato === 'word' ? 'word' : 'pdf';

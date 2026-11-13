@@ -1,5 +1,3 @@
-   /* COMPONENTE: ProtectedRoute (pantalla de carga de sesion) */
-
    .protected-cargando {
        min-height: 100vh;
        display: flex;

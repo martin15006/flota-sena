@@ -26,24 +26,15 @@ dotenv.config();
 const app = express();
 const PORT = process.env.PORT || 3001;
 
-// Detras del proxy de Railway: confiar en 1 salto para leer la IP real del cliente
-// (necesario para que el rate-limit por IP cuente bien y no agrupe a todos en una sola IP).
 app.set('trust proxy', 1);
-// No revelar el framework (fingerprinting).
 app.disable('x-powered-by');
 
-// Helmet: cabeceras de seguridad. Config CONSERVADORA para un API solo-JSON que vive en
-// otro origen que el frontend (Cloudflare): SIN CSP (el del sitio va en frontend/public/_headers)
-// y SIN las politicas cross-origin-isolation, para no interferir con el fetch del front -> backend.
 app.use(helmet({
     contentSecurityPolicy: false,
     crossOriginResourcePolicy: false,
     crossOriginEmbedderPolicy: false,
 }));
 
-// Limite anti-fuerza-bruta POR IP en el login. Complementa el bloqueo por cuenta de
-// loginIntentos.service: frena el password-spraying (rotar muchas cuentas desde una IP).
-// 50 intentos / 15 min por IP es holgado incluso para una oficina con IP compartida.
 const limiteLogin = rateLimit({
     windowMs: 15 * 60 * 1000,
     max: 50,
@@ -52,17 +43,12 @@ const limiteLogin = rateLimit({
     message: { error: 'Demasiados intentos de inicio de sesion. Espera unos minutos e intenta de nuevo.' },
 });
 
-// CORS: en development aceptamos localhost y cualquier IP LAN (192.168.x.x, 10.x.x.x, 172.16-31.x.x)
-// para permitir pruebas desde celulares conectados al mismo wifi. En produccion se respeta
-// estrictamente la variable CORS_ORIGIN del .env.
 const esDev = process.env.NODE_ENV !== 'production';
 
 app.use(cors({
     origin: (origin, callback) => {
-        // Peticiones sin origin (Thunder Client, curl, mismo origen) siempre permitidas
         if (!origin) return callback(null, true);
 
-        // En produccion solo CORS_ORIGIN literal
         if (!esDev) {
             return callback(
                 origin === process.env.CORS_ORIGIN ? null : new Error(`Origen no permitido: ${origin}`),
@@ -70,7 +56,6 @@ app.use(cors({
             );
         }
 
-        // En dev: aceptar localhost y rangos LAN privados (RFC 1918)
         const permitidoDev = /^http:\/\/(localhost|127\.0\.0\.1|10\.[\d.]+|192\.168\.[\d.]+|172\.(1[6-9]|2[0-9]|3[01])\.[\d.]+)(:\d+)?$/;
         if (permitidoDev.test(origin)) return callback(null, true);
 
@@ -117,11 +102,8 @@ const servidor = app.listen(PORT, async () => {
     console.log(`Servidor corriendo en http://localhost:${PORT}`);
     console.log(`Prueba: http://localhost:${PORT}/api/hello`);
     console.log(`Test Supabase: http://localhost:${PORT}/api/test-supabase`);
-    // Esperamos el primer latido antes de seguir, asi las primeras requests llegan con la conexion caliente
     await iniciarKeepAlive();
-    // Programar el aviso diario de vencimientos (SOAT/RTM/extintor/licencia)
     iniciarCronVencimientos();
-    // Verificar credenciales de correo (no bloquea el arranque)
     verificarCorreo();
 });
 

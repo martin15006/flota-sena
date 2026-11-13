@@ -11,35 +11,28 @@ import "./SeleccionVehiculo.css";
 function SeleccionVehiculo() {
     const navigate = useNavigate();
 
-    // Estado del chequeo en curso
     const [chequeoEnCurso, setChequeoEnCurso] = useState(null);
 
-    // Lista de vehiculos
     const [vehiculos, setVehiculos] = useState([]);
     const [cargandoLista, setCargandoLista] = useState(true);
     const [errorLista, setErrorLista] = useState(null);
 
-    // Filtro de busqueda
     const [busqueda, setBusqueda] = useState("");
 
-    // Vehiculo seleccionado y kilometraje
     const [vehiculoSeleccionado, setVehiculoSeleccionado] = useState(null);
     const [kilometraje, setKilometraje] = useState("");
     const [errorForm, setErrorForm] = useState(null);
     const [iniciando, setIniciando] = useState(false);
 
-    // Cargar el chequeo en curso al montar
     useEffect(() => {
         const enCurso = obtenerChequeoEnCurso();
         if (!enCurso || !enCurso.respuestas_aptitud) {
-            // No hay aptitud guardada → no debe estar aqui
             navigate("/conductor");
             return;
         }
         setChequeoEnCurso(enCurso);
     }, [navigate]);
 
-    // Cargar lista de vehiculos disponibles (con debounce sobre busqueda)
     useEffect(() => {
         if (!chequeoEnCurso) return;
 
@@ -89,7 +82,6 @@ function SeleccionVehiculo() {
             return;
         }
 
-        // Si el km es menor al actual, advertimos
         const kmActual = vehiculoSeleccionado.kilometraje_actual || 0;
         if (km < kmActual) {
             setErrorForm(
@@ -110,7 +102,6 @@ function SeleccionVehiculo() {
                 },
             });
 
-            // Guardar chequeo_id y datos del vehiculo en sessionStorage
             actualizarChequeoEnCurso({
                 paso: "items",
                 chequeo_id: resp.chequeo.id,
@@ -143,7 +134,6 @@ function SeleccionVehiculo() {
 
     return (
         <div className="selveh-pagina">
-            {/* Header */}
             <header className="selveh-header">
                 <button className="selveh-volver-chip" onClick={cancelarTodo}>
                     ← Cancelar
@@ -156,7 +146,6 @@ function SeleccionVehiculo() {
             </header>
 
             <main className="selveh-main">
-                {/* Buscador */}
                 <div className="selveh-buscador-wrap">
                     <label className="selveh-buscador-label">
                         Buscar por placa
@@ -171,7 +160,6 @@ function SeleccionVehiculo() {
                     />
                 </div>
 
-                {/* Lista */}
                 <div className="selveh-lista-wrap">
                     <div className="selveh-lista-titulo">
                         {cargandoLista
@@ -217,7 +205,6 @@ function SeleccionVehiculo() {
                 </div>
             </main>
 
-            {/* Modal de confirmacion del vehiculo */}
             {vehiculoSeleccionado && (
                 <div className="selveh-modal-overlay">
                     <div className="selveh-modal">

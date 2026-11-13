@@ -1,12 +1,3 @@
--- ==
--- Seed: 5 preguntas de aptitud del conductor
--- ==
--- Orden de ejecución: 03 (independiente de las anteriores)
--- Idempotente: borra las preguntas anteriores y vuelve a insertar
---
--- Fuente: Requerimientos_Sistema_Flota_SENA.html · Paso 2 del flujo del conductor
--- ==
-
 DELETE FROM preguntas_aptitud;
 
 INSERT INTO preguntas_aptitud (pregunta, respuesta_apta, orden) VALUES

@@ -1,7 +1,3 @@
-// Pagina "Todas las notificaciones" (Bloque C — complemento del dropdown).
-// Lista paginada con filtro Todas / No leidas + marcar leidas.
-// Reusa el endpoint GET /api/notificaciones?pagina=&limite=&solo_no_leidas=
-
 import { useCallback, useEffect, useState } from "react";
 import { useNavigate } from "react-router-dom";
 import { api } from "../../lib/api.js";
@@ -53,7 +49,6 @@ function Notificaciones() {
             try {
                 await api(`/notificaciones/${n.id}/leer`, { method: "PATCH" });
             } catch {
-                // si falla igual navegamos
             }
         }
         if (n.url_destino) navigate(n.url_destino);
@@ -77,7 +72,6 @@ function Notificaciones() {
     return (
         <AdminLayout titulo="Notificaciones">
             <div className="notif-pagina">
-                {/* Barra de filtros + accion */}
                 <div className="notif-barra">
                     <div className="notif-filtros">
                         <button
@@ -136,7 +130,6 @@ function Notificaciones() {
                     </ul>
                 )}
 
-                {/* Paginacion */}
                 {!cargando && total > LIMITE && (
                     <div className="notif-paginacion">
                         <button

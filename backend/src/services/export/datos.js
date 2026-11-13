@@ -4,8 +4,6 @@ import { obtenerVehiculoCompleto } from '../vehiculos.service.js';
 import { puedeAccederCentro, obtenerScope, usuarioEnScope } from '../scope.service.js';
 import { cabeceraDeCentro, origenDeUsuario, etiquetaEstado, fechaLarga } from './branding.js';
 
-// Junta TODO lo necesario para exportar un chequeo (reusa la capa de datos existente,
-// respetando el scope del usuario). Devuelve { ok, error?, status?, chequeo, origen }.
 export const datosChequeo = async (id, usuario) => {
     const resultado = await obtenerChequeoCompleto(id, usuario);
     if (resultado.error) {
@@ -16,8 +14,6 @@ export const datosChequeo = async (id, usuario) => {
     return { ok: true, chequeo, origen };
 };
 
-// Junta el vehiculo completo + sus ultimos chequeos cerrados, respetando el scope.
-// Devuelve { ok, error?, status?, vehiculo, chequeos, origen }.
 export const datosVehiculo = async (id, usuario) => {
     let vehiculo;
     try {
@@ -42,9 +38,6 @@ export const datosVehiculo = async (id, usuario) => {
     return { ok: true, vehiculo, chequeos: chequeos || [], origen };
 };
 
-// Junta el conductor (perfil completo) + sus ultimos chequeos, respetando el scope
-// (mismo criterio que la gestion de usuarios: el objetivo debe estar en el area).
-// Devuelve { ok, error?, status?, conductor, chequeos, origen }.
 export const datosConductor = async (id, usuario) => {
     const { data: conductor } = await supabase
         .from('usuarios')
@@ -62,16 +55,13 @@ export const datosConductor = async (id, usuario) => {
     try {
         const { data: authUser } = await supabase.auth.admin.getUserById(id);
         email = authUser?.user?.email || null;
-    } catch { /* sin email de auth */ }
+    } catch {  }
 
     const chequeos = await obtenerChequeosDelConductor(id, 8);
     const origen = await cabeceraDeCentro(conductor.centro_id);
     return { ok: true, conductor: { ...conductor, email }, chequeos: chequeos || [], origen };
 };
 
-// Reporte/listado de chequeos visibles segun el scope del admin, respetando los
-// mismos filtros de ChequeosAdmin (periodo, placa, resultado, oficiales, cerrados).
-// Devuelve { ok, chequeos, total, origen, filtrosTexto }.
 export const datosReporteChequeos = async (filtros, usuario) => {
     const { chequeos } = await listarChequeosParaAdmin({
         usuario,

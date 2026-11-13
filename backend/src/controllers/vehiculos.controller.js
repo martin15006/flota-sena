@@ -8,8 +8,6 @@ import {
 } from "../services/vehiculos.service.js";
 import { obtenerScope, aplicarScope, puedeAccederCentro } from "../services/scope.service.js";
 
-// Verifica que el vehiculo exista Y que el admin tenga el centro del vehiculo
-// dentro de su scope territorial (Tarea #102). Recibe el usuario completo.
 const verificarAccesoVehiculo = async (vehiculoId, usuario) => {
     const { data: existente } = await supabase
         .from("vehiculos")
@@ -49,7 +47,6 @@ export const listarVehiculos = async (req, res) => {
             .order("nivel_criticidad", { ascending: false })
             .order("placa", { ascending: true });
 
-        // Filtrar por el scope territorial del admin (centro/ciudad/depto/region/nacional)
         const scope = await obtenerScope(req.usuario);
         query = aplicarScope(query, scope);
 
@@ -133,9 +130,6 @@ export const crearVehiculo = async (req, res) => {
             });
         }
 
-        // Centro del vehiculo (multinivel #102/#116): el Coordinador de Flota
-        // hereda SU centro; el Director Regional/Nacional lo elige y debe estar
-        // dentro de su scope. (El alias 'admin' con centro tambien hereda el suyo.)
         const centroFinal = req.usuario.centro_id || req.body.centro_id;
         if (!centroFinal) {
             return res.status(400).json({
@@ -167,8 +161,6 @@ export const crearVehiculo = async (req, res) => {
                 nivel_criticidad,
                 notas,
                 centro_id: centroFinal,
-                // Vehiculo VIP / de direccion (Pool, ver docs/diseno-pool-vip.md):
-                // solo lo pueden marcar los Directores (Regional / Nacional).
                 es_vip: ["superadmin", "admin_departamental"].includes(req.usuario.rol)
                     ? req.body.es_vip === true
                     : false,
@@ -216,8 +208,6 @@ export const actualizarVehiculo = async (req, res) => {
 
         const { centro_id: _, id: __, created_at: ___, es_vip, ...datos } = req.body;
 
-        // El marcado VIP / de direccion solo lo cambian los Directores; para el
-        // resto se ignora (no se toca el valor existente).
         if (es_vip !== undefined &&
             ["superadmin", "admin_departamental"].includes(req.usuario.rol)) {
             datos.es_vip = es_vip === true;
@@ -291,9 +281,6 @@ export const reactivarVehiculo = async (req, res) => {
     try {
         const { id } = req.params;
 
-        // Cargar el vehiculo para verificar que existe y que el actor tiene acceso
-        // a su centro (mismo patron que desactivar/eliminar). Sin esto, un admin
-        // podria reactivar vehiculos de OTRO centro (IDOR).
         const { data: existente } = await supabase
             .from("vehiculos")
             .select("centro_id, placa")

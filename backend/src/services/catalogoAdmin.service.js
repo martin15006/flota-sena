@@ -1,9 +1,4 @@
-// Servicio del catalogo del chequeo (admin).
-// Soft delete (activo=false) para no romper chequeos historicos.
-
 import { supabase } from "../config/supabase.js";
-
-// -- Categorias --
 
 export const listarCategoriasAdmin = async () => {
     const { data, error } = await supabase
@@ -49,11 +44,7 @@ export const actualizarCategoria = async (id, { nombre, descripcion, icono, orde
 };
 
 export const eliminarCategoria = async (id) => {
-    // Estrategia: si la categoria no tiene items O todos sus items son borrables
-    // (sin respuestas_chequeo), se borra todo en cascada. Si algun item ya tiene
-    // historial, se hace soft delete para no romper el historial.
 
-    // 1. Buscar items de la categoria
     const { data: items, error: errItems } = await supabase
         .from("items_chequeo")
         .select("id")
@@ -62,7 +53,6 @@ export const eliminarCategoria = async (id) => {
 
     const idsItems = (items || []).map((i) => i.id);
 
-    // 2. Si hay items, ver cuantos tienen respuestas en algun chequeo
     let tieneHistorial = false;
     if (idsItems.length > 0) {
         const { count, error: errCount } = await supabase
@@ -74,7 +64,6 @@ export const eliminarCategoria = async (id) => {
     }
 
     if (tieneHistorial) {
-        // Soft delete: marca todo como inactivo
         if (idsItems.length > 0) {
             await supabase.from("items_chequeo").update({ activo: false }).in("id", idsItems);
         }
@@ -88,7 +77,6 @@ export const eliminarCategoria = async (id) => {
         return { tipo: "soft", data, motivo: "tiene_historial" };
     }
 
-    // Hard delete: primero los items (no tienen respuestas), luego la categoria
     if (idsItems.length > 0) {
         const { error: errDelItems } = await supabase
             .from("items_chequeo")
@@ -105,8 +93,6 @@ export const eliminarCategoria = async (id) => {
     if (error) throw error;
     return { tipo: "hard", data };
 };
-
-// -- Items --
 
 export const listarItemsAdmin = async () => {
     const { data, error } = await supabase
@@ -166,8 +152,6 @@ export const actualizarItem = async (id, datos) => {
 };
 
 export const eliminarItem = async (id) => {
-    // Si el item nunca tuvo respuestas, se borra de verdad. Si ya esta en algun
-    // chequeo, solo se desactiva para no romper el historial.
     const { count, error: errCount } = await supabase
         .from("respuestas_chequeo")
         .select("id", { count: "exact", head: true })
@@ -194,8 +178,6 @@ export const eliminarItem = async (id) => {
     if (error) throw error;
     return { tipo: "hard", data };
 };
-
-// -- Preguntas de aptitud --
 
 export const listarPreguntasAdmin = async () => {
     const { data, error } = await supabase
@@ -247,8 +229,6 @@ export const actualizarPregunta = async (id, { pregunta, respuesta_apta, orden, 
 };
 
 export const eliminarPregunta = async (id) => {
-    // Si la pregunta nunca tuvo respuestas, se borra de verdad. Si ya esta en
-    // algun chequeo, solo se desactiva para no romper el historial.
     const { count, error: errCount } = await supabase
         .from("respuestas_aptitud")
         .select("id", { count: "exact", head: true })

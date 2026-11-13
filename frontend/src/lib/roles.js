@@ -1,19 +1,8 @@
-// Jerarquia de roles en el FRONTEND.
-// ESPEJO de backend/src/services/jerarquia.service.js — si cambias alla, cambia aca.
-//
-// Sirve para que la UI muestre solo lo que el admin actual puede hacer (que roles
-// puede crear, que nivel de territorio asignar). La seguridad REAL la impone el
-// backend; esto es solo para no ofrecer opciones que igual serian rechazadas.
-//
-// NOTA (12 jun 2026): se eliminaron admin_regional y admin_ciudad. El SENA no los
-// usa: una "Regional" del SENA equivale a un departamento (Director Regional).
-// Quedan 4 roles + el alias historico 'admin'.
-
 export const RANGO_ROL = {
     superadmin: 3,
     admin_departamental: 2,
     admin_centro: 1,
-    admin: 1, // alias historico de admin_centro
+    admin: 1,
     conductor: 0,
 };
 
@@ -25,7 +14,6 @@ export const ETIQUETA_ROL = {
     conductor: "Conductor",
 };
 
-// Etiqueta compacta para badges/pills de tabla (espacio reducido).
 export const ETIQUETA_ROL_CORTA = {
     superadmin: "Dir. Nacional",
     admin_departamental: "Dir. Regional",
@@ -34,16 +22,12 @@ export const ETIQUETA_ROL_CORTA = {
     conductor: "Conductor",
 };
 
-// Que NIVEL geografico se le asigna a cada rol.
-//   departamento / centro  (superadmin no tiene territorio)
 export const NIVEL_TERRITORIO = {
     admin_departamental: "departamento",
     admin_centro: "centro",
     conductor: "centro",
 };
 
-// Todos los roles con acceso al panel administrativo + el alias historico 'admin'.
-// Lo unico que NO es admin es 'conductor'.
 export const ROLES_ADMIN = [
     "admin",
     "admin_centro",
@@ -51,32 +35,21 @@ export const ROLES_ADMIN = [
     "superadmin",
 ];
 
-// ¿Este rol es de tipo administrador (cualquier nivel)? Usar esto en vez de
-// comparar contra "admin" a secas, que deja fuera a los roles multinivel.
 export const esAdmin = (rol) => ROLES_ADMIN.includes(rol);
 
-// ¿Es un Director (Regional o Nacional)? Son los que asignan el VIP/pool.
 export const esDirector = (rol) => rol === "superadmin" || rol === "admin_departamental";
 
-// ¿Tiene una suplencia VIGENTE? (el backend adjunta usuario.suplencia o null)
 export const enSuplencia = (usuario) => !!usuario?.suplencia;
 
-// ¿Es admin a efectos de UI? Admin por rol, O un conductor del pool con suplencia
-// vigente (actua como Coordinador). Usar esto para gatear la UI admin del suplente.
 export const esAdminEfectivo = (usuario) =>
     esAdmin(usuario?.rol) || enSuplencia(usuario);
 
-// Suplencia Fase B (multi-centro): ¿la suplencia cubre VARIOS centros (toda una regional)?
 export const cubreVariosCentros = (usuario) =>
     (usuario?.suplencia_centros?.length || 0) > 1;
 
-// ¿El suplente todavia tiene que ELEGIR a que centro entrar? (cubre varios y no eligio).
-// Mientras no elija, no debe ver el panel admin (no tendria scope).
 export const necesitaElegirCentro = (usuario) =>
     enSuplencia(usuario) && cubreVariosCentros(usuario) && !usuario?.centro_activo;
 
-// Etiqueta de CARGO considerando el pool (ver docs/diseno-pool-vip.md): un
-// conductor con es_pool se muestra como "Pool de transporte" en vez de "Conductor".
 export const etiquetaCargo = (usuario) => {
     if (usuario?.rol === "conductor" && usuario?.es_pool) return "Pool de transporte";
     return ETIQUETA_ROL[usuario?.rol] || usuario?.rol || "";
@@ -91,9 +64,6 @@ export const rangoDe = (rol) => {
     return r === undefined ? -1 : r;
 };
 
-// Roles que el actor puede crear: todos los de rango ESTRICTAMENTE inferior.
-// Excepcion (continuidad): el superadmin tambien puede nombrar OTROS superadmins
-// (pero nunca eliminarlos/desactivarlos/editarlos — eso protege #112).
 export const rolesQuePuedeCrear = (rolActor) => {
     const nivel = rangoDe(rolActor);
     const canonicos = [

@@ -1,10 +1,3 @@
-// Campanita de notificaciones en el header del admin (Bloque C paso 3).
-// Antes era placeholder. Ahora:
-//   - Polling cada 30s del contador no leidas (punto rojo).
-//   - Click abre dropdown con las ultimas 10 notificaciones.
-//   - Cada notificacion clicable: marca como leida + navega al url_destino.
-//   - Boton "Marcar todas como leidas" al pie.
-
 import { useEffect, useRef, useState } from "react";
 import { useNavigate } from "react-router-dom";
 import useNotificaciones from "../../hooks/useNotificaciones.js";
@@ -24,12 +17,10 @@ function Campanita() {
         marcarTodasLeidas,
     } = useNotificaciones({ habilitado: true });
 
-    // Cargar la lista al abrir el dropdown
     useEffect(() => {
         if (abierto) cargarLista();
     }, [abierto, cargarLista]);
 
-    // Cerrar al hacer clic fuera
     useEffect(() => {
         if (!abierto) return undefined;
         const onClick = (e) => {

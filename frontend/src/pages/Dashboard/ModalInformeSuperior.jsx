@@ -1,11 +1,9 @@
-// Modal para que un admin escale un informe a su superior inmediato (Opción C).
-// Le llega al superior por correo + notificación en la campanita.
 import { useEffect, useState } from "react";
 import { api } from "../../lib/api.js";
 import "./ModalInformeSuperior.css";
 
 function ModalInformeSuperior({ abierto, onCerrar, onEnviado }) {
-    const [superior, setSuperior] = useState(null); // { tieneSuperior, etiqueta }
+    const [superior, setSuperior] = useState(null);
     const [asunto, setAsunto] = useState("");
     const [mensaje, setMensaje] = useState("");
     const [incluirResumen, setIncluirResumen] = useState(true);

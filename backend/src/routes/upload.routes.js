@@ -26,7 +26,6 @@ const upload = multer({
 });
 
 
-// solo los admin pueden subir fotos 
 router.use(verificarToken, soloAdmin);
 
 router.post('/foto', upload.single('foto'), subirFoto);

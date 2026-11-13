@@ -1,6 +1,3 @@
-// Pantalla admin del catalogo del chequeo: categorias, items y preguntas de aptitud.
-// Cualquier cambio se refleja inmediatamente en la app del conductor.
-
 import { useEffect, useState } from "react";
 import { useNavigate } from "react-router-dom";
 import { api } from "../../lib/api.js";
@@ -10,7 +7,6 @@ import Toast from "../../components/Toast/Toast.jsx";
 import AdminLayout from "../../components/AdminLayout/AdminLayout.jsx";
 import "./CatalogoAdmin.css";
 
-// Emojis sugeridos para categorias (selector visual)
 const EMOJIS_CATEGORIAS = [
     "🛞", "⛽", "🔧", "💡", "🪑", "🚦", "🔩", "🚗",
     "🦶", "🛢️", "🔋", "🪟", "🚪", "🛑", "📋", "🧰",
@@ -23,28 +19,19 @@ function CatalogoAdmin() {
     const navigate = useNavigate();
     const { usuario } = useAuth();
 
-    // Tab activa
     const [tab, setTab] = useState("categorias");
 
-    // Listas
     const [categorias, setCategorias] = useState([]);
     const [items, setItems] = useState([]);
     const [preguntas, setPreguntas] = useState([]);
 
-    // Estados generales
     const [cargando, setCargando] = useState(false);
     const [toast, setToast] = useState(null);
-    // ^ { mensaje: string, tipo: 'exito' | 'error' | 'advertencia' | 'info' }
 
-    // Modal generico de formulario
     const [modal, setModal] = useState(null);
-    // ^ { tipo: 'categoria'|'item'|'pregunta', modo: 'crear'|'editar', datos: {...} }
 
-    // Modal de confirmacion de borrado
     const [confirmacion, setConfirmacion] = useState(null);
-    // ^ { tipo, id, nombre }
 
-    // Cargar segun tab al cambiar
     useEffect(() => {
         cargarTab(tab);
     }, [tab]);
@@ -75,7 +62,6 @@ function CatalogoAdmin() {
         }
     };
 
-    // Funciones para abrir el modal de crear/editar
     const abrirCrear = (tipo) => {
         const plantillas = {
             categoria: { nombre: "", descripcion: "", icono: "•", orden: 99 },
@@ -144,7 +130,6 @@ function CatalogoAdmin() {
                 confirmacion.tipo === "categoria" ? "Categoría" :
                 confirmacion.tipo === "item" ? "Ítem" : "Pregunta";
             const resp = await api(`${rutas[confirmacion.tipo]}/${confirmacion.id}`, { method: "DELETE" });
-            // El backend devuelve tipo: 'hard' (borrado real) o 'soft' (desactivada por historial)
             if (resp.tipo === "hard") {
                 setToast({
                     mensaje: `${nombreEntidad} eliminada permanentemente`,
@@ -172,7 +157,6 @@ function CatalogoAdmin() {
 
     return (
         <AdminLayout titulo="Catálogo del chequeo">
-            {/* Barra de página */}
             <section className="catadmin-barra-pagina">
                 <div className="catadmin-barra-titulo">
                     <h1>Catálogo del chequeo</h1>
@@ -180,7 +164,6 @@ function CatalogoAdmin() {
                 </div>
             </section>
 
-            {/* Tabs */}
             <nav className="catadmin-tabs">
                 <button
                     className={`catadmin-tab ${tab === "categorias" ? "catadmin-tab-activa" : ""}`}
@@ -205,7 +188,6 @@ function CatalogoAdmin() {
             <main className="catadmin-main">
                 {cargando && <div className="catadmin-cargando">Cargando...</div>}
 
-                {/* Tab categorias */}
                 {tab === "categorias" && !cargando && (
                     <section>
                         <div className="catadmin-toolbar">
@@ -250,7 +232,6 @@ function CatalogoAdmin() {
                     </section>
                 )}
 
-                {/* Tab items */}
                 {tab === "items" && !cargando && (
                     <section>
                         <div className="catadmin-toolbar">
@@ -266,7 +247,6 @@ function CatalogoAdmin() {
                             </button>
                         </div>
 
-                        {/* Agrupar items por categoria */}
                         {categorias.map((cat) => {
                             const itemsCat = items.filter((i) => i.categoria_id === cat.id);
                             if (itemsCat.length === 0) return null;
@@ -311,7 +291,6 @@ function CatalogoAdmin() {
                     </section>
                 )}
 
-                {/* Tab preguntas */}
                 {tab === "preguntas" && !cargando && (
                     <section>
                         <div className="catadmin-toolbar">
@@ -353,7 +332,6 @@ function CatalogoAdmin() {
                 )}
             </main>
 
-            {/* Modal de formulario */}
             <Modal
                 abierto={!!modal}
                 onCerrar={cerrarModal}
@@ -388,7 +366,6 @@ function CatalogoAdmin() {
                 )}
             </Modal>
 
-            {/* Modal de confirmacion de borrado */}
             <Modal
                 abierto={!!confirmacion}
                 onCerrar={() => setConfirmacion(null)}
@@ -419,7 +396,6 @@ function CatalogoAdmin() {
                 )}
             </Modal>
 
-            {/* Toast de notificaciones */}
             {toast && (
                 <Toast
                     mensaje={toast.mensaje}
@@ -432,8 +408,6 @@ function CatalogoAdmin() {
         </AdminLayout>
     );
 }
-
-// -- Sub-formularios --
 
 function FormCategoria({ datos, onChange }) {
     return (

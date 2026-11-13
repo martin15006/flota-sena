@@ -1,16 +1,3 @@
-// Mi perfil — pagina dedicada para que el usuario logueado vea y edite
-// SUS PROPIOS datos personales (Tarea #100).
-//
-// Reglas de negocio:
-//   - Foto, nombre y telefono: el propio usuario los puede cambiar.
-//   - Cedula y correo: SOLO un admin de rango superior puede cambiarlos
-//     (el usuario los ve en modo lectura con un mensaje explicativo).
-//   - Cambiar contraseña: link al flujo /cambiar-password ya existente.
-//
-// Se monta dentro de AdminLayout para admins. Si un conductor entra aqui,
-// se mostraria igual pero sin el sidebar (esto se decide cuando hagamos
-// el perfil del conductor — por ahora solo lo usa el admin).
-
 import { useEffect, useRef, useState } from "react";
 import { useNavigate } from "react-router-dom";
 import { useAuth } from "../../hooks/useAuth.js";
@@ -24,24 +11,20 @@ function MiPerfil() {
     const { usuario, actualizarUsuario } = useAuth();
     const navigate = useNavigate();
 
-    // Form para los campos editables. Se inicializa con los valores actuales.
     const [form, setForm] = useState({
         nombre_completo: "",
         telefono: "",
     });
-    const [foto, setFoto] = useState(null);            // archivo seleccionado
-    const [fotoPreview, setFotoPreview] = useState(null); // url preview o url remota
+    const [foto, setFoto] = useState(null);
+    const [fotoPreview, setFotoPreview] = useState(null);
     const [cargando, setCargando] = useState(false);
     const [subiendoFoto, setSubiendoFoto] = useState(false);
     const [error, setError] = useState(null);
     const [toast, setToast] = useState(null);
 
-    // Avisos contextuales debajo de cada campo (mismo patron que ModalCrear/Editar).
-    // Se muestran al tipear un caracter no permitido y se borran a los 2.5s.
     const [avisos, setAvisos] = useState({});
     const timersAvisos = useRef({});
 
-    // Ref al input file oculto para disparar el dialogo desde el boton
     const fileInputRef = useRef(null);
 
     const mostrarToast = (mensaje, tipo = "exito") => setToast({ mensaje, tipo });
@@ -69,7 +52,6 @@ function MiPerfil() {
         return filtrado;
     };
 
-    // Rellenar el form cuando se carga el usuario
     useEffect(() => {
         if (usuario) {
             setForm({
@@ -84,7 +66,6 @@ function MiPerfil() {
 
     const inicial = usuario.nombre_completo?.charAt(0).toUpperCase() || "U";
 
-    // Filtros de input (mismo patron que en otros formularios)
     const soloLetrasYEspacios = (texto) =>
         (texto || "").replace(/[^A-Za-zÁÉÍÓÚáéíóúÑñÜü\s]/g, "");
     const telefonoColombia = (texto) =>
@@ -116,7 +97,6 @@ function MiPerfil() {
         try {
             let foto_url = usuario.foto_url;
 
-            // Si hay nueva foto, subir primero
             if (foto) {
                 setSubiendoFoto(true);
                 const fd = new FormData();
@@ -148,8 +128,6 @@ function MiPerfil() {
                 },
             });
 
-            // Actualizar el usuario global del AuthContext para que el header
-            // y demas componentes reflejen los cambios sin recargar.
             if (actualizarUsuario) actualizarUsuario(resp.usuario);
 
             mostrarToast(resp.mensaje || "Perfil actualizado correctamente", "exito");
@@ -165,7 +143,6 @@ function MiPerfil() {
     return (
         <AdminLayout titulo="Mi perfil">
             <div className="mi-perfil-contenedor animar-fade-in-up">
-                {/* ===== Hero: foto + nombre + rol + centro ===== */}
                 <section className="mi-perfil-hero">
                     {fotoPreview ? (
                         <img
@@ -182,7 +159,6 @@ function MiPerfil() {
                         <div className="mi-perfil-centro">{usuario.centro_nombre}</div>
                     )}
 
-                    {/* Boton "Cambiar foto" debajo, como pediste */}
                     <input
                         type="file"
                         accept="image/jpeg, image/png, image/webp"
@@ -205,11 +181,9 @@ function MiPerfil() {
                     )}
                 </section>
 
-                {/* ===== Formulario de datos personales ===== */}
                 <form className="mi-perfil-form" onSubmit={guardar}>
                     <h3 className="mi-perfil-seccion-titulo">Datos personales</h3>
 
-                    {/* Cedula — solo lectura */}
                     <div className="mi-perfil-campo">
                         <label className="mi-perfil-label">
                             Cédula
@@ -224,7 +198,6 @@ function MiPerfil() {
                         />
                     </div>
 
-                    {/* Correo — solo lectura */}
                     <div className="mi-perfil-campo">
                         <label className="mi-perfil-label">
                             Correo electrónico
@@ -239,8 +212,6 @@ function MiPerfil() {
                         />
                     </div>
 
-                    {/* Aviso explicativo (segun el nivel: el superadmin no tiene
-                        a nadie por encima — su via es el soporte tecnico) */}
                     <div className="mi-perfil-aviso-bloqueado">
                         <strong>¿Necesitas cambiar tu cédula o correo?</strong>{" "}
                         {usuario?.rol === "superadmin"
@@ -248,7 +219,6 @@ function MiPerfil() {
                             : "Por seguridad, estos datos solo pueden ser modificados por un administrador de rango superior. Contáctalo si los datos son incorrectos."}
                     </div>
 
-                    {/* Nombre — editable */}
                     <div className="mi-perfil-campo">
                         <label className="mi-perfil-label">Nombre completo *</label>
                         <input
@@ -277,7 +247,6 @@ function MiPerfil() {
                         )}
                     </div>
 
-                    {/* Telefono — editable */}
                     <div className="mi-perfil-campo">
                         <label className="mi-perfil-label">Teléfono</label>
                         <input

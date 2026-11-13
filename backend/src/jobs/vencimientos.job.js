@@ -1,8 +1,3 @@
-// Job diario de vencimientos (node-cron).
-//
-// Cada manana: arma la lista de documentos por vencer, crea las notificaciones
-// en la campanita (con dedup de 7 dias para no repetir a diario) y manda un
-// correo-resumen por admin con lo que esta por vencer en su centro.
 import cron from 'node-cron';
 import { supabase } from '../config/supabase.js';
 import { correoHabilitado } from '../config/email.js';
@@ -11,9 +6,8 @@ import { crearNotificacion } from '../services/notificaciones.service.js';
 import { enviarCorreo, plantillaDigestVencimientos, obtenerMapaEmails } from '../services/email.service.js';
 import { cabeceraDeCentro, fechaLarga } from '../services/export/branding.js';
 
-const DEDUPE_HORAS = 24 * 7; // no repetir el mismo aviso (mismo doc) en 7 dias
+const DEDUPE_HORAS = 24 * 7;
 
-// Ejecuta una revision completa. Exportada para poder dispararla manualmente.
 export const ejecutarRevisionVencimientos = async () => {
     let items = [];
     try {
@@ -24,7 +18,6 @@ export const ejecutarRevisionVencimientos = async () => {
     }
     console.log(`[vencimientos] revision: ${items.length} documento(s) por vencer`);
 
-    // 1) Notificaciones en la campanita (una por item, fan-out a los admins del centro)
     let notifsCreadas = 0;
     for (const it of items) {
         const esVeh = Boolean(it.vehiculo_id);
@@ -40,7 +33,7 @@ export const ejecutarRevisionVencimientos = async () => {
                 conductor_id: it.conductor_id || null,
                 dedupeHoras: DEDUPE_HORAS,
                 maxPorVentana: 1,
-                soloCentro: true, // el vencimiento es del Coordinador del centro (no sube a Regional/Nacional)
+                soloCentro: true,
             });
             notifsCreadas += r.cantidadCreada || 0;
         } catch (e) {
@@ -48,10 +41,6 @@ export const ejecutarRevisionVencimientos = async () => {
         }
     }
 
-    // 2) Correo-resumen al COORDINADOR DE FLOTA de cada centro (solo si el correo
-    //    esta habilitado). Es una tarea operativa del centro: va unicamente a los
-    //    admins ASIGNADOS A UN CENTRO (centro_id), NO escala al Director Regional ni
-    //    al Nacional (seria mucho correo y no es su gestion directa).
     let correosEnviados = 0;
     if (correoHabilitado && items.length > 0) {
         const { data: admins } = await supabase
@@ -59,7 +48,7 @@ export const ejecutarRevisionVencimientos = async () => {
             .select('id, centro_id')
             .neq('rol', 'conductor')
             .eq('activo', true)
-            .not('centro_id', 'is', null); // solo Coordinadores de Flota (admins de centro)
+            .not('centro_id', 'is', null);
         const emailPorId = await obtenerMapaEmails();
         let sinEmail = 0;
 
